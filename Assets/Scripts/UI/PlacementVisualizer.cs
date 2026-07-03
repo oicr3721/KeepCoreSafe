@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Data;
 using UnityEngine;
 
@@ -7,94 +5,65 @@ namespace KeepCoreSafe.UI
 {
     public sealed class PlacementVisualizer : MonoBehaviour
     {
-        private readonly Dictionary<AdjacencyDirection, LineRenderer> directionLines = new();
-        private LineRenderer rangeLine;
-        private Material lineMaterial;
+        [Header("Direction Renderers")]
+        [SerializeField] private SpriteRenderer upRenderer;
+        [SerializeField] private SpriteRenderer downRenderer;
+        [SerializeField] private SpriteRenderer leftRenderer;
+        [SerializeField] private SpriteRenderer rightRenderer;
 
-        private void Awake()
+        [Header("Blink")]
+        [SerializeField] private Color effectColor = new Color(0.2f, 0.85f, 1f, 0.45f);
+        [SerializeField, Min(0.1f)] private float blinkSpeed = 3f;
+        [SerializeField, Range(0f, 1f)] private float minimumAlpha = 0.15f;
+        [SerializeField, Range(0f, 1f)] private float maximumAlpha = 0.55f;
+
+        public void SetData(BlockData blockData, float cellSize)
         {
-            lineMaterial = new Material(Shader.Find("Sprites/Default"));
-            rangeLine = CreateLine("Effect Range", new Color(1f, 0.75f, 0.2f), 30);
-            directionLines[AdjacencyDirection.Up] = CreateLine("Affects Up", Color.cyan, 31);
-            directionLines[AdjacencyDirection.Down] = CreateLine("Affects Down", Color.cyan, 31);
-            directionLines[AdjacencyDirection.Left] = CreateLine("Affects Left", Color.cyan, 31);
-            directionLines[AdjacencyDirection.Right] = CreateLine("Affects Right", Color.cyan, 31);
-            Hide();
+            AdjacencyDirection directions = blockData != null
+                ? blockData.AffectedDirections
+                : AdjacencyDirection.None;
+
+            Configure(upRenderer, AdjacencyDirection.Up, directions, Vector2.up, cellSize);
+            Configure(downRenderer, AdjacencyDirection.Down, directions, Vector2.down, cellSize);
+            Configure(leftRenderer, AdjacencyDirection.Left, directions, Vector2.left, cellSize);
+            Configure(rightRenderer, AdjacencyDirection.Right, directions, Vector2.right, cellSize);
         }
 
-        public void Show(BlockData data, Vector3 center, float cellSize)
+        private void Update()
         {
-            transform.position = center;
-            DrawDirections(data.AffectedDirections, cellSize);
-            DrawRange(data, cellSize);
+            float wave = (Mathf.Sin(Time.time * blinkSpeed) + 1f) * 0.5f;
+            float alpha = Mathf.Lerp(minimumAlpha, maximumAlpha, wave);
+
+            SetAlpha(upRenderer, alpha);
+            SetAlpha(downRenderer, alpha);
+            SetAlpha(leftRenderer, alpha);
+            SetAlpha(rightRenderer, alpha);
         }
 
-        public void Hide()
-        {
-            if (rangeLine != null) rangeLine.enabled = false;
-            foreach (LineRenderer line in directionLines.Values) line.enabled = false;
-        }
-
-        private void DrawDirections(AdjacencyDirection directions, float cellSize)
-        {
-            SetDirection(AdjacencyDirection.Up, Vector2.up, directions, cellSize);
-            SetDirection(AdjacencyDirection.Down, Vector2.down, directions, cellSize);
-            SetDirection(AdjacencyDirection.Left, Vector2.left, directions, cellSize);
-            SetDirection(AdjacencyDirection.Right, Vector2.right, directions, cellSize);
-        }
-
-        private void SetDirection(
+        private void Configure(
+            SpriteRenderer renderer,
             AdjacencyDirection flag,
-            Vector2 direction,
             AdjacencyDirection activeDirections,
+            Vector2 offset,
             float cellSize)
         {
-            LineRenderer line = directionLines[flag];
-            line.enabled = (activeDirections & flag) != 0;
-            if (!line.enabled) return;
+            if (renderer == null)
+                return;
 
-            line.positionCount = 2;
-            line.SetPosition(0, direction * cellSize * 0.25f);
-            line.SetPosition(1, direction * cellSize * 0.85f);
+            renderer.enabled = (activeDirections & flag) != 0;
+            renderer.transform.localPosition = offset * cellSize;
+            renderer.transform.localScale = new Vector3(cellSize, cellSize, 1f);
+            renderer.color = effectColor;
         }
 
-        private void DrawRange(BlockData data, float cellSize)
+        private void SetAlpha(SpriteRenderer renderer, float alpha)
         {
-            bool hasRange = (data.Properties & (BlockProperty.Attack | BlockProperty.Healer | BlockProperty.Support)) != 0;
-            rangeLine.enabled = hasRange && data.EffectRange > 0f;
-            if (!rangeLine.enabled) return;
+            if (renderer == null || !renderer.enabled)
+                return;
 
-            float radius = (data.Properties & BlockProperty.Attack) != 0
-                ? data.EffectRange
-                : data.EffectRange * cellSize;
-            const int segments = 48;
-            rangeLine.positionCount = segments + 1;
-
-            for (int i = 0; i <= segments; i++)
-            {
-                float angle = i * Mathf.PI * 2f / segments;
-                rangeLine.SetPosition(i, new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * radius);
-            }
-        }
-
-        private LineRenderer CreateLine(string lineName, Color color, int sortingOrder)
-        {
-            GameObject lineObject = new GameObject(lineName);
-            lineObject.transform.SetParent(transform, false);
-            LineRenderer line = lineObject.AddComponent<LineRenderer>();
-            line.material = lineMaterial;
-            line.startColor = color;
-            line.endColor = color;
-            line.startWidth = 0.045f;
-            line.endWidth = 0.045f;
-            line.useWorldSpace = false;
-            line.sortingOrder = sortingOrder;
-            return line;
-        }
-
-        private void OnDestroy()
-        {
-            if (lineMaterial != null) Destroy(lineMaterial);
+            Color color = effectColor;
+            color.a = alpha;
+            renderer.color = color;
         }
     }
 }
