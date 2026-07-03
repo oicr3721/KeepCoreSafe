@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 859f9a5add2359241bbfa8e71fe75f5b, type: 3}
+  m_Name: CoreData
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.BlockData
+  displayName: Core
+  properties: 1
+  maxHP: 100
+  cost: 0
+  attackValue: 0
+  healValue: 0
+  actionCooldown: 1
+  effectRange: 0
+  cooldownMultiplier: 1
+  sprite: {fileID: 1170115753450382605, guid: f426aa947a2beba4baa03253848215b7, type: 3}
+  affectedDirections: 0
