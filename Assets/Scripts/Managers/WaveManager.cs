@@ -4,19 +4,27 @@ using System.Collections.Generic;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Enemies;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace KeepCoreSafe.Managers
 {
     public sealed class WaveManager : MonoBehaviour
     {
-        [SerializeField, Range(5, 10)]
-        private int enemiesPerWave = 5;
+        [SerializeField, Range(1, 50)]
+        private int enemiesPerWave = 20;
 
         [SerializeField, Min(0.05f)]
         private float spawnInterval = 0.4f;
 
         [SerializeField]
-        private EnemyData enemyData;
+        [FormerlySerializedAs("enemyData")]
+        private EnemyData meleeEnemyData;
+
+        [SerializeField, Range(0, 30)]
+        private int rangedEnemiesPerWave = 10;
+
+        [SerializeField]
+        private EnemyData rangedEnemyData;
 
         private readonly HashSet<Enemy> activeEnemies = new();
         private Coroutine spawnRoutine;
@@ -30,7 +38,10 @@ namespace KeepCoreSafe.Managers
         private void Awake()
         {
             worldCamera = Camera.main;
-            if (enemyData == null) enemyData = Resources.Load<EnemyData>("Data/MeleeEnemyData");
+            if (meleeEnemyData == null)
+                meleeEnemyData = Resources.Load<EnemyData>("Data/Enemy/MeleeEnemyData");
+            if (rangedEnemyData == null)
+                rangedEnemyData = Resources.Load<EnemyData>("Data/Enemy/RangedEnemyData");
         }
 
         public void StartWave(int waveIndex)
@@ -58,9 +69,10 @@ namespace KeepCoreSafe.Managers
         private IEnumerator SpawnWave()
         {
             isSpawning = true;
+            List<bool> spawnTypes = CreateSpawnTypes();
             for (int i = 0; i < enemiesPerWave; i++)
             {
-                SpawnEnemy();
+                SpawnEnemy(spawnTypes[i]);
                 yield return new WaitForSeconds(spawnInterval);
             }
 
@@ -69,15 +81,34 @@ namespace KeepCoreSafe.Managers
             CheckWaveCompleted();
         }
 
-        private void SpawnEnemy()
+        private List<bool> CreateSpawnTypes()
         {
-            GameObject enemyObject = new GameObject("Melee Enemy");
-            enemyObject.transform.position = GetRandomSpawnPosition();
+            int rangedCount = rangedEnemyData == null
+                ? 0
+                : Mathf.Min(rangedEnemiesPerWave, enemiesPerWave);
+            List<bool> types = new List<bool>(enemiesPerWave);
+            for (int i = 0; i < enemiesPerWave; i++)
+                types.Add(i < rangedCount);
 
+            for (int i = types.Count - 1; i > 0; i--)
+            {
+                int swapIndex = UnityEngine.Random.Range(0, i + 1);
+                (types[i], types[swapIndex]) = (types[swapIndex], types[i]);
+            }
+
+            return types;
+        }
+
+        private void SpawnEnemy(bool spawnRanged)
+        {
+            GameObject enemyObject = new GameObject(spawnRanged ? "Ranged Enemy" : "Melee Enemy");
+            enemyObject.transform.position = GetRandomSpawnPosition();
             enemyObject.transform.localScale = Vector3.one * 0.45f;
 
-            MeleeEnemy enemy = enemyObject.AddComponent<MeleeEnemy>();
-            enemy.Initialize(enemyData);
+            Enemy enemy = spawnRanged
+                ? enemyObject.AddComponent<RangedEnemy>()
+                : enemyObject.AddComponent<MeleeEnemy>();
+            enemy.Initialize(spawnRanged ? rangedEnemyData : meleeEnemyData);
             enemy.Died += HandleEnemyDied;
             activeEnemies.Add(enemy);
         }

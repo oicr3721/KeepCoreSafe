@@ -1,4 +1,6 @@
 using System;
+using DG.Tweening;
+using KeepCoreSafe.Combat;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Managers;
 using KeepCoreSafe.UI;
@@ -14,6 +16,8 @@ namespace KeepCoreSafe.Blocks
         private GameManager gameManager;
         private GridManager gridManager;
         private bool isDead;
+        private DamageFeedback damageFeedback;
+        private bool isBeingDismantled;
 
         public BlockData Data => data;
         public int MaxHP => data != null ? data.MaxHP : 1;
@@ -71,6 +75,7 @@ namespace KeepCoreSafe.Blocks
             }
 
             CurrentHP = Mathf.Max(0, CurrentHP - amount);
+            damageFeedback?.Play();
             NotifyHealthChanged();
 
             if (CurrentHP == 0)
@@ -108,6 +113,43 @@ namespace KeepCoreSafe.Blocks
             Destroy(gameObject);
         }
 
+        public void PlayPlacementAnimation()
+        {
+            transform.DOKill();
+            Vector3 finalScale = transform.localScale;
+            transform.localScale = Vector3.zero;
+
+            DOTween.Sequence()
+                .SetTarget(transform)
+                .Append(transform.DOScale(finalScale * 1.08f, 0.16f).SetEase(Ease.OutBack))
+                .Append(transform.DOScale(finalScale, 0.08f).SetEase(Ease.OutQuad));
+        }
+
+        public void PlayDismantleAnimation(Action onComplete)
+        {
+            if (isBeingDismantled)
+                return;
+
+            isBeingDismantled = true;
+            transform.DOKill();
+            if (TryGetComponent(out Collider2D blockCollider))
+                blockCollider.enabled = false;
+
+            SpriteRenderer visual = GetComponentInChildren<SpriteRenderer>();
+            Sequence sequence = DOTween.Sequence().SetTarget(transform);
+            sequence.Append(transform.DOShakeRotation(
+                0.12f,
+                new Vector3(0f, 0f, 12f),
+                8,
+                20f,
+                true,
+                ShakeRandomnessMode.Harmonic));
+            sequence.Append(transform.DOScale(Vector3.zero, 0.16f).SetEase(Ease.InBack));
+            if (visual != null)
+                sequence.Join(visual.DOFade(0f, 0.14f));
+            sequence.OnComplete(() => onComplete?.Invoke());
+        }
+
         internal void SetGridPosition(Vector2Int position)
         {
             GridPosition = position;
@@ -126,7 +168,7 @@ namespace KeepCoreSafe.Blocks
                 return baseCooldown;
             }
 
-            foreach (Block adjacentBlock in gridManager.GetAdjacentBlocks(GridPosition))
+            foreach (Block adjacentBlock in gridManager.GetBlocks())
             {
                 if (adjacentBlock is SupportBlock supportBlock
                     && supportBlock.Data != null
@@ -162,14 +204,21 @@ namespace KeepCoreSafe.Blocks
 
         private void ApplySprite()
         {
-            if (!TryGetComponent(out SpriteRenderer renderer))
-            {
-                renderer = gameObject.AddComponent<SpriteRenderer>();
-            }
+            SpriteRenderer renderer = DamageFeedback.GetOrCreateVisualRenderer(gameObject);
 
             renderer.sprite = data.Sprite;
             renderer.color = Color.white;
             renderer.sortingOrder = 1;
+
+            if (!TryGetComponent(out damageFeedback))
+                damageFeedback = gameObject.AddComponent<DamageFeedback>();
+
+            damageFeedback.Initialize(renderer, Color.white);
+        }
+
+        protected virtual void OnDestroy()
+        {
+            transform.DOKill();
         }
 
     }

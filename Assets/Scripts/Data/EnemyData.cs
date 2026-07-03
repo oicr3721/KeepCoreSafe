@@ -28,6 +28,19 @@ namespace KeepCoreSafe.Data
         private Sprite sprite;
 
         [SerializeField]
+        private Color visualColor = Color.white;
+
+        [Header("Ranged Attack")]
+        [SerializeField, Min(0.01f)]
+        private float attackRangeTolerance = 0.2f;
+
+        [SerializeField, Min(0.1f)]
+        private float projectileSpeed = 7f;
+
+        [SerializeField, Min(0f)]
+        private float projectileArcHeight = 0.7f;
+
+        [SerializeField]
         private BlockProperty[] targetPriority = { BlockProperty.Core, BlockProperty.Wall };
 
         public string DisplayName => displayName;
@@ -37,6 +50,10 @@ namespace KeepCoreSafe.Data
         public float AttackCooldown => attackCooldown;
         public float AttackRange => attackRange;
         public Sprite Sprite => sprite;
+        public Color VisualColor => visualColor;
+        public float AttackRangeTolerance => attackRangeTolerance;
+        public float ProjectileSpeed => projectileSpeed;
+        public float ProjectileArcHeight => projectileArcHeight;
 
         public int GetPriority(BlockProperty property)
         {
@@ -57,7 +74,11 @@ namespace KeepCoreSafe.Data
             float cooldown,
             float range,
             Sprite enemySprite,
-            BlockProperty[] priorities)
+            BlockProperty[] priorities,
+            Color color,
+            float rangeTolerance = 0.2f,
+            float missileSpeed = 7f,
+            float missileArcHeight = 0.7f)
         {
             displayName = name;
             maxHP = hp;
@@ -67,6 +88,10 @@ namespace KeepCoreSafe.Data
             attackRange = range;
             sprite = enemySprite;
             targetPriority = priorities;
+            visualColor = color;
+            attackRangeTolerance = rangeTolerance;
+            projectileSpeed = missileSpeed;
+            projectileArcHeight = missileArcHeight;
         }
 #endif
     }

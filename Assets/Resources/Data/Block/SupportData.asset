@@ -22,4 +22,4 @@ MonoBehaviour:
   effectRange: 1
   cooldownMultiplier: 0.75
   sprite: {fileID: 4183758239832987388, guid: 42a7c04790a898c47a9e63e8836c9a27, type: 3}
-  affectedDirections: -1
+  affectedDirections: 15

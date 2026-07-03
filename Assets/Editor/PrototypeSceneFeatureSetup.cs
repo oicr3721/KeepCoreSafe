@@ -1,4 +1,7 @@
+using KeepCoreSafe.Blocks;
+using KeepCoreSafe.Controllers;
 using KeepCoreSafe.Data;
+using KeepCoreSafe.Managers;
 using KeepCoreSafe.UI;
 using TMPro;
 using UnityEditor;
@@ -15,13 +18,16 @@ namespace KeepCoreSafe.Editor
         [MenuItem("Keep Core Safe/Setup Timer, Speed, and Placement Effects")]
         public static void SetupScene()
         {
+            SetupRangedEnemyData();
             var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             SetupPlacementEffects();
             SetupSpeedButton();
+            SetupWaveManager();
+            SetupCameraController();
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             AssetDatabase.SaveAssets();
-            Debug.Log("Prototype scene timer, speed, and placement effects configured.");
+            Debug.Log("Prototype scene features configured.");
         }
 
         private static void SetupPlacementEffects()
@@ -56,18 +62,69 @@ namespace KeepCoreSafe.Editor
             SpriteRenderer down = GetOrCreateDirection(root, "Down Effect", preview);
             SpriteRenderer left = GetOrCreateDirection(root, "Left Effect", preview);
             SpriteRenderer right = GetOrCreateDirection(root, "Right Effect", preview);
+            SpriteRenderer upLeft = GetOrCreateDirection(root, "Up Left Effect", preview);
+            SpriteRenderer upRight = GetOrCreateDirection(root, "Up Right Effect", preview);
+            SpriteRenderer downLeft = GetOrCreateDirection(root, "Down Left Effect", preview);
+            SpriteRenderer downRight = GetOrCreateDirection(root, "Down Right Effect", preview);
+            SpriteRenderer everything = GetOrCreateDirection(root, "Everything Effect", preview);
 
             SerializedObject visualizerObjectData = new SerializedObject(visualizer);
             visualizerObjectData.FindProperty("upRenderer").objectReferenceValue = up;
             visualizerObjectData.FindProperty("downRenderer").objectReferenceValue = down;
             visualizerObjectData.FindProperty("leftRenderer").objectReferenceValue = left;
             visualizerObjectData.FindProperty("rightRenderer").objectReferenceValue = right;
+            visualizerObjectData.FindProperty("upLeftRenderer").objectReferenceValue = upLeft;
+            visualizerObjectData.FindProperty("upRightRenderer").objectReferenceValue = upRight;
+            visualizerObjectData.FindProperty("downLeftRenderer").objectReferenceValue = downLeft;
+            visualizerObjectData.FindProperty("downRightRenderer").objectReferenceValue = downRight;
+            visualizerObjectData.FindProperty("everythingRenderer").objectReferenceValue = everything;
             visualizerObjectData.ApplyModifiedPropertiesWithoutUndo();
 
             controllerObject.FindProperty("effectVisualizer").objectReferenceValue = visualizer;
             controllerObject.FindProperty("coreBlockData").objectReferenceValue =
                 AssetDatabase.LoadAssetAtPath<BlockData>("Assets/Resources/Data/Block/CoreData.asset");
+            controllerObject.FindProperty("dismantleRefundText").objectReferenceValue =
+                GetOrCreateRefundText();
             controllerObject.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static TMP_Text GetOrCreateRefundText()
+        {
+            GameDefaultUI gameUI = Object.FindFirstObjectByType<GameDefaultUI>(FindObjectsInactive.Include);
+            if (gameUI == null) return null;
+
+            Transform existing = gameUI.transform.Find("Dismantle Refund Text");
+            TextMeshProUGUI text;
+            if (existing != null)
+            {
+                text = existing.GetComponent<TextMeshProUGUI>();
+            }
+            else
+            {
+                TMP_Text fontSource = Object.FindFirstObjectByType<TMP_Text>(FindObjectsInactive.Include);
+                GameObject textObject = new GameObject(
+                    "Dismantle Refund Text",
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(TextMeshProUGUI));
+                textObject.transform.SetParent(gameUI.transform, false);
+                text = textObject.GetComponent<TextMeshProUGUI>();
+                if (fontSource != null) text.font = fontSource.font;
+            }
+
+            RectTransform rect = text.rectTransform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.zero;
+            rect.pivot = new Vector2(0f, 0.5f);
+            rect.sizeDelta = new Vector2(260f, 36f);
+            text.text = "Refund +0";
+            text.fontSize = 20f;
+            text.fontStyle = FontStyles.Bold;
+            text.alignment = TextAlignmentOptions.Left;
+            text.color = new Color(1f, 0.85f, 0.25f, 1f);
+            text.raycastTarget = false;
+            text.gameObject.SetActive(false);
+            return text;
         }
 
         private static SpriteRenderer GetOrCreateDirection(
@@ -160,6 +217,52 @@ namespace KeepCoreSafe.Editor
             text.color = Color.white;
             label = text;
             return button;
+        }
+
+        private static void SetupRangedEnemyData()
+        {
+            const string path = "Assets/Resources/Data/Enemy/RangedEnemyData.asset";
+            EnemyData rangedData = AssetDatabase.LoadAssetAtPath<EnemyData>(path);
+            if (rangedData == null)
+            {
+                rangedData = ScriptableObject.CreateInstance<EnemyData>();
+                AssetDatabase.CreateAsset(rangedData, path);
+            }
+
+            EnemyData meleeData = AssetDatabase.LoadAssetAtPath<EnemyData>(
+                "Assets/Resources/Data/Enemy/MeleeEnemyData.asset");
+            rangedData.ConfigurePrototype(
+                "Ranged Enemy",
+                25,
+                1.25f,
+                7,
+                1.4f,
+                3f,
+                meleeData != null ? meleeData.Sprite : null,
+                new[] { BlockProperty.Core, BlockProperty.Wall },
+                new Color(0.65f, 0.85f, 1f, 1f),
+                0.25f,
+                7f,
+                0.75f);
+            EditorUtility.SetDirty(rangedData);
+        }
+
+        private static void SetupWaveManager()
+        {
+            WaveManager waveManager = Object.FindFirstObjectByType<WaveManager>(FindObjectsInactive.Include);
+            if (waveManager == null) return;
+
+            SerializedObject waveObject = new SerializedObject(waveManager);
+            waveObject.FindProperty("rangedEnemyData").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/Resources/Data/Enemy/RangedEnemyData.asset");
+            waveObject.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void SetupCameraController()
+        {
+            Camera mainCamera = Camera.main;
+            if (mainCamera != null && !mainCamera.TryGetComponent(out GameCameraController _))
+                mainCamera.gameObject.AddComponent<GameCameraController>();
         }
     }
 }

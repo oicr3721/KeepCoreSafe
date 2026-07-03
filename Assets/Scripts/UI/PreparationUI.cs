@@ -27,7 +27,7 @@ namespace KeepCoreSafe.UI
             foreach (var bd in blockDatas)
             {
                 Button button = Instantiate(blockButtonPrefab, transform);
-                button.GetComponentInChildren<TMP_Text>().text = bd.name;
+                button.GetComponentInChildren<TMP_Text>().text = bd.DisplayName;
                 button.GetComponent<Image>().sprite = bd.Sprite;
 
                 button.onClick.AddListener(() => controller.SelectBlock(bd));

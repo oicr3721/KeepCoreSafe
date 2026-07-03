@@ -93,9 +93,62 @@
 
 ---
 
+# Phase 7 - Combat Readability & Enemy Variety
+
+* [x] Add diagonal and Everything effect directions
+* [x] Change AttackBlock to persistent random grid-area targeting
+* [x] Add animated laser feedback to AttackBlock
+* [x] Add health-scaled dismantle refund and hover preview
+* [x] Add RangedEnemy and curved missile attacks
+* [x] Add shared hit flash and shake feedback for Blocks and Enemies
+
+---
+
+# Phase 8 - Grid Movement & Placement Polish
+
+* [x] Correct Everything visualization to `(EffectRange * 2 + 1)` cells
+* [x] Add enemy destination-cell reservation (superseded by Phase 10)
+* [x] Replace free enemy movement with cell-based movement
+* [x] Replace path search with A*
+* [x] Add DOTween placement and dismantle animations
+* [x] Block all placement input while the pointer is over UI
+
+---
+
+# Phase 9 - Enemy Surrounding & Camera Controls
+
+* [x] Reserve separate final target cells for Enemies (superseded by Phase 10)
+* [x] Select the closest reachable cell when Core access is unavailable
+* [x] Recalculate paths after blockers or target availability change
+* [x] Add smooth middle-mouse camera panning
+* [x] Add smooth mouse-wheel zoom with limits
+* [x] Return camera to Core on Preparation and GameOver
+
+---
+
+# Phase 10 - Reservation-free Enemy Flow
+
+* [x] Remove Enemy occupancy and all cell reservations from GridManager
+* [x] Allow Enemies to share paths, cells, and destinations
+* [x] Add a persistent per-Enemy visual cell offset
+* [x] Add weak mathematical separation steering
+* [x] Preserve A*, Block destruction, targeting, and wave behavior
+
+---
+
+# Phase 11 - Enemy Path Diversity & Feedback Stability
+
+* [x] Add stable per-Enemy A* tie-breaking
+* [x] Distribute equivalent Core approaches and blocking targets
+* [x] Limit preferred-route detours to four cells
+* [x] Use only nearby boundary entries for outside-Grid spawns
+* [x] Prevent repeated DamageFeedback calls from accumulating visual drift
+
+---
+
 # Current Task
 
-Data architecture and placement UX overhaul complete.
+Seeded path diversity and repeat-safe damage feedback complete.
 
 Always complete one feature before moving to the next.
 

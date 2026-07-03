@@ -2,7 +2,9 @@ using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Managers;
 using KeepCoreSafe.UI;
+using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 public sealed class PlacementController : MonoBehaviour
@@ -12,6 +14,9 @@ public sealed class PlacementController : MonoBehaviour
     [SerializeField] private Color normalColor;
     [SerializeField] private Color invalidColor;
     [SerializeField] private PlacementVisualizer effectVisualizer;
+
+    [Header("Dismantle Preview")]
+    [SerializeField] private TMP_Text dismantleRefundText;
 
     [Header("Core")]
     [SerializeField] private BlockData coreBlockData;
@@ -24,6 +29,7 @@ public sealed class PlacementController : MonoBehaviour
         GameManager.PhaseChanged += OnPhaseChanged;
         placePoint = GameManager.PlacePoint;
         PlaceCoreAtCenter();
+        SetRefundPreviewVisible(false);
     }
 
     private void OnDestroy()
@@ -34,17 +40,40 @@ public sealed class PlacementController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (selectedBlock == null) return;
+        if (Mouse.current == null || Camera.main == null || GridManager.Instance == null)
+            return;
 
-        Vector2Int pos = GridManager.Instance.WorldToGrid(GetMousePos());
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        {
+            previewRenderer.gameObject.SetActive(false);
+            SetRefundPreviewVisible(false);
+            return;
+        }
+
+        Vector3 mouseWorld = GetMousePos();
+        Vector2Int pos = GridManager.Instance.WorldToGrid(mouseWorld);
 
         if (!GridManager.Instance.Grid.IsWithinBounds(pos))
+        {
+            previewRenderer.gameObject.SetActive(false);
+            SetRefundPreviewVisible(false);
+            return;
+        }
+
+        UpdateRefundPreview(pos);
+        if (Mouse.current.rightButton.wasPressedThisFrame)
+        {
+            TryDismantle(pos);
+            return;
+        }
+
+        if (selectedBlock == null)
         {
             previewRenderer.gameObject.SetActive(false);
             return;
         }
 
-        HandleInput(pos);
+        TryPlaceSelectedBlock(pos);
 
         previewRenderer.gameObject.SetActive(true);
 
@@ -70,10 +99,13 @@ public sealed class PlacementController : MonoBehaviour
         if (phase == GamePhase.Preparation)
             gameObject.SetActive(true);
         else
+        {
+            SetRefundPreviewVisible(false);
             gameObject.SetActive(false);
+        }
     }
 
-    private void HandleInput(Vector2Int pos)
+    private void TryPlaceSelectedBlock(Vector2Int pos)
     {
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
@@ -90,16 +122,53 @@ public sealed class PlacementController : MonoBehaviour
             if (GridManager.Instance.TryPlaceBlock(block, pos))
             {
                 placePoint.SubtractValue(selectedBlock.Cost);
+                block.PlayPlacementAnimation();
             }
         }
-        else if (Mouse.current.rightButton.wasPressedThisFrame)
+    }
+
+    private void TryDismantle(Vector2Int pos)
+    {
+        if (GridManager.Instance.TryRemoveBlock(pos, out Block block))
         {
-            if (GridManager.Instance.TryRemoveBlock(pos, out Block block))
-            {
-                placePoint.AddValue(block.Cost);
-                Destroy(block.gameObject);
-            }
+            placePoint.AddValue(CalculateDismantleRefund(block));
+            block.PlayDismantleAnimation(() => Destroy(block.gameObject));
+            SetRefundPreviewVisible(false);
         }
+    }
+
+    private void UpdateRefundPreview(Vector2Int pos)
+    {
+        if (dismantleRefundText == null
+            || !GridManager.Instance.TryGetBlock(pos, out Block block))
+        {
+            SetRefundPreviewVisible(false);
+            return;
+        }
+
+        bool isCore = (block.BlockProperty & BlockProperty.Core) != 0;
+        dismantleRefundText.text = isCore
+            ? "Core cannot be dismantled"
+            : $"Refund +{CalculateDismantleRefund(block):0.#}";
+        dismantleRefundText.rectTransform.position = Mouse.current.position.ReadValue() + new Vector2(22f, 26f);
+        SetRefundPreviewVisible(true);
+    }
+
+    private void SetRefundPreviewVisible(bool visible)
+    {
+        if (dismantleRefundText != null
+            && dismantleRefundText.gameObject.activeSelf != visible)
+        {
+            dismantleRefundText.gameObject.SetActive(visible);
+        }
+    }
+
+    public static float CalculateDismantleRefund(Block block)
+    {
+        if (block == null || block.MaxHP <= 0)
+            return 0f;
+
+        return Mathf.FloorToInt(block.Cost * 0.5f * ((float)block.CurrentHP / block.MaxHP));
     }
 
     private Block CreateBlock(BlockData data)
@@ -183,6 +252,7 @@ public sealed class PlacementController : MonoBehaviour
     /// </summary>
     public void Confirm()
     {
+        selectedBlock = null;
         GameManager.Instance.TryStartCombat();
     }
 }

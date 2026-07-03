@@ -22,7 +22,10 @@ namespace KeepCoreSafe.Blocks
                 return;
             }
 
-            foreach (Block adjacentBlock in gridManager.GetAdjacentBlocks(GridPosition, Data.AffectedDirections))
+            foreach (Block adjacentBlock in gridManager.GetBlocksInEffectArea(
+                         GridPosition,
+                         Data.AffectedDirections,
+                         Data.EffectRange))
             {
                 adjacentBlock.Heal(Data.HealValue);
             }

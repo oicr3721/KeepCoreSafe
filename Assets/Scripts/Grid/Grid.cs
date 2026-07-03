@@ -102,23 +102,38 @@ namespace KeepCoreSafe.GridSystem
 
         public IEnumerable<Block> GetAdjacentBlocks(Vector2Int position, AdjacencyDirection directions)
         {
-            foreach ((AdjacencyDirection flag, Vector2Int offset) in DirectionOffsets)
+            return GetBlocksInEffectArea(position, directions, 1f);
+        }
+
+        public IEnumerable<Block> GetBlocksInEffectArea(
+            Vector2Int origin,
+            AdjacencyDirection directions,
+            float effectRange)
+        {
+            int range = GridEffectArea.GetCellRange(effectRange);
+            for (int x = -range; x <= range; x++)
             {
-                if ((directions & flag) != 0
-                    && TryGetCell(position + offset, out GridCell cell)
-                    && cell.IsOccupied)
+                for (int y = -range; y <= range; y++)
                 {
-                    yield return cell.Occupant;
+                    Vector2Int offset = new Vector2Int(x, y);
+                    if (GridEffectArea.ContainsOffset(offset, directions, effectRange)
+                        && TryGetCell(origin + offset, out GridCell cell)
+                        && cell.IsOccupied)
+                    {
+                        yield return cell.Occupant;
+                    }
                 }
             }
         }
 
-        private static readonly (AdjacencyDirection, Vector2Int)[] DirectionOffsets =
+        public IEnumerable<Block> GetBlocks()
         {
-            (AdjacencyDirection.Up, Vector2Int.up),
-            (AdjacencyDirection.Down, Vector2Int.down),
-            (AdjacencyDirection.Left, Vector2Int.left),
-            (AdjacencyDirection.Right, Vector2Int.right)
-        };
+            for (int x = 0; x < Width; x++)
+            for (int y = 0; y < Height; y++)
+            {
+                if (cells[x, y].IsOccupied)
+                    yield return cells[x, y].Occupant;
+            }
+        }
     }
 }

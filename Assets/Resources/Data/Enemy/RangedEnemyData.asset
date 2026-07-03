@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb75bc9d86a92804d9656757ba1fc454, type: 3}
-  m_Name: MeleeEnemyData
+  m_Name: RangedEnemyData
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.EnemyData
-  displayName: Melee Enemy
-  maxHP: 150
-  moveSpeed: 2
-  attackDamage: 12
-  attackCooldown: 1
-  attackRange: 1
+  displayName: Ranged Enemy
+  maxHP: 50
+  moveSpeed: 1.5
+  attackDamage: 7
+  attackCooldown: 1.4
+  attackRange: 2
   sprite: {fileID: -5356574185940491189, guid: 5f7eba390e6a4cc498a31ef2325162df, type: 3}
-  visualColor: {r: 0.9528302, g: 0.73085827, b: 0.4539427, a: 1}
-  attackRangeTolerance: 0.08
+  visualColor: {r: 0.61552155, g: 0.82375014, b: 0.9811321, a: 1}
+  attackRangeTolerance: 0.25
   projectileSpeed: 7
-  projectileArcHeight: 0.7
+  projectileArcHeight: 0.75
   targetPriority: 0100000002000000100000000400000020000000

@@ -53,11 +53,7 @@ namespace KeepCoreSafe.Data
 
         public bool AffectsOffset(Vector2Int offset)
         {
-            if (offset == Vector2Int.up) return (affectedDirections & AdjacencyDirection.Up) != 0;
-            if (offset == Vector2Int.down) return (affectedDirections & AdjacencyDirection.Down) != 0;
-            if (offset == Vector2Int.left) return (affectedDirections & AdjacencyDirection.Left) != 0;
-            if (offset == Vector2Int.right) return (affectedDirections & AdjacencyDirection.Right) != 0;
-            return false;
+            return GridEffectArea.ContainsOffset(offset, affectedDirections, effectRange);
         }
 
 #if UNITY_EDITOR

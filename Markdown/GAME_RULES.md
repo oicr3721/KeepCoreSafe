@@ -23,10 +23,11 @@ Do not implement future features unless explicitly requested.
 # Grid
 
 - The battlefield uses a square grid.
-- Only Blocks occupy grid cells.
+- Blocks occupy grid cells permanently until moved or destroyed.
 - Multiple Blocks cannot occupy the same cell.
-- Enemies do NOT use the grid.
-- Enemies move freely in world space.
+- Enemies move between grid cells.
+- Multiple Enemies may move through, stand in, and target the same cell.
+- The Grid tracks Block occupancy only; Enemies never reserve cells.
 
 ---
 
@@ -79,14 +80,17 @@ Future blocks may contain any combination of properties.
 
 # Adjacency
 
-Adjacency uses only the four cardinal directions.
+Adjacency is selected by BlockData flags.
 
 - Up
 - Down
 - Left
 - Right
+- Four diagonal directions
+- Cardinal and diagonal grouped categories
+- Everything square range
 
-Diagonal tiles are NOT adjacent.
+EffectRange controls the number of grid cells affected.
 
 ---
 
@@ -104,11 +108,12 @@ Combat runs in real time.
 
 # Enemy
 
-Prototype contains only one enemy type.
+Prototype contains two enemy types.
 
 - Melee Enemy
+- Ranged Enemy
 
-Ranged enemies will be implemented later.
+Ranged enemies keep their configured attack distance and fire curved missiles.
 
 ---
 
@@ -136,11 +141,26 @@ Priority only affects targets already inside Detection Radius.
 
 # Enemy Movement
 
-Enemies move freely.
+Enemies use A* paths over the Grid.
 
-Enemies are NOT restricted by the grid.
+- Blocks are obstacles.
+- Enemies move one cell at a time.
+- If no open route exists, enemies attack a blocking Block.
+- If a Core approach is unavailable, enemies select the closest reachable block-free cell.
+- Paths are recalculated after the blocking Block is destroyed.
+- A fixed per-Enemy cell offset and weak separation steering reduce visual stacking.
+- Separation never changes the A* path and does not use Enemy-to-Enemy collisions.
+- Equal-cost paths and equivalent blocking targets are distributed by a stable per-Enemy seed.
+- A preferred Core approach may be used when it is no more than four cells longer than the shortest path.
+- Enemies outside the Grid enter from the nearest boundary rather than considering the full perimeter.
 
-Movement implementation is intentionally left simple for the prototype.
+---
+
+# Camera
+
+- Middle-mouse drag pans in Preparation and Combat.
+- Mouse-wheel input controls smooth orthographic zoom.
+- Preparation and GameOver return the camera to the Core and default zoom.
 
 ---
 

@@ -94,9 +94,11 @@ Responsible for
 - Cell lookup
 - Block placement
 - Block movement
-- Occupancy check
+- Block occupancy check
 
 The Grid only knows which Block occupies each cell.
+
+Enemy occupancy and destination state are deliberately not stored in GridManager.
 
 The Grid never handles combat logic.
 
@@ -163,7 +165,7 @@ Enemy
 
 MeleeEnemy
 
-Future
+Additional prototype enemy
 
 Enemy
 
@@ -177,9 +179,31 @@ Enemy is responsible for
 - Target Selection
 - Attacking
 
-Enemy does NOT know the Grid.
+Enemy movement queries the Grid for A* paths, but does not reserve or occupy cells.
 
-Enemy moves freely in world space.
+Enemies move one cell at a time with smooth world-space interpolation between cells.
+
+When a Core approach is unavailable, pathfinding selects the closest reachable,
+block-free cell to the Core as the Enemy's fallback target.
+
+Each Enemy keeps one visual offset inside a cell. A weak mathematical separation
+steering force reduces visual overlap without changing paths or using collisions.
+
+Each Enemy also owns a stable navigation seed. A* remains cost-based, while equal-cost
+cells, nearby Core approaches, and equivalent blocking Blocks use that seed as a
+deterministic tie-breaker. This distributes pressure without restoring reservations.
+
+Enemies spawned outside the Grid enter through the nearest local boundary cells only.
+
+---
+
+# Camera
+
+The Main Camera owns a single GameCameraController component.
+
+- Middle-mouse drag pans the camera.
+- Mouse-wheel input changes orthographic zoom.
+- Preparation and GameOver smoothly return focus to the Core and default zoom.
 
 ---
 
@@ -232,14 +256,12 @@ Combat should not manage movement.
 
 # Adjacency System
 
-Adjacency checks only
+Adjacency is configured per BlockData with flags.
 
-- Up
-- Down
-- Left
-- Right
-
-Diagonal cells are ignored.
+- Four cardinal directions
+- Four diagonal directions
+- Cardinal and diagonal category flags
+- Everything square mode covering `(EffectRange * 2 + 1)` cells per axis
 
 The adjacency system should be independent from individual block implementations.
 
@@ -325,6 +347,7 @@ The prototype only requires
 - WallBlock
 - HealerBlock
 - MeleeEnemy
+- RangedEnemy
 - Target Selection
 - Damage
 - Healing

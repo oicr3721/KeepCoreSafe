@@ -1,86 +1,64 @@
 using System;
 using System.Collections.Generic;
 using KeepCoreSafe.Blocks;
-using KeepCoreSafe.Managers;
 using UnityEngine;
 
 namespace KeepCoreSafe.Enemies
 {
     public sealed class MeleeEnemy : Enemy
     {
-        private GridManager gridManager;
         private GridPathfinder pathfinder;
-        private IReadOnlyList<Vector3> waypoints = Array.Empty<Vector3>();
+        private IReadOnlyList<Vector2Int> pathCells = Array.Empty<Vector2Int>();
         private Block currentTarget;
-        private int waypointIndex;
+        private int pathIndex;
         private float attackCooldownRemaining;
+        private float repathCooldownRemaining;
+        private bool hasPlan;
+        private bool isFallbackPlan;
+        private bool planHadBlocker;
+
 
         protected override void Start()
         {
             base.Start();
-            gridManager = FindFirstObjectByType<GridManager>();
-            pathfinder = new GridPathfinder(gridManager, Data);
+            pathfinder = new GridPathfinder(GridManager, Data, GetInstanceID());
         }
 
         protected override void OnCombatUpdate(float deltaTime)
         {
-            if (currentTarget == null)
-            {
-                RebuildPlan();
-            }
+            base.OnCombatUpdate(deltaTime);
 
-            if (currentTarget == null)
+            repathCooldownRemaining -= deltaTime;
+            if (ContinueCellMovement(deltaTime))
+                return;
+
+            if (!hasPlan || planHadBlocker && currentTarget == null)
+                RebuildPlan();
+
+            if (!hasPlan)
             {
                 StopMoving();
                 return;
             }
 
-            if (TryMoveToNextWaypoint())
+            SkipCurrentPathCell();
+            if (pathIndex < pathCells.Count)
             {
+                TryBeginCellMovement(pathCells[pathIndex]);
                 return;
             }
 
-            MoveOrAttackTarget(deltaTime);
-        }
-
-        private void RebuildPlan()
-        {
-            Block core = gridManager?.Grid?.Core;
-
-            if (core == null || !pathfinder.TryBuildPath(transform.position, core, out GridPathfinder.PathResult path))
+            if (currentTarget == null)
             {
-                currentTarget = null;
-                waypoints = Array.Empty<Vector3>();
+                StopMoving();
+                if (isFallbackPlan && repathCooldownRemaining <= 0f)
+                    RebuildPlan();
                 return;
             }
 
-            currentTarget = path.BlockingBlock != null ? path.BlockingBlock : core;
-            waypoints = path.Waypoints;
-            waypointIndex = 0;
-        }
-
-        private bool TryMoveToNextWaypoint()
-        {
-            while (waypointIndex < waypoints.Count
-                && Vector2.Distance(Body.position, waypoints[waypointIndex]) < 0.12f)
+            if (!IsAdjacentToTarget())
             {
-                waypointIndex++;
-            }
-
-            if (waypointIndex >= waypoints.Count)
-            {
-                return false;
-            }
-
-            MoveTowards(waypoints[waypointIndex]);
-            return true;
-        }
-
-        private void MoveOrAttackTarget(float deltaTime)
-        {
-            if (!IsInAttackRange())
-            {
-                MoveTowards(currentTarget.transform.position);
+                RebuildPlan();
                 return;
             }
 
@@ -93,26 +71,48 @@ namespace KeepCoreSafe.Enemies
             }
         }
 
-        private bool IsInAttackRange()
+        protected override void RebuildPlan()
         {
-            Collider2D targetCollider = currentTarget.GetComponent<Collider2D>();
-            if (targetCollider == null)
+            Block core = GridManager?.Grid?.Core;
+            bool foundPath = TryGetCurrentCell(out Vector2Int start)
+                ? pathfinder.TryBuildPath(start, core, out GridPathfinder.PathResult path)
+                : pathfinder.TryBuildPath(transform.position, core, out path);
+
+            if (!foundPath)
             {
-                return Vector2.Distance(Body.position, currentTarget.transform.position) <= 0.8f;
+                hasPlan = false;
+                currentTarget = null;
+                pathCells = Array.Empty<Vector2Int>();
+                return;
             }
 
-            return CollisionCollider.Distance(targetCollider).distance <= Data.AttackRange;
+            isFallbackPlan = !path.ReachesCore;
+            planHadBlocker = path.BlockingBlock != null;
+            currentTarget = path.BlockingBlock != null
+                ? path.BlockingBlock
+                : path.ReachesCore ? core : null;
+            pathCells = path.Cells;
+            pathIndex = 0;
+            hasPlan = true;
+            repathCooldownRemaining = 0.4f;
         }
 
-        private void MoveTowards(Vector3 destination)
+        private void SkipCurrentPathCell()
         {
-            Vector2 direction = ((Vector2)destination - Body.position).normalized;
-            Body.linearVelocity = direction * Data.MoveSpeed;
+            if (!TryGetCurrentCell(out Vector2Int current))
+                return;
+
+            while (pathIndex < pathCells.Count && pathCells[pathIndex] == current)
+                pathIndex++;
         }
 
-        private void StopMoving()
+        private bool IsAdjacentToTarget()
         {
-            Body.linearVelocity = Vector2.zero;
+            Vector2Int current = TryGetCurrentCell(out Vector2Int currentCell)
+                ? currentCell
+                : GridManager.WorldToGrid(transform.position);
+            Vector2Int offset = current - currentTarget.GridPosition;
+            return Mathf.Abs(offset.x) + Mathf.Abs(offset.y) <= 1;
         }
     }
 }

@@ -40,6 +40,13 @@ namespace KeepCoreSafe.Managers
 
         public Vector3 GridCenter => transform.position;
 
+        public event Action GridChanged;
+
+        private void NotifyGridChanged()
+        {
+            GridChanged?.Invoke();
+        }
+
         private void Awake()
         {
             if (Instance == null)
@@ -69,6 +76,7 @@ namespace KeepCoreSafe.Managers
             block.SetGridPosition(position);
             blockPositions[block] = position;
             block.Died += HandleBlockDied;
+            NotifyGridChanged();
             return true;
         }
 
@@ -81,6 +89,7 @@ namespace KeepCoreSafe.Managers
             }
 
             UnregisterBlock(block);
+            NotifyGridChanged();
             return true;
         }
 
@@ -92,6 +101,29 @@ namespace KeepCoreSafe.Managers
         public IEnumerable<Block> GetAdjacentBlocks(Vector2Int position, AdjacencyDirection directions)
         {
             return Grid.GetAdjacentBlocks(position, directions);
+        }
+
+        public IEnumerable<Block> GetBlocksInEffectArea(
+            Vector2Int position,
+            AdjacencyDirection directions,
+            float effectRange)
+        {
+            return Grid.GetBlocksInEffectArea(position, directions, effectRange);
+        }
+
+        public IEnumerable<Block> GetBlocks()
+        {
+            return Grid.GetBlocks();
+        }
+
+        public bool TryGetBlock(Vector2Int position, out Block block)
+        {
+            block = null;
+            if (Grid == null || !Grid.TryGetCell(position, out GridCell cell) || !cell.IsOccupied)
+                return false;
+
+            block = cell.Occupant;
+            return true;
         }
 
         private void HandleBlockDied(Block block)
@@ -107,6 +139,8 @@ namespace KeepCoreSafe.Managers
             {
                 CoreDestroyed?.Invoke();
             }
+
+            NotifyGridChanged();
         }
 
         private void UnregisterBlock(Block block)
