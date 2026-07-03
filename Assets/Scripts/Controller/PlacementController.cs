@@ -139,7 +139,7 @@ public sealed class PlacementController : MonoBehaviour
             return;
 
         if (coreBlockData == null)
-            coreBlockData = Resources.Load<BlockData>("Data/CoreData");
+            coreBlockData = Resources.Load<BlockData>("Data/Block/CoreData");
 
         if (coreBlockData == null)
         {
