@@ -39,6 +39,7 @@ namespace KeepCoreSafe.Combat
             float progress = 1f - remaining / duration;
             float envelope = 1f - progress;
             Vector2 shake = Random.insideUnitCircle * (shakeStrength * envelope);
+            shake.y = 0;
             targetRenderer.transform.localPosition = baseLocalPosition + (Vector3)shake;
 
             if (progress < 0.25f)

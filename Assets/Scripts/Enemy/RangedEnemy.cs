@@ -81,7 +81,8 @@ namespace KeepCoreSafe.Enemies
 
             if (cellDistance <= maximumRange)
             {
-                StopMoving();
+                StopMoving(false);
+                FaceAttackTarget(currentTarget);
                 Attack(deltaTime);
                 return;
             }

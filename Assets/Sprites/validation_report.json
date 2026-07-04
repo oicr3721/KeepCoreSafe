@@ -1,0 +1,518 @@
+{
+  "required_palette_rgba": [
+    [
+      13,
+      43,
+      69,
+      255
+    ],
+    [
+      32,
+      60,
+      86,
+      255
+    ],
+    [
+      84,
+      78,
+      104,
+      255
+    ],
+    [
+      141,
+      105,
+      122,
+      255
+    ],
+    [
+      208,
+      129,
+      89,
+      255
+    ],
+    [
+      255,
+      170,
+      94,
+      255
+    ],
+    [
+      255,
+      212,
+      163,
+      255
+    ],
+    [
+      255,
+      236,
+      214,
+      255
+    ]
+  ],
+  "sheet_count": 21,
+  "all_passed": true,
+  "checks": [
+    {
+      "file": "attack_laser_idle.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        1.0
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "attack_laser_action.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        3.5
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "attack_cannon_idle.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 3,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        1.0
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "attack_cannon_action.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        5.5
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "attack_hammer_a_idle.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        1.0
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "attack_hammer_a_action.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        4.5
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "attack_hammer_b_idle.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        0.0
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "attack_hammer_b_action.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        0.0
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "healer_idle.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        0.0
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "healer_action.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        0.5
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "supporter_idle.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        0.0
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "supporter_action.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        0.0
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "wall_idle.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        0.0
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "enemy_melee_idle.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 3,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        2.0
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "enemy_melee_attack.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        9.5
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "enemy_melee_move.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 3,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        4.0,
+        0.0
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "enemy_ranged_idle.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        1.0
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "enemy_ranged_attack.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        0.0
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "enemy_ranged_move.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        4.0,
+        1.0
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "core_idle.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.0,
+        0.0
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    },
+    {
+      "file": "core_break.png",
+      "size": [
+        256,
+        64
+      ],
+      "size_ok": true,
+      "frame_count_ok": true,
+      "palette_ok": true,
+      "opaque_color_count": 4,
+      "simplified_shading_ok": true,
+      "bad_colors": [],
+      "transparent_background_ok": true,
+      "partial_alpha_absent": true,
+      "frame_bbox_centers_spread_px": [
+        0.5,
+        0.5
+      ],
+      "alignment_ok": true,
+      "filtering_absent": true,
+      "passed": true
+    }
+  ]
+}

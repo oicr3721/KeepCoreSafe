@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: HealerData
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.HealerBlockData
   displayName: Healer
+  description: "지정된 방향의 블록을 주기적으로 수리해 체력을 회복합니다."
   maxHP: 100
   cost: 10
-  sprite: {fileID: -3152180383845805149, guid: 0e62c153595481d41949642498192141, type: 3}
+  sprite: {fileID: -6516952278035918218, guid: e4adadbff4951da40a04c2daa4382a23, type: 3}
   prefab: {fileID: 544130411324589891, guid: 63352878e856a79478f35914d23e4b9f, type: 3}
   additionalProperties: 0
   effectRange: 1

@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: CoreData
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.CoreBlockData
   displayName: Core
+  description: "반드시 지켜야 하는 중앙 코어입니다. 파괴되면 게임이 끝납니다."
   maxHP: 100
   cost: 0
-  sprite: {fileID: 1170115753450382605, guid: f426aa947a2beba4baa03253848215b7, type: 3}
+  sprite: {fileID: -6526318947721168298, guid: e4adadbff4951da40a04c2daa4382a23, type: 3}
   prefab: {fileID: 6595445646424716651, guid: f44b028d3bd7a334fb493b74fb5d5d27, type: 3}
   additionalProperties: 0

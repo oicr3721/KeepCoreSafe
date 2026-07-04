@@ -1,4 +1,5 @@
 using KeepCoreSafe.Blocks;
+using KeepCoreSafe.Controllers;
 using KeepCoreSafe.Managers;
 using UnityEngine;
 
@@ -80,6 +81,7 @@ namespace KeepCoreSafe.Combat
                 return;
 
             target.TakeDamage(damage);
+            GameCameraController.Instance?.PlayImpactShake();
             Destroy(gameObject);
         }
     }

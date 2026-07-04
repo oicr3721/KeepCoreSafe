@@ -1,14 +1,18 @@
 using System;
 using System.Collections.Generic;
+using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Combat;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Managers;
+using KeepCoreSafe.UI;
 using UnityEngine;
 
 namespace KeepCoreSafe.Enemies
 {
     public abstract class Enemy : MonoBehaviour
     {
+        private static readonly int MoveXParameter = Animator.StringToHash("MoveX");
+        private static readonly int MoveYParameter = Animator.StringToHash("MoveY");
         private static readonly List<Enemy> ActiveEnemies = new();
         private static readonly List<Collider2D> ActiveEnemyColliders = new();
 
@@ -20,6 +24,7 @@ namespace KeepCoreSafe.Enemies
         [SerializeField] private Collider2D collisionCollider;
         [SerializeField] private SpriteRenderer visualRenderer;
         [SerializeField] private DamageFeedback damageFeedback;
+        [SerializeField] private Animator animator;
 
         [Header("Visual Movement")]
         [SerializeField, Range(0f, 0.4f)]
@@ -41,6 +46,7 @@ namespace KeepCoreSafe.Enemies
         private bool isMovingToCell;
         private Vector2Int movementDestination;
         private Vector2 personalCellOffset;
+        private Vector2Int prevMove;
 
         protected Rigidbody2D Body { get; private set; }
         protected Collider2D CollisionCollider { get; private set; }
@@ -58,6 +64,9 @@ namespace KeepCoreSafe.Enemies
 
         protected virtual void Awake()
         {
+            if (animator == null && visualRenderer != null)
+                animator = visualRenderer.GetComponent<Animator>();
+
             EnsurePhysicsComponents();
             ActiveEnemies.Add(this);
         }
@@ -162,6 +171,7 @@ namespace KeepCoreSafe.Enemies
             }
 
             movementDestination = destination;
+            UpdateMovementPresentation(CalculateAnimationMove(destination));
             isMovingToCell = true;
             return true;
         }
@@ -176,9 +186,22 @@ namespace KeepCoreSafe.Enemies
             return GridManager.Grid.IsWithinBounds(position);
         }
 
-        protected void StopMoving()
+        protected void StopMoving(bool resetPresentation = true)
         {
             Body.linearVelocity = Vector2.zero;
+            if (resetPresentation)
+                UpdateMovementPresentation(Vector2Int.zero);
+        }
+
+        protected void FaceAttackTarget(Block target)
+        {
+            if (target == null)
+                return;
+
+            Vector2 direction = TryGetCurrentCell(out Vector2Int currentCell)
+                ? target.GridPosition - currentCell
+                : target.transform.position - transform.position;
+            UpdateMovementPresentation(ToCardinalAnimationMove(direction));
         }
 
         private void Die()
@@ -190,7 +213,9 @@ namespace KeepCoreSafe.Enemies
 
             isDead = true;
             Body.linearVelocity = Vector2.zero;
-            GameManager.PlacePoint.AddValue(1f);
+            UpdateMovementPresentation(Vector2Int.zero);
+            if (!EnemyRewardUI.TryPlayReward(transform.position, 1f))
+                GameManager.PlacePoint.AddValue(1f);
             Died?.Invoke(this);
             Destroy(gameObject);
         }
@@ -228,8 +253,7 @@ namespace KeepCoreSafe.Enemies
             }
 
             visualRenderer.sprite = data.Sprite;
-            visualRenderer.color = data.VisualColor;
-            damageFeedback?.Initialize(visualRenderer, data.VisualColor);
+            damageFeedback?.Initialize(visualRenderer, Color.white);
         }
 
         private void IgnoreOtherEnemies()
@@ -289,6 +313,47 @@ namespace KeepCoreSafe.Enemies
         private Vector2 GetCellWorldPosition(Vector2Int cell)
         {
             return (Vector2)GridManager.GridToWorld(cell) + personalCellOffset;
+        }
+
+        private Vector2Int CalculateAnimationMove(Vector2Int destination)
+        {
+            Vector2 direction;
+            if (TryGetCurrentCell(out Vector2Int currentCell))
+                direction = destination - currentCell;
+            else
+                direction = GetCellWorldPosition(destination) - Body.position;
+
+            return ToCardinalAnimationMove(direction);
+        }
+
+        private static Vector2Int ToCardinalAnimationMove(Vector2 direction)
+        {
+            if (Mathf.Abs(direction.x) >= Mathf.Abs(direction.y)
+                && !Mathf.Approximately(direction.x, 0f))
+            {
+                return new Vector2Int(direction.x > 0f ? 1 : -1, 0);
+            }
+
+            if (!Mathf.Approximately(direction.y, 0f))
+                return new Vector2Int(0, direction.y > 0f ? 1 : -1);
+
+            return Vector2Int.zero;
+        }
+
+        private void UpdateMovementPresentation(Vector2Int move)
+        {
+            if (move == prevMove)
+                return;
+
+            prevMove = move;
+            if (animator != null)
+            {
+                animator.SetInteger(MoveXParameter, move.x);
+                animator.SetInteger(MoveYParameter, move.y);
+            }
+
+            if (visualRenderer != null)
+                visualRenderer.flipX = move.x < 0;
         }
 
         protected virtual void OnDestroy()

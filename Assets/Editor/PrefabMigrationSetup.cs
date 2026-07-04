@@ -222,12 +222,14 @@ namespace KeepCoreSafe.Editor
             CircleCollider2D collider = root.AddComponent<CircleCollider2D>();
             DamageFeedback feedback = root.AddComponent<DamageFeedback>();
             SpriteRenderer visual = CreateSpritePart("Visual", root.transform, null, 2);
+            Animator animator = visual.gameObject.AddComponent<Animator>();
 
             SerializedObject serialized = new SerializedObject(enemy);
             serialized.FindProperty("body").objectReferenceValue = body;
             serialized.FindProperty("collisionCollider").objectReferenceValue = collider;
             serialized.FindProperty("visualRenderer").objectReferenceValue = visual;
             serialized.FindProperty("damageFeedback").objectReferenceValue = feedback;
+            serialized.FindProperty("animator").objectReferenceValue = animator;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);

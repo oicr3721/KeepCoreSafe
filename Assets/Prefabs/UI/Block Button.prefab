@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5180077204358423625}
   - component: {fileID: 6157239095896495734}
   - component: {fileID: 654980511930813321}
+  - component: {fileID: 6187939432171656458}
   m_Layer: 5
   m_Name: Block Button
   m_TagString: Untagged
@@ -57,7 +58,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -121,6 +122,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &6187939432171656458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7797622047845543719}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 715f538aabbc1804c891a553a6d597cd, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.UI.BlockButtonTooltipTrigger
 --- !u!1 &7927177650812823746
 GameObject:
   m_ObjectHideFlags: 0

@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: SupportData
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.SupportBlockData
   displayName: Support
+  description: "지정된 방향의 블록이 더 자주 행동하도록 재사용 대기시간을 줄입니다."
   maxHP: 100
   cost: 8
-  sprite: {fileID: 4183758239832987388, guid: 42a7c04790a898c47a9e63e8836c9a27, type: 3}
+  sprite: {fileID: 8831050944492163324, guid: e4adadbff4951da40a04c2daa4382a23, type: 3}
   prefab: {fileID: 7005742919833205052, guid: ef48c69017ffd91418170f7382c9dbae, type: 3}
   additionalProperties: 0
   effectRange: 1

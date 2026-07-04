@@ -14,7 +14,7 @@ namespace KeepCoreSafe.UI
 
         [SerializeField] private List<BlockData> blockDatas = new();
 
-        [SerializeField] private TMP_Text placePointTMP;
+        [SerializeField] private BlockDescriptionTooltip descriptionTooltip;
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
@@ -29,6 +29,13 @@ namespace KeepCoreSafe.UI
                 Button button = Instantiate(blockButtonPrefab, transform);
                 button.GetComponentInChildren<TMP_Text>().text = bd.DisplayName;
                 button.GetComponent<Image>().sprite = bd.Sprite;
+
+                BlockButtonTooltipTrigger tooltipTrigger =
+                    button.GetComponent<BlockButtonTooltipTrigger>();
+                if (tooltipTrigger != null)
+                    tooltipTrigger.Initialize(bd, descriptionTooltip);
+                else
+                    Debug.LogError($"{button.name} prefab has no tooltip trigger.", button);
 
                 button.onClick.AddListener(() => controller.SelectBlock(bd));
             }

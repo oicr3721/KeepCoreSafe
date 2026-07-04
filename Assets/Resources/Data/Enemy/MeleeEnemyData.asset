@@ -19,7 +19,7 @@ MonoBehaviour:
   attackCooldown: 1
   repathInterval: 0.4
   maxPreferredPathExtraCells: 4
-  sprite: {fileID: -5356574185940491189, guid: 5f7eba390e6a4cc498a31ef2325162df, type: 3}
+  sprite: {fileID: 7248435532839286903, guid: e4adadbff4951da40a04c2daa4382a23, type: 3}
   visualColor: {r: 0.9528302, g: 0.73085827, b: 0.4539427, a: 1}
   prefab: {fileID: 389284933144154984, guid: b8867c48a34f3fe48a6e8f39add604ed, type: 3}
   targetPriority: 0100000002000000100000000400000020000000

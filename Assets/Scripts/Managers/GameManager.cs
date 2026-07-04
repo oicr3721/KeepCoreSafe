@@ -1,4 +1,7 @@
 using System;
+using System.Collections;
+using KeepCoreSafe.Blocks;
+using KeepCoreSafe.Controllers;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -13,11 +16,19 @@ namespace KeepCoreSafe.Managers
         [Header("Combat Setting")]
         [SerializeField, Min(0.1f)] private float maxCombatDuration = 30f;
 
+        [Header("Core Destruction Presentation")]
+        [SerializeField, Range(0.01f, 1f)] private float coreDeathTimeScale = 0.15f;
+        [SerializeField, Min(0f)] private float coreDeathPresentationDuration = 0.8f;
+        [SerializeField, Min(0.1f)] private float coreDeathCameraZoom = 2.4f;
+        [SerializeField, Min(0f)] private float coreDeathCameraDuration = 0.28f;
+
         public static GameManager Instance { get; private set; }
 
         private WaveManager waveManager;
         private float combatElapsedTime;
         private int timeScaleIndex;
+        private Coroutine coreDeathRoutine;
+        private bool isCoreDestructionPlaying;
 
         private static readonly float[] TimeScaleOptions = { 1f, 2f, 4f };
 
@@ -30,6 +41,7 @@ namespace KeepCoreSafe.Managers
 
         public static event Action<GamePhase> PhaseChanged;
         public static event Action<float> TimeScaleChanged;
+        public static event Action<int> WaveStarted;
 
         private void Awake()
         {
@@ -51,17 +63,19 @@ namespace KeepCoreSafe.Managers
             waveManager.WaveCompleted += HandleWaveCompleted;
             GridManager.Instance.CoreDestroyed += HandleCoreDestroyed;
 
+            PlacePoint.Initialize(0f, float.MaxValue);
             PlacePoint.SetValue(startPlacePoint);
         }
 
         private void Update()
         {
-            if (Phase != GamePhase.Combat)
+            if (Phase != GamePhase.Combat || isCoreDestructionPlaying)
                 return;
 
             combatElapsedTime += Time.deltaTime;
             if (combatElapsedTime >= maxCombatDuration)
             {
+                Debug.Log("시간 초과");
                 waveManager.StopWave();
                 SetPhase(GamePhase.Preparation);
             }
@@ -77,13 +91,14 @@ namespace KeepCoreSafe.Managers
 
             WaveIndex++;
             SetPhase(GamePhase.Combat);
+            WaveStarted?.Invoke(WaveIndex);
             waveManager.StartWave(WaveIndex);
             return true;
         }
 
         private void HandleWaveCompleted()
         {
-            if (Phase == GamePhase.Combat)
+            if (Phase == GamePhase.Combat && !isCoreDestructionPlaying)
             {
                 SetPhase(GamePhase.Preparation);
             }
@@ -91,12 +106,39 @@ namespace KeepCoreSafe.Managers
 
         private void HandleCoreDestroyed()
         {
+            isCoreDestructionPlaying = false;
             waveManager.StopWave();
             SetPhase(GamePhase.GameOver);
         }
 
+        public bool TryPlayCoreDestruction(CoreBlock core, Action onComplete)
+        {
+            if (core == null || onComplete == null || isCoreDestructionPlaying)
+                return false;
+
+            isCoreDestructionPlaying = true;
+            coreDeathRoutine = StartCoroutine(PlayCoreDestruction(core, onComplete));
+            return true;
+        }
+
+        private IEnumerator PlayCoreDestruction(CoreBlock core, Action onComplete)
+        {
+            Time.timeScale = coreDeathTimeScale;
+            GameCameraController.Instance?.PlayCoreDeathFocus(
+                core.transform,
+                coreDeathCameraZoom,
+                coreDeathCameraDuration);
+
+            yield return new WaitForSecondsRealtime(coreDeathPresentationDuration);
+            coreDeathRoutine = null;
+            onComplete.Invoke();
+        }
+
         public void CycleTimeScale()
         {
+            if (isCoreDestructionPlaying)
+                return;
+
             timeScaleIndex = (timeScaleIndex + 1) % TimeScaleOptions.Length;
             SetTimeScale(TimeScaleOptions[timeScaleIndex]);
         }
@@ -131,6 +173,8 @@ namespace KeepCoreSafe.Managers
                 GridManager.Instance.CoreDestroyed -= HandleCoreDestroyed;
 
             Time.timeScale = 1f;
+            if (coreDeathRoutine != null)
+                StopCoroutine(coreDeathRoutine);
             Instance = null;
         }
     }

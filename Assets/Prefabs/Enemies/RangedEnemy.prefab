@@ -30,8 +30,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.45, y: 0.45, z: 0.45}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2438257012012963214}
   m_Father: {fileID: 0}
@@ -53,6 +53,7 @@ MonoBehaviour:
   collisionCollider: {fileID: 7895782972118926122}
   visualRenderer: {fileID: 5491021658804871185}
   damageFeedback: {fileID: 3794267572075241481}
+  animator: {fileID: 4466583099022128579}
   minimumPersonalOffsetRatio: 0.2
   maximumPersonalOffsetRatio: 0.25
   separationRadiusInCells: 0.55
@@ -120,7 +121,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.5
+  m_Radius: 0.3
 --- !u!114 &3794267572075241481
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -145,6 +146,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2438257012012963214}
   - component: {fileID: 5491021658804871185}
+  - component: {fileID: 4466583099022128579}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -226,3 +228,25 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
+--- !u!95 &4466583099022128579
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8545397261468219171}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 22100000, guid: 73558b9cab0e59d49bd1708a9b4f7e98, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage:
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0

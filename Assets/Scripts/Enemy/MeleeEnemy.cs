@@ -62,7 +62,8 @@ namespace KeepCoreSafe.Enemies
                 return;
             }
 
-            StopMoving();
+            StopMoving(false);
+            FaceAttackTarget(currentTarget);
             attackCooldownRemaining -= deltaTime;
             if (attackCooldownRemaining <= 0f)
             {

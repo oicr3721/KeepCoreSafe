@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: WallData
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.WallBlockData
   displayName: Wall
+  description: "높은 내구도로 적의 진로를 막고 방어 시간을 벌어줍니다."
   maxHP: 100
   cost: 2
   sprite: {fileID: -5356574185940491189, guid: 5f7eba390e6a4cc498a31ef2325162df, type: 3}

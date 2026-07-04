@@ -8,6 +8,8 @@ namespace KeepCoreSafe.GridSystem
     {
         [SerializeField]
         private LineRenderer linePrefab;
+        [SerializeField]
+        private Transform gridLineRoot;
 
         [SerializeField]
         private Color lineColor = new Color(0.35f, 0.55f, 0.7f, 0.8f);
@@ -23,7 +25,23 @@ namespace KeepCoreSafe.GridSystem
         private void Start()
         {
             gridManager = GetComponent<GridManager>();
+
+            GameManager.PhaseChanged += OnPhaseChanged;
+
             BuildRuntimeGrid();
+        }
+
+        private void OnPhaseChanged(GamePhase phase)
+        {
+            if (phase == GamePhase.Combat)
+                SetGridVisible(false);
+            else if (phase == GamePhase.Preparation)
+                SetGridVisible(true);
+        }
+
+        private void SetGridVisible(bool visible)
+        {
+            gridLineRoot.gameObject.SetActive(visible);
         }
 
         private void BuildRuntimeGrid()
@@ -52,7 +70,7 @@ namespace KeepCoreSafe.GridSystem
 
         private void CreateLine(string lineName, float x1, float y1, float x2, float y2)
         {
-            LineRenderer line = Instantiate(linePrefab, transform);
+            LineRenderer line = Instantiate(linePrefab, gridLineRoot);
             line.name = lineName;
             line.startColor = lineColor;
             line.endColor = lineColor;

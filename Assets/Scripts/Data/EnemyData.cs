@@ -31,9 +31,6 @@ namespace KeepCoreSafe.Data
         private Sprite sprite;
 
         [SerializeField]
-        private Color visualColor = Color.white;
-
-        [SerializeField]
         private Enemy prefab;
 
         [SerializeField]
@@ -47,7 +44,6 @@ namespace KeepCoreSafe.Data
         public float RepathInterval => repathInterval;
         public int MaxPreferredPathExtraCells => maxPreferredPathExtraCells;
         public Sprite Sprite => sprite;
-        public Color VisualColor => visualColor;
         public Enemy Prefab => prefab;
 
         public int GetPriority(BlockProperty property)

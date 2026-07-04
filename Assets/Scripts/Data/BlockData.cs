@@ -8,6 +8,9 @@ namespace KeepCoreSafe.Data
         [SerializeField]
         private string displayName;
 
+        [SerializeField, TextArea(2, 5)]
+        private string description;
+
         [SerializeField, Min(1)]
         private int maxHP = 100;
 
@@ -25,6 +28,7 @@ namespace KeepCoreSafe.Data
         private BlockProperty additionalProperties;
 
         public string DisplayName => displayName;
+        public string Description => description;
         public int MaxHP => maxHP;
         public int Cost => cost;
         public Sprite Sprite => sprite;

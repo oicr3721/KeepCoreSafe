@@ -1,0 +1,42 @@
+{
+  "frame_size": [
+    64,
+    64
+  ],
+  "frames_per_sheet": 4,
+  "layout": "horizontal",
+  "background": "transparent",
+  "palette": [
+    "#0D2B45",
+    "#203C56",
+    "#544E68",
+    "#8D697A",
+    "#D08159",
+    "#FFAA5E",
+    "#FFD4A3",
+    "#FFECD6"
+  ],
+  "sheets": [
+    "attack_laser_idle.png",
+    "attack_laser_action.png",
+    "attack_cannon_idle.png",
+    "attack_cannon_action.png",
+    "attack_hammer_a_idle.png",
+    "attack_hammer_a_action.png",
+    "attack_hammer_b_idle.png",
+    "attack_hammer_b_action.png",
+    "healer_idle.png",
+    "healer_action.png",
+    "supporter_idle.png",
+    "supporter_action.png",
+    "wall_idle.png",
+    "enemy_melee_idle.png",
+    "enemy_melee_attack.png",
+    "enemy_melee_move.png",
+    "enemy_ranged_idle.png",
+    "enemy_ranged_attack.png",
+    "enemy_ranged_move.png",
+    "core_idle.png",
+    "core_break.png"
+  ]
+}
