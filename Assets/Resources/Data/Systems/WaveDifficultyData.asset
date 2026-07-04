@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 883f17012bdb3884eb0be14b441271e3, type: 3}
+  m_Name: WaveDifficultyData
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.WaveDifficultyData
+  lateGameWave: 30
+  progressionCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.35
+      value: 0.14
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.7
+      value: 0.48
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  firstWaveCombatDuration: 22
+  lateGameCombatDuration: 48
+  firstWaveEnemyCount: {x: 3, y: 4}
+  lateGameEnemyCount: {x: 38, y: 56}
+  firstWaveRangedRatio: {x: 0.12, y: 0.24}
+  lateGameRangedRatio: {x: 0.22, y: 0.42}
+  firstWaveSpawnInterval: 0.58
+  lateGameSpawnInterval: 0.12
+  firstWaveSpawnMargin: 1.8
+  lateGameSpawnMargin: 0.45
+  enemyGrowthPerExtraWave: 1.4
+  combatDurationGrowthPerExtraWave: 0.4
+  spawnIntervalMultiplierPerExtraWave: 0.985
+  spawnMarginReductionPerExtraWave: 0.01
+  rangedRatioGrowthPerExtraWave: 0.002

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Combat;
@@ -43,6 +44,7 @@ namespace KeepCoreSafe.Enemies
         private float minimumSnapDistance = 0.02f;
 
         private bool isDead;
+        private bool isShockwaveEliminationPlaying;
         private bool isMovingToCell;
         private Vector2Int movementDestination;
         private Vector2 personalCellOffset;
@@ -91,7 +93,7 @@ namespace KeepCoreSafe.Enemies
 
         protected virtual void Update()
         {
-            if (GameManager.Phase == GamePhase.Combat)
+            if (!isShockwaveEliminationPlaying && GameManager.Phase == GamePhase.Combat)
             {
                 OnCombatUpdate(Time.deltaTime);
             }
@@ -99,7 +101,7 @@ namespace KeepCoreSafe.Enemies
 
         public void TakeDamage(int amount)
         {
-            if (amount <= 0 || isDead)
+            if (amount <= 0 || isDead || isShockwaveEliminationPlaying)
             {
                 return;
             }
@@ -218,6 +220,31 @@ namespace KeepCoreSafe.Enemies
                 GameManager.PlacePoint.AddValue(1f);
             Died?.Invoke(this);
             Destroy(gameObject);
+        }
+
+        public void EliminateByShockwave(float silhouetteDuration)
+        {
+            if (isDead || isShockwaveEliminationPlaying)
+                return;
+
+            isShockwaveEliminationPlaying = true;
+            StopMoving();
+            if (CollisionCollider != null)
+                CollisionCollider.enabled = false;
+            damageFeedback?.Cancel();
+            if (visualRenderer != null)
+                visualRenderer.color = Color.black;
+
+            StartCoroutine(CompleteShockwaveElimination(
+                Mathf.Max(0f, silhouetteDuration)));
+        }
+
+        private IEnumerator CompleteShockwaveElimination(float delay)
+        {
+            if (delay > 0f)
+                yield return new WaitForSecondsRealtime(delay);
+
+            Die();
         }
 
         private void EnsurePhysicsComponents()

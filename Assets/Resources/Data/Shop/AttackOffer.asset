@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9fa6a7ca178d7334fb51b7045ae0ab6e, type: 3}
+  m_Name: AttackOffer
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.GrantedBlockShopOfferData
+  displayName: Attack
+  description: "\uC644\uC131\uB41C \uACF5\uACA9 \uBE14\uB85D\uC744 \uC774\uBC88 \uBC30\uCE58
+    \uBAA9\uB85D\uC5D0 \uCD94\uAC00\uD569\uB2C8\uB2E4."
+  cost: 12
+  grantedBlock: {fileID: 11400000, guid: 33b09b7570f8c8c4ba7c5c2a7ffbc291, type: 2}
+  playRareAppearance: 1

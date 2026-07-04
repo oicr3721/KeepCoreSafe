@@ -61,6 +61,14 @@ MonoBehaviour:
   dismantleShakeRandomness: 20
   dismantleScaleDuration: 0.16
   dismantleFadeDuration: 0.14
+  HP:
+    currentValue: 0
+    maxValue: 100
+  healProjectilePrefab: {fileID: 59026969038798961, guid: e6f82a5ea21d94246ad3762405141d4b, type: 3}
+  initialPoolSize: 4
+  projectileRoot: {fileID: 0}
+  projectileDuration: 0.22
+  projectileCurveHeight: 0.22
 --- !u!61 &2973971891034782593
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -120,7 +128,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Combat.DamageFeedback
   duration: 0.18
+  useUnscaledTime: 1
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  flashPortion: 0.22
   shakeStrength: 0.1
+  scalePunch: 0.12
 --- !u!1 &9166603199674805919
 GameObject:
   m_ObjectHideFlags: 0

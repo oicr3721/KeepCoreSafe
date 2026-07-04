@@ -1,5 +1,6 @@
 using System;
 using DG.Tweening;
+using KeepCoreSafe.Audio;
 using KeepCoreSafe.Combat;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Managers;
@@ -40,7 +41,7 @@ namespace KeepCoreSafe.Blocks
 
         public ObservableValue HP = new();
 
-        public int Cost => data != null ? data.Cost : 0;
+        public int DismantleValue => data != null ? data.DismantleValue : 0;
         public BlockProperty BlockProperty => data != null ? data.Properties : BlockProperty.None;
         public Vector2Int GridPosition { get; private set; }
         public bool HasGridPosition { get; private set; }
@@ -116,6 +117,7 @@ namespace KeepCoreSafe.Blocks
             }
 
             isDead = true;
+            AudioManager.PlayAt(data?.DestroyedSound, transform.position);
             Died?.Invoke(this);
             Destroy(gameObject);
         }
@@ -130,6 +132,22 @@ namespace KeepCoreSafe.Blocks
                 .SetTarget(transform)
                 .Append(transform.DOScale(finalScale * placementOvershoot, placementGrowDuration).SetEase(Ease.OutBack))
                 .Append(transform.DOScale(finalScale, placementSettleDuration).SetEase(Ease.OutQuad));
+        }
+
+        public void PlayRareAppearance()
+        {
+            if (visualRenderer == null || data == null)
+                return;
+
+            visualRenderer.DOKill(false);
+            Color originalColor = data.VisualColor;
+            visualRenderer.color = originalColor;
+            DOTween.Sequence()
+                .SetTarget(visualRenderer)
+                .Append(visualRenderer.DOColor(new Color(1f, 0.9f, 0.25f, 1f), 0.12f))
+                .Append(visualRenderer.DOColor(Color.white, 0.1f))
+                .SetLoops(2, LoopType.Yoyo)
+                .OnComplete(() => visualRenderer.color = originalColor);
         }
 
         public void PlayDismantleAnimation(Action onComplete)
@@ -209,8 +227,8 @@ namespace KeepCoreSafe.Blocks
             }
 
             visualRenderer.sprite = data.Sprite;
-            visualRenderer.color = Color.white;
-            damageFeedback?.Initialize(visualRenderer, Color.white);
+            visualRenderer.color = data.VisualColor;
+            damageFeedback?.Initialize(visualRenderer, data.VisualColor);
         }
 
         protected virtual void OnDestroy()

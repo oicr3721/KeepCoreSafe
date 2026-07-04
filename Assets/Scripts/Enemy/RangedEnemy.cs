@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using KeepCoreSafe.Audio;
 using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Combat;
 using KeepCoreSafe.Data;
@@ -145,6 +146,7 @@ namespace KeepCoreSafe.Enemies
                 Data.AttackDamage,
                 RangedData.ProjectileSpeed,
                 RangedData.ProjectileArcHeight);
+            AudioManager.PlayAt(Data.AttackSound, transform.position);
             attackCooldownRemaining = Data.AttackCooldown;
         }
 

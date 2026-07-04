@@ -190,7 +190,7 @@ namespace KeepCoreSafe.Editor
             ConfigureTooltipText(description, new Vector2(14f, 48f), new Vector2(-14f, 8f));
             description.fontSize = 18f;
             description.color = Color.white;
-            description.enableWordWrapping = true;
+            //description.enableWordWrapping = true;
 
             BlockDescriptionTooltip tooltip = root.GetComponent<BlockDescriptionTooltip>();
             SerializedObject data = new(tooltip);

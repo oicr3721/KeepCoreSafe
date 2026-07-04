@@ -1,4 +1,6 @@
+using KeepCoreSafe.Audio;
 using KeepCoreSafe.Blocks;
+using KeepCoreSafe.Controllers;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Managers;
 using KeepCoreSafe.UI;
@@ -11,164 +13,296 @@ public sealed class PlacementController : MonoBehaviour
 {
     [Header("Preview")]
     [SerializeField] private SpriteRenderer previewRenderer;
-    [SerializeField] private Color normalColor;
-    [SerializeField] private Color invalidColor;
+    [SerializeField] private Color normalColor = new(1f, 1f, 1f, 0.55f);
+    [SerializeField] private Color invalidColor = new(1f, 0.2f, 0.2f, 0.55f);
     [SerializeField] private PlacementVisualizer effectVisualizer;
+
+    [Header("Granted Blocks")]
+    [SerializeField] private BlockSupplyController supplyController;
+    [SerializeField] private BlockMatchData matchData;
 
     [Header("Dismantle Preview")]
     [SerializeField] private RectTransform placementControlText;
     [SerializeField] private TMP_Text dismantleRefundText;
-    [SerializeField] private TMP_Text placementCostText;
     [SerializeField, Range(0f, 1f)] private float dismantleRefundRate = 0.5f;
-    [SerializeField] private Vector2 dismantlePreviewOffset = new Vector2(22f, 26f);
+    [SerializeField] private Vector2 dismantlePreviewOffset = new(22f, 26f);
 
     [Header("Core")]
     [SerializeField] private CoreBlockData coreBlockData;
 
-    private BlockData selectedBlock;
-    private ObservableValue placePoint;
+    [Header("Audio")]
+    [Tooltip("Played after a player block is successfully placed on the Grid.")]
+    [SerializeField] private AudioCue placementSound = new();
+    [Tooltip("Played after the dismantle animation completes.")]
+    [SerializeField] private AudioCue dismantleSound = new();
 
-    void Start()
+    private BlockSupplyController.GrantedBlock selectedGrant;
+    private int selectedSupplyIndex = -1;
+    private BlockMatchResolver matchResolver;
+    private bool placementInputEnabled;
+
+    private void Start()
     {
         GameManager.PhaseChanged += OnPhaseChanged;
-        placePoint = GameManager.PlacePoint;
-        PlaceCoreAtCenter();
+        if (supplyController != null)
+            supplyController.SupplyChanged += HandleSupplyChanged;
+
+        matchResolver = new BlockMatchResolver(GridManager.Instance, matchData);
+        PlaceCoreAndStartingBlocks();
         SetRefundPreviewVisible(false);
+        HidePreview();
     }
 
     private void OnDestroy()
     {
         GameManager.PhaseChanged -= OnPhaseChanged;
+        if (supplyController != null)
+            supplyController.SupplyChanged -= HandleSupplyChanged;
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
         if (Mouse.current == null || Camera.main == null || GridManager.Instance == null)
             return;
 
+        if (!placementInputEnabled)
+        {
+            HidePreview();
+            SetRefundPreviewVisible(false);
+            return;
+        }
+
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
         {
-            previewRenderer.gameObject.SetActive(false);
+            HidePreview();
             SetRefundPreviewVisible(false);
             return;
         }
 
-        Vector3 mouseWorld = GetMousePos();
-        Vector2Int pos = GridManager.Instance.WorldToGrid(mouseWorld);
-
-        if (!GridManager.Instance.Grid.IsWithinBounds(pos))
+        Vector2Int position = GridManager.Instance.WorldToGrid(GetMousePosition());
+        if (!GridManager.Instance.Grid.IsWithinBounds(position))
         {
-            previewRenderer.gameObject.SetActive(false);
+            HidePreview();
             SetRefundPreviewVisible(false);
             return;
         }
 
-        UpdateControlPreview(pos);
+        UpdateDismantlePreview(position);
         if (Mouse.current.rightButton.wasPressedThisFrame)
         {
-            TryDismantle(pos);
+            TryDismantle(position);
             return;
         }
 
-        if (selectedBlock == null)
+        if (selectedSupplyIndex < 0 || selectedGrant.Data == null)
         {
-            previewRenderer.gameObject.SetActive(false);
+            HidePreview();
             return;
         }
 
-        TryPlaceSelectedBlock(pos);
+        UpdatePlacementPreview(position);
+        if (Mouse.current.leftButton.wasPressedThisFrame)
+            TryPlaceSelectedBlock(position);
+    }
 
+    public void SelectGrantedBlock(int supplyIndex)
+    {
+        if (!placementInputEnabled
+            || supplyController == null
+            || !supplyController.TryGet(supplyIndex, out BlockSupplyController.GrantedBlock grant))
+        {
+            ClearSelection();
+            return;
+        }
+
+        selectedSupplyIndex = supplyIndex;
+        selectedGrant = grant;
+        previewRenderer.sprite = grant.Data.Sprite;
+        previewRenderer.color = grant.Data.VisualColor;
+    }
+
+    public void ClearSelection()
+    {
+        selectedSupplyIndex = -1;
+        selectedGrant = default;
+        HidePreview();
+    }
+
+    public void Confirm()
+    {
+        if (!placementInputEnabled)
+            return;
+
+        ClearSelection();
+        SetRefundPreviewVisible(false);
+        GameManager.Instance.TryStartCombat();
+    }
+
+    public void SetPlacementInputEnabled(bool enabled)
+    {
+        placementInputEnabled = enabled && GameManager.Phase == GamePhase.Preparation;
+        if (!placementInputEnabled)
+        {
+            ClearSelection();
+            SetRefundPreviewVisible(false);
+        }
+    }
+
+    public static float CalculateDismantleRefund(Block block, float refundRate = 0.5f)
+    {
+        if (block == null || block.HP.MaxValue <= 0f)
+            return 0f;
+
+        float healthRatio = block.HP.CurrentValue / block.HP.MaxValue;
+        return Mathf.FloorToInt(block.DismantleValue * refundRate * healthRatio);
+    }
+
+    private void TryPlaceSelectedBlock(Vector2Int position)
+    {
+        if (!GridManager.Instance.IsCellEmpty(position))
+            return;
+
+        Block block = CreateBlock(selectedGrant.Data);
+        if (block == null)
+            return;
+
+        if (!GridManager.Instance.TryPlaceBlock(block, position))
+        {
+            Destroy(block.gameObject);
+            return;
+        }
+
+        bool wasRare = selectedGrant.IsRare;
+        if (supplyController == null
+            || !supplyController.TryConsume(selectedSupplyIndex, out _))
+        {
+            GridManager.Instance.TryRemoveBlock(position, out _);
+            Destroy(block.gameObject);
+            ClearSelection();
+            return;
+        }
+
+        block.PlayPlacementAnimation();
+        AudioManager.PlayAt(placementSound, block.transform.position);
+        if (wasRare)
+            block.PlayRareAppearance();
+
+        ClearSelection();
+        ResolveMatch(position);
+    }
+
+    private void ResolveMatch(Vector2Int lastPlacedPosition)
+    {
+        if (matchResolver == null
+            || !matchResolver.TryResolve(lastPlacedPosition, out BlockMatchResolver.MatchResult match))
+        {
+            return;
+        }
+
+        foreach (Block consumedBlock in match.ConsumedBlocks)
+        {
+            if (consumedBlock != null
+                && GridManager.Instance.TryRemoveBlock(consumedBlock.GridPosition, out Block removed))
+            {
+                Destroy(removed.gameObject);
+            }
+        }
+
+        Block resultBlock = CreateBlock(match.ResultBlock);
+        if (resultBlock == null
+            || !GridManager.Instance.TryPlaceBlock(resultBlock, match.Position))
+        {
+            if (resultBlock != null)
+                Destroy(resultBlock.gameObject);
+            Debug.LogError("Failed to place the matched skill block.", this);
+            return;
+        }
+
+        resultBlock.PlayPlacementAnimation();
+        AudioManager.PlayAt(placementSound, resultBlock.transform.position);
+        resultBlock.PlayRareAppearance();
+    }
+
+    private void TryDismantle(Vector2Int position)
+    {
+        if (!GridManager.Instance.TryRemoveBlock(position, out Block block))
+            return;
+
+        GameManager.PlacePoint.AddValue(CalculateDismantleRefund(block, dismantleRefundRate));
+        block.PlayDismantleAnimation(() =>
+        {
+            AudioManager.PlayAt(dismantleSound, block.transform.position);
+            Destroy(block.gameObject);
+        });
+        SetRefundPreviewVisible(false);
+    }
+
+    private void UpdatePlacementPreview(Vector2Int position)
+    {
+        Vector3 worldPosition = GridManager.Instance.GridToWorld(position);
         previewRenderer.gameObject.SetActive(true);
-
-        previewRenderer.color = GridManager.Instance.IsCellEmpty(pos)
-                                ? normalColor
-                                : invalidColor;
-
-        previewRenderer.transform.position = GridManager.Instance.GridToWorld(pos);
+        previewRenderer.color = GridManager.Instance.IsCellEmpty(position)
+            ? WithPreviewAlpha(selectedGrant.Data.VisualColor, normalColor.a)
+            : invalidColor;
+        previewRenderer.transform.position = worldPosition;
+        effectVisualizer?.ShowPlacement(
+            selectedGrant.Data,
+            worldPosition,
+            GridManager.Instance.CellSize);
     }
 
-    Vector3 GetMousePos()
+    private void UpdateDismantlePreview(Vector2Int position)
     {
-        Vector3 mousePos = Mouse.current.position.ReadValue();
-        Vector3 rawMouseWorld = Camera.main.ScreenToWorldPoint(mousePos);
-        rawMouseWorld.z = 0f;
+        if (dismantleRefundText == null
+            || !GridManager.Instance.TryGetBlock(position, out Block block))
+        {
+            SetRefundPreviewVisible(false);
+            return;
+        }
 
-        return rawMouseWorld;
+        bool isCore = (block.BlockProperty & BlockProperty.Core) != 0;
+        dismantleRefundText.text = isCore
+            ? "철거 불가"
+            : $"철거 +{CalculateDismantleRefund(block, dismantleRefundRate):0.#}";
+        SetRefundPreviewVisible(true);
+        if (placementControlText != null)
+            placementControlText.position = Mouse.current.position.ReadValue() + dismantlePreviewOffset;
     }
 
-    void OnPhaseChanged(GamePhase phase)
+    private Vector3 GetMousePosition()
     {
-        //Placement Controller의 자식으로 Placement Visual도 전부 넣어놓고 한 번에 껐다 켰다 되게끔 할 것
+        Vector3 mousePosition = Mouse.current.position.ReadValue();
+        Vector3 worldPosition = Camera.main.ScreenToWorldPoint(mousePosition);
+        worldPosition.z = 0f;
+        return worldPosition;
+    }
+
+    private void OnPhaseChanged(GamePhase phase)
+    {
         if (phase == GamePhase.Preparation)
+        {
             gameObject.SetActive(true);
+            placementInputEnabled = false;
+        }
         else
         {
+            placementInputEnabled = false;
+            ClearSelection();
             SetRefundPreviewVisible(false);
             gameObject.SetActive(false);
         }
     }
 
-    private void TryPlaceSelectedBlock(Vector2Int pos)
+    private void HandleSupplyChanged(bool _)
     {
-        if (Mouse.current.leftButton.wasPressedThisFrame)
-        {
-            if (selectedBlock == null)
-                return;
-
-            if (placePoint.CurrentValue < selectedBlock.Cost)
-                return;
-
-            if (!GridManager.Instance.IsCellEmpty(pos))
-                return;
-
-            Block block = CreateBlock(selectedBlock);
-            if (GridManager.Instance.TryPlaceBlock(block, pos))
-            {
-                placePoint.SubtractValue(selectedBlock.Cost);
-                block.PlayPlacementAnimation();
-            }
-        }
+        ClearSelection();
     }
 
-    private void TryDismantle(Vector2Int pos)
+    private void HidePreview()
     {
-        if (GridManager.Instance.TryRemoveBlock(pos, out Block block))
-        {
-            placePoint.AddValue(CalculateDismantleRefund(block, dismantleRefundRate));
-            block.PlayDismantleAnimation(() => Destroy(block.gameObject));
-            SetRefundPreviewVisible(false);
-        }
-    }
-
-    private void UpdateControlPreview(Vector2Int pos)
-    {
-        if (dismantleRefundText == null
-            || !GridManager.Instance.TryGetBlock(pos, out Block block))
-        {
-            SetRefundPreviewVisible(false);
-        }
-        else
-        {
-            bool isCore = (block.BlockProperty & BlockProperty.Core) != 0;
-            dismantleRefundText.text = isCore
-                ? "Core cannot be dismantled"
-                : $"Refund +{CalculateDismantleRefund(block, dismantleRefundRate):0.#}";
-            SetRefundPreviewVisible(true);
-        }
-
-        if (placementCostText == null || selectedBlock == null)
-        {
-            SetCostPreviewVisible(false);
-        }
-        else
-        {
-            placementCostText.text = $"Cost -{selectedBlock.Cost:0.#}";
-
-            SetCostPreviewVisible(true);
-        }
-
-        placementControlText.position = Mouse.current.position.ReadValue() + dismantlePreviewOffset;
+        if (previewRenderer != null)
+            previewRenderer.gameObject.SetActive(false);
+        effectVisualizer?.HidePlacement();
     }
 
     private void SetRefundPreviewVisible(bool visible)
@@ -178,23 +312,6 @@ public sealed class PlacementController : MonoBehaviour
         {
             dismantleRefundText.gameObject.SetActive(visible);
         }
-    }
-
-    private void SetCostPreviewVisible(bool visible)
-    {
-        if (placementCostText != null
-            && placementCostText.gameObject.activeSelf != visible)
-        {
-            placementCostText.gameObject.SetActive(visible);
-        }
-    }
-
-    public static float CalculateDismantleRefund(Block block, float refundRate = 0.5f)
-    {
-        if (block == null || block.HP.MaxValue <= 0)
-            return 0f;
-
-        return Mathf.FloorToInt(block.Cost * refundRate * ((float)block.HP.CurrentValue / block.HP.MaxValue));
     }
 
     private Block CreateBlock(BlockData data)
@@ -211,21 +328,20 @@ public sealed class PlacementController : MonoBehaviour
         return block;
     }
 
-    private void PlaceCoreAtCenter()
+    private void PlaceCoreAndStartingBlocks()
     {
         if (GridManager.Instance.Grid.Core != null)
             return;
 
         if (coreBlockData == null)
             coreBlockData = Resources.Load<CoreBlockData>("Data/Block/CoreData");
-
         if (coreBlockData == null)
         {
             Debug.LogError("CoreData is not assigned or available in Resources/Data.");
             return;
         }
 
-        Vector2Int center = new Vector2Int(
+        Vector2Int center = new(
             GridManager.Instance.Width / 2,
             GridManager.Instance.Height / 2);
         Block core = CreateBlock(coreBlockData);
@@ -236,36 +352,47 @@ public sealed class PlacementController : MonoBehaviour
         {
             Destroy(core.gameObject);
             Debug.LogError("Failed to place the Core at the Grid center.");
+            return;
+        }
+
+        PlaceStartingBasicBlocks(center);
+    }
+
+    private void PlaceStartingBasicBlocks(Vector2Int corePosition)
+    {
+        Vector2Int[] directions =
+        {
+            Vector2Int.up,
+            Vector2Int.down,
+            Vector2Int.left,
+            Vector2Int.right
+        };
+
+        foreach (Vector2Int direction in directions)
+        {
+            Vector2Int position = corePosition + direction;
+            BlockData data = supplyController?.GetRandomBasicBlock();
+            if (data is not BasicBlockData
+                || !GridManager.Instance.Grid.IsWithinBounds(position)
+                || !GridManager.Instance.IsCellEmpty(position))
+            {
+                continue;
+            }
+
+            Block block = CreateBlock(data);
+            if (block == null)
+                continue;
+            if (!GridManager.Instance.TryPlaceBlock(block, position))
+            {
+                Destroy(block.gameObject);
+                continue;
+            }
         }
     }
 
-
-    /// <summary>
-    /// UI 측에서 호출
-    /// </summary>
-    /// <param name="block"></param>
-    public void SelectBlock(BlockData block)
+    private static Color WithPreviewAlpha(Color color, float alpha)
     {
-        selectedBlock = block;
-
-        previewRenderer.sprite = block.Sprite;
-        effectVisualizer?.SetData(block, GridManager.Instance.CellSize);
-    }
-
-    public void ClearBlock()
-    {
-        selectedBlock = null;
-        previewRenderer.gameObject.SetActive(false);
-    }
-
-    /// <summary>
-    /// 배치 완료 버튼 클릭시
-    /// </summary>
-    public void Confirm()
-    {
-        selectedBlock = null;
-        SetRefundPreviewVisible(false);
-        SetCostPreviewVisible(false);
-        GameManager.Instance.TryStartCombat();
+        color.a = alpha;
+        return color;
     }
 }

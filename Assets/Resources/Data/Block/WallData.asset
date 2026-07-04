@@ -12,10 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b34f3486bf574d2097781076d69a5fd5, type: 3}
   m_Name: WallData
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.WallBlockData
-  displayName: Wall
-  description: "높은 내구도로 적의 진로를 막고 방어 시간을 벌어줍니다."
+  displayName: "\uBCBD"
+  description: "\uB192\uC740 \uB0B4\uAD6C\uB3C4\uB85C \uC801\uC758 \uC9C4\uB85C\uB97C
+    \uB9C9\uACE0 \uBC29\uC5B4 \uC2DC\uAC04\uC744 \uBC8C\uC5B4\uC90D\uB2C8\uB2E4."
   maxHP: 100
-  cost: 2
+  dismantleValue: 2
   sprite: {fileID: -5356574185940491189, guid: 5f7eba390e6a4cc498a31ef2325162df, type: 3}
   prefab: {fileID: 2008381815392251027, guid: fda390f54e8b79d4fb687eebe3d069b0, type: 3}
   additionalProperties: 0
+  destroyedSound:
+    clips: []
+    volume: 1
+    pitchRange: {x: 0.96, y: 1.04}
+    spatialBlend: 0

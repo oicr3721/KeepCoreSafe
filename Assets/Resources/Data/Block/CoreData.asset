@@ -12,10 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3068589c2e484a4ab500ca913305ed4f, type: 3}
   m_Name: CoreData
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.CoreBlockData
-  displayName: Core
-  description: "반드시 지켜야 하는 중앙 코어입니다. 파괴되면 게임이 끝납니다."
+  displayName: "\uCF54\uC5B4"
+  description: "\uBC18\uB4DC\uC2DC \uC9C0\uCF1C\uC57C \uD558\uB294 \uC911\uC559 \uCF54\uC5B4\uC785\uB2C8\uB2E4.
+    \uD30C\uAD34\uB418\uBA74 \uAC8C\uC784\uC774 \uB05D\uB0A9\uB2C8\uB2E4."
   maxHP: 100
-  cost: 0
+  dismantleValue: 0
   sprite: {fileID: -6526318947721168298, guid: e4adadbff4951da40a04c2daa4382a23, type: 3}
   prefab: {fileID: 6595445646424716651, guid: f44b028d3bd7a334fb493b74fb5d5d27, type: 3}
   additionalProperties: 0
+  destroyedSound:
+    clips:
+    - {fileID: 8300000, guid: d87057982a7accf4bba7906a2c99f46a, type: 3}
+    volume: 1
+    pitchRange: {x: 0.96, y: 1.04}
+    spatialBlend: 0

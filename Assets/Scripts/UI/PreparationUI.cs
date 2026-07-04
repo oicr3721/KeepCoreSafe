@@ -1,47 +1,225 @@
-using KeepCoreSafe.Data;
-using UnityEngine;
-using UnityEngine.UI;
 using System.Collections.Generic;
+using KeepCoreSafe.Controllers;
+using KeepCoreSafe.Data;
+using KeepCoreSafe.Managers;
 using TMPro;
+using UnityEngine;
+using UnityEngine.Serialization;
+using UnityEngine.UI;
 
 namespace KeepCoreSafe.UI
 {
-    public class PreparationUI : MonoBehaviour
+    public sealed class PreparationUI : MonoBehaviour
     {
-        [SerializeField] private PlacementController controller;
+        [Header("Controllers")]
+        [FormerlySerializedAs("controller")]
+        [SerializeField] private PlacementController placementController;
+        [SerializeField] private BlockSupplyController supplyController;
 
+        [Header("Granted Block List")]
         [SerializeField] private Button blockButtonPrefab;
-
-        [SerializeField] private List<BlockData> blockDatas = new();
-
+        [SerializeField] private Transform inventoryRoot;
         [SerializeField] private BlockDescriptionTooltip descriptionTooltip;
+        [SerializeField] private SupplyPresentationUI supplyPresentation;
 
-        // Start is called once before the first execution of Update after the MonoBehaviour is created
-        void Start()
+        [Header("Reroll")]
+        [SerializeField] private Button rerollButton;
+        [SerializeField] private TMP_Text rerollLabel;
+        [SerializeField] private string rerollFormat = "Reroll {0:0}";
+        [SerializeField] private string rerollLockedText = "Reroll Locked";
+
+        [Header("Confirm")]
+        [SerializeField] private Button confirmButton;
+
+        [Header("Start Wave")]
+        [SerializeField] private Button startWaveButton;
+        [SerializeField] private StartWaveButtonUI startWaveButtonUI;
+
+        private readonly List<Button> buttonPool = new();
+        private readonly List<Button> activeButtons = new();
+        private readonly List<bool> activeRareFlags = new();
+
+        private void Start()
         {
-            CreateBlockButtons();
+            if (inventoryRoot == null)
+                inventoryRoot = transform;
+            if (supplyController != null)
+                supplyController.SupplyChanged += Refresh;
+            if (rerollButton != null)
+                rerollButton.onClick.AddListener(HandleReroll);
+            if (confirmButton != null)
+                confirmButton.onClick.AddListener(HandleConfirm);
+            if (startWaveButton != null)
+                startWaveButton.onClick.AddListener(HandleStartWave);
+            GameManager.PlacePoint.OnValueChanged += HandlePointsChanged;
+            GameManager.PhaseChanged += HandlePhaseChanged;
+
+            placementController?.SetPlacementInputEnabled(false);
+            startWaveButtonUI?.Hide(true);
+
+            Refresh(true);
         }
 
-        void CreateBlockButtons()
+        private void OnDestroy()
         {
-            foreach (var bd in blockDatas)
+            if (supplyController != null)
+                supplyController.SupplyChanged -= Refresh;
+            if (rerollButton != null)
+                rerollButton.onClick.RemoveListener(HandleReroll);
+            if (confirmButton != null)
+                confirmButton.onClick.RemoveListener(HandleConfirm);
+            if (startWaveButton != null)
+                startWaveButton.onClick.RemoveListener(HandleStartWave);
+            GameManager.PlacePoint.OnValueChanged -= HandlePointsChanged;
+            GameManager.PhaseChanged -= HandlePhaseChanged;
+        }
+
+        private void Refresh(bool playAppearance)
+        {
+            if (supplyController == null || blockButtonPrefab == null)
+                return;
+
+            IReadOnlyList<BlockSupplyController.GrantedBlock> granted =
+                supplyController.GrantedBlocks;
+            EnsureButtonCount(granted.Count);
+            activeButtons.Clear();
+            activeRareFlags.Clear();
+
+            for (int i = 0; i < buttonPool.Count; i++)
             {
-                Button button = Instantiate(blockButtonPrefab, transform);
-                button.GetComponentInChildren<TMP_Text>().text = bd.DisplayName;
-                button.GetComponent<Image>().sprite = bd.Sprite;
+                Button button = buttonPool[i];
+                bool active = i < granted.Count;
+                button.gameObject.SetActive(active);
+                if (!active)
+                    continue;
 
-                BlockButtonTooltipTrigger tooltipTrigger =
+                activeButtons.Add(button);
+
+                int supplyIndex = i;
+                BlockSupplyController.GrantedBlock item = granted[i];
+                activeRareFlags.Add(item.IsRare);
+                TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+                Image image = button.GetComponent<Image>();
+                label.text = item.Data.DisplayName;
+                image.sprite = item.Data.Sprite;
+                image.color = item.Data.VisualColor;
+                button.onClick.RemoveAllListeners();
+                button.onClick.AddListener(() => placementController.SelectGrantedBlock(supplyIndex));
+
+                BlockButtonTooltipTrigger tooltip =
                     button.GetComponent<BlockButtonTooltipTrigger>();
-                if (tooltipTrigger != null)
-                    tooltipTrigger.Initialize(bd, descriptionTooltip);
-                else
-                    Debug.LogError($"{button.name} prefab has no tooltip trigger.", button);
+                tooltip?.Initialize(item.Data, descriptionTooltip);
 
-                button.onClick.AddListener(() => controller.SelectBlock(bd));
+            }
+
+            if (supplyPresentation != null)
+            {
+                if (playAppearance && !supplyPresentation.IsDocked)
+                {
+                    placementController?.SetPlacementInputEnabled(false);
+                    startWaveButtonUI?.Hide(true);
+                    supplyPresentation.PlayDeal(activeButtons, activeRareFlags, RefreshReroll);
+                }
+                else
+                {
+                    supplyPresentation.RefreshDockedLayout(activeButtons);
+                }
+            }
+
+            RefreshReroll();
+        }
+
+        private void EnsureButtonCount(int count)
+        {
+            while (buttonPool.Count < count)
+            {
+                Button button = Instantiate(blockButtonPrefab, inventoryRoot);
+                button.transform.SetSiblingIndex(buttonPool.Count);
+                buttonPool.Add(button);
             }
         }
 
+        private void HandleReroll()
+        {
+            if (supplyController == null)
+                return;
 
+            if (supplyPresentation == null)
+            {
+                supplyController.TryReroll();
+                RefreshReroll();
+                return;
+            }
+
+            supplyPresentation.PlayRerollOut(activeButtons, () =>
+            {
+                if (!supplyController.TryReroll())
+                    Refresh(true);
+            });
+        }
+
+        private void HandleConfirm()
+        {
+            if (supplyPresentation == null)
+            {
+                placementController?.SetPlacementInputEnabled(true);
+                startWaveButtonUI?.Show();
+                return;
+            }
+
+            supplyPresentation.PlayConfirm(activeButtons, () =>
+            {
+                placementController?.SetPlacementInputEnabled(true);
+                startWaveButtonUI?.Show();
+                RefreshReroll();
+            });
+        }
+
+        private void HandleStartWave()
+        {
+            if (GameManager.Phase != GamePhase.Preparation)
+                return;
+
+            startWaveButtonUI?.Hide();
+            placementController?.Confirm();
+        }
+
+        private void HandlePointsChanged(float _, float __)
+        {
+            RefreshReroll();
+        }
+
+        private void RefreshReroll()
+        {
+            if (supplyController == null)
+                return;
+
+            if (rerollButton != null)
+            {
+                rerollButton.interactable = supplyController.CanReroll
+                                            && (supplyPresentation == null
+                                                || supplyPresentation.CanReroll);
+            }
+            if (rerollLabel != null)
+            {
+                rerollLabel.text = supplyController.CanReroll
+                    ? string.Format(rerollFormat, supplyController.CurrentRerollCost)
+                    : rerollLockedText;
+            }
+        }
+
+        private void HandlePhaseChanged(GamePhase phase)
+        {
+            if (phase == GamePhase.Preparation)
+            {
+                placementController?.SetPlacementInputEnabled(false);
+                startWaveButtonUI?.Hide(true);
+                return;
+            }
+
+            placementController?.SetPlacementInputEnabled(false);
+            startWaveButtonUI?.Hide();
+            supplyPresentation?.Hide();
+        }
     }
-
 }

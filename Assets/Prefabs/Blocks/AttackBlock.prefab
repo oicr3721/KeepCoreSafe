@@ -62,6 +62,9 @@ MonoBehaviour:
   dismantleShakeRandomness: 20
   dismantleScaleDuration: 0.16
   dismantleFadeDuration: 0.14
+  HP:
+    currentValue: 0
+    maxValue: 100
   laser: {fileID: 4255869223718553524}
   laserDuration: 0.14
   laserDrawSpeed: 2.5
@@ -363,7 +366,7 @@ SpriteRenderer:
   m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.21176468, g: 0.5504395, b: 0.9254902, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

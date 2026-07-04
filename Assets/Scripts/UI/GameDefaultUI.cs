@@ -43,7 +43,7 @@ namespace KeepCoreSafe.UI
         private void RefreshTimeScale(float scale)
         {
             if (timeScaleText != null)
-                timeScaleText.text = $"{scale:0}x";
+                timeScaleText.text = scale < 1f ? $"{scale:0.##}x" : $"{scale:0}x";
         }
     }
 }

@@ -152,6 +152,13 @@ MonoBehaviour:
   dismantleShakeRandomness: 20
   dismantleScaleDuration: 0.16
   dismantleFadeDuration: 0.14
+  HP:
+    currentValue: 0
+    maxValue: 100
+  electricLinePrefab: {fileID: 6299946013597023600, guid: 4db9ba3b85a068341993393446cad9ef, type: 3}
+  initialPoolSize: 4
+  electricLineRoot: {fileID: 0}
+  targetRefreshInterval: 0.15
 --- !u!61 &2674989877825659983
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -211,4 +218,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Combat.DamageFeedback
   duration: 0.18
+  useUnscaledTime: 1
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  flashPortion: 0.22
   shakeStrength: 0.1
+  scalePunch: 0.12

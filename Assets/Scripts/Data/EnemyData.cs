@@ -1,4 +1,5 @@
 using KeepCoreSafe.Blocks;
+using KeepCoreSafe.Audio;
 using KeepCoreSafe.Enemies;
 using UnityEngine;
 
@@ -36,6 +37,10 @@ namespace KeepCoreSafe.Data
         [SerializeField]
         private BlockProperty[] targetPriority = { BlockProperty.Core, BlockProperty.Wall };
 
+        [Header("Audio")]
+        [Tooltip("Played when this enemy successfully performs an attack.")]
+        [SerializeField] private AudioCue attackSound = new();
+
         public string DisplayName => displayName;
         public int MaxHP => maxHP;
         public float MoveSpeed => moveSpeed;
@@ -45,6 +50,7 @@ namespace KeepCoreSafe.Data
         public int MaxPreferredPathExtraCells => maxPreferredPathExtraCells;
         public Sprite Sprite => sprite;
         public Enemy Prefab => prefab;
+        public AudioCue AttackSound => attackSound;
 
         public int GetPriority(BlockProperty property)
         {

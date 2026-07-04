@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using KeepCoreSafe.Audio;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Enemies;
 using UnityEngine;
@@ -10,31 +11,30 @@ namespace KeepCoreSafe.Managers
 {
     public sealed class WaveManager : MonoBehaviour
     {
-        [SerializeField, Range(1, 50)]
-        private int enemiesPerWave = 20;
-
-        [SerializeField, Min(0.05f)]
-        private float spawnInterval = 0.4f;
-
-        [SerializeField, Min(0f)]
-        private float spawnMargin = 1.2f;
-
         [SerializeField]
         [FormerlySerializedAs("enemyData")]
         private MeleeEnemyData meleeEnemyData;
 
-        [SerializeField, Range(0, 30)]
-        private int rangedEnemiesPerWave = 10;
-
         [SerializeField]
         private RangedEnemyData rangedEnemyData;
+
+        [Header("Audio")]
+        [Tooltip("Played once when a combat wave begins.")]
+        [SerializeField] private AudioCue waveStartSound = new();
 
         private readonly HashSet<Enemy> activeEnemies = new();
         private Coroutine spawnRoutine;
         private Camera worldCamera;
         private bool isSpawning;
+        private int currentEnemyCount;
+        private int currentRangedEnemyCount;
+        private float currentSpawnInterval;
+        private float currentSpawnMargin;
 
         public int ActiveEnemyCount => activeEnemies.Count;
+        public IReadOnlyCollection<Enemy> ActiveEnemies => activeEnemies;
+        public int CurrentWaveEnemyCount => currentEnemyCount;
+        public int CurrentWaveRangedEnemyCount => currentRangedEnemyCount;
 
         public event Action WaveCompleted;
 
@@ -47,11 +47,35 @@ namespace KeepCoreSafe.Managers
                 rangedEnemyData = Resources.Load<RangedEnemyData>("Data/Enemy/RangedEnemyData");
         }
 
-        public void StartWave(int waveIndex)
+        public void StartWave(int waveIndex, WaveDifficultySnapshot difficulty)
         {
             StopSpawnRoutine();
+            if (difficulty.EnemyCount <= 0)
+            {
+                difficulty = new WaveDifficultySnapshot(
+                    waveIndex,
+                    0f,
+                    30f,
+                    new Vector2Int(5, 8),
+                    UnityEngine.Random.Range(5, 9),
+                    new Vector2(0.15f, 0.25f),
+                    UnityEngine.Random.Range(0.15f, 0.25f),
+                    0.5f,
+                    1.2f);
+            }
+
+            currentEnemyCount = Mathf.Max(1, difficulty.EnemyCount);
+            currentRangedEnemyCount = rangedEnemyData == null
+                ? 0
+                : Mathf.Min(difficulty.RangedEnemyCount, currentEnemyCount);
+            currentSpawnInterval = Mathf.Max(0.02f, difficulty.SpawnInterval);
+            currentSpawnMargin = Mathf.Max(0f, difficulty.SpawnMargin);
+            AudioManager.Play(waveStartSound);
             spawnRoutine = StartCoroutine(SpawnWave());
-            Debug.Log($"Wave {waveIndex} started.");
+            Debug.Log(
+                $"Wave {waveIndex}: {currentEnemyCount} enemies " +
+                $"({currentRangedEnemyCount} ranged), interval {currentSpawnInterval:0.00}s, " +
+                $"charge {difficulty.CombatDuration:0.0}s.");
         }
 
         public void StopWave()
@@ -69,14 +93,19 @@ namespace KeepCoreSafe.Managers
             activeEnemies.Clear();
         }
 
+        public void StopSpawning()
+        {
+            StopSpawnRoutine();
+        }
+
         private IEnumerator SpawnWave()
         {
             isSpawning = true;
             List<bool> spawnTypes = CreateSpawnTypes();
-            for (int i = 0; i < enemiesPerWave; i++)
+            for (int i = 0; i < currentEnemyCount; i++)
             {
                 SpawnEnemy(spawnTypes[i]);
-                yield return new WaitForSeconds(spawnInterval);
+                yield return new WaitForSeconds(currentSpawnInterval);
             }
 
             isSpawning = false;
@@ -86,12 +115,9 @@ namespace KeepCoreSafe.Managers
 
         private List<bool> CreateSpawnTypes()
         {
-            int rangedCount = rangedEnemyData == null
-                ? 0
-                : Mathf.Min(rangedEnemiesPerWave, enemiesPerWave);
-            List<bool> types = new List<bool>(enemiesPerWave);
-            for (int i = 0; i < enemiesPerWave; i++)
-                types.Add(i < rangedCount);
+            List<bool> types = new List<bool>(currentEnemyCount);
+            for (int i = 0; i < currentEnemyCount; i++)
+                types.Add(i < currentRangedEnemyCount);
 
             for (int i = types.Count - 1; i > 0; i--)
             {
@@ -130,10 +156,10 @@ namespace KeepCoreSafe.Managers
             float y = UnityEngine.Random.Range(-halfHeight, halfHeight);
             return UnityEngine.Random.Range(0, 4) switch
             {
-                0 => new Vector3(center.x - halfWidth - spawnMargin, center.y + y, 0f),
-                1 => new Vector3(center.x + halfWidth + spawnMargin, center.y + y, 0f),
-                2 => new Vector3(center.x + x, center.y - halfHeight - spawnMargin, 0f),
-                _ => new Vector3(center.x + x, center.y + halfHeight + spawnMargin, 0f)
+                0 => new Vector3(center.x - halfWidth - currentSpawnMargin, center.y + y, 0f),
+                1 => new Vector3(center.x + halfWidth + currentSpawnMargin, center.y + y, 0f),
+                2 => new Vector3(center.x + x, center.y - halfHeight - currentSpawnMargin, 0f),
+                _ => new Vector3(center.x + x, center.y + halfHeight + currentSpawnMargin, 0f)
             };
         }
 

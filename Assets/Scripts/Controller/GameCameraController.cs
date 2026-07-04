@@ -103,6 +103,11 @@ namespace KeepCoreSafe.Controllers
 
         public void PlayCoreDeathFocus(Transform target, float zoom, float duration)
         {
+            PlayCinematicFocus(target, zoom, duration);
+        }
+
+        public void PlayCinematicFocus(Transform target, float zoom, float duration)
+        {
             if (target == null)
                 return;
 
@@ -163,6 +168,11 @@ namespace KeepCoreSafe.Controllers
 
         private void ReturnToDefault()
         {
+            ReturnToDefaultView(returnDuration);
+        }
+
+        public void ReturnToDefaultView(float duration)
+        {
             isCinematicFocus = false;
             RemoveAppliedShakeOffset();
             shakeRemaining = 0f;
@@ -178,10 +188,14 @@ namespace KeepCoreSafe.Controllers
             transform.DOKill();
             worldCamera.DOKill();
             isReturning = true;
-            transform.DOMove(targetPosition, returnDuration)
+            float safeDuration = Mathf.Max(0f, duration);
+            transform.DOMove(targetPosition, safeDuration)
                 .SetEase(Ease.OutCubic)
+                .SetUpdate(true)
                 .OnComplete(() => isReturning = false);
-            worldCamera.DOOrthoSize(targetZoom, returnDuration).SetEase(Ease.OutCubic);
+            worldCamera.DOOrthoSize(targetZoom, safeDuration)
+                .SetEase(Ease.OutCubic)
+                .SetUpdate(true);
         }
 
         private void CancelReturn()

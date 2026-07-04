@@ -46,16 +46,17 @@ namespace KeepCoreSafe.Editor
                 return;
             }
 
-            Transform root = preview.transform.Find("Placement Block Effect Visualizer");
+            PlacementVisualizer visualizer =
+                Object.FindFirstObjectByType<PlacementVisualizer>(FindObjectsInactive.Include);
+            Transform root = visualizer != null ? visualizer.transform : null;
             if (root == null)
             {
-                GameObject visualizerObject = new GameObject("Placement Block Effect Visualizer");
+                GameObject visualizerObject = new GameObject("Block Effect Visualizer");
                 root = visualizerObject.transform;
-                root.SetParent(preview.transform, false);
             }
 
-            PlacementVisualizer visualizer = root.GetComponent<PlacementVisualizer>();
             if (visualizer == null) visualizer = root.gameObject.AddComponent<PlacementVisualizer>();
+            root.SetParent(null, true);
 
             SpriteRenderer up = GetOrCreateDirection(root, "Up Effect", preview);
             SpriteRenderer down = GetOrCreateDirection(root, "Down Effect", preview);

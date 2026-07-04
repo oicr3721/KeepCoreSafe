@@ -158,9 +158,37 @@
 
 ---
 
+# Phase 13 - Random Grant and Match Core Loop
+
+* [x] Remove point cost from normal placement
+* [x] Add data-driven Block colors and passive BasicBlockData
+* [x] Add weighted 3-5 Block grants per Preparation phase
+* [x] Add rare completed-skill grants and appearance feedback
+* [x] Add cardinal same-color matching from the last placed Block
+* [x] Add data-driven color-to-skill mappings and configurable match counts
+* [x] Add escalating rerolls with first-use locking
+* [x] Preserve HP-scaled dismantle refunds through DismantleValue
+* [x] Add scheduled data-driven Shop events
+* [x] Add extensible ShopOfferData and completed-block purchase offers
+* [x] Replace fixed Block selection UI with granted-item UI
+
+---
+
+# Phase 14 - Starting Defense and Shared Hover UX
+
+* [x] Place four random basic Blocks around the Core at run start
+* [x] Register starting Blocks through normal Grid placement
+* [x] Share one owner-scoped tooltip between Supply and World hover
+* [x] Add role-specific Block details to the shared tooltip
+* [x] Add World Block Grid-cell hover detection
+* [x] Reuse one effect visualizer for Placement and World hover
+* [x] Hide hover ranges immediately and suppress ranges for passive Blocks
+
+---
+
 # Current Task
 
-Data specialization, prefab migration, and phase-aware Block health bars complete.
+Starting defense and shared Supply/World hover UX complete.
 
 Always complete one feature before moving to the next.
 

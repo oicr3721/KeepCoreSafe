@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6137a0b34e76bc34ba6e4a48a6424e83, type: 3}
+  m_Name: BlockSupplyData
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.BlockSupplyData
+  minimumBlocks: 3
+  maximumBlocks: 4
+  basicBlocks:
+  - block: {fileID: 11400000, guid: a6b090c0674199442b92fc85889c56a9, type: 2}
+    weight: 1
+  - block: {fileID: 11400000, guid: 1093741bec3f61a488d8856fe00e9ef7, type: 2}
+    weight: 1
+  - block: {fileID: 11400000, guid: e33b7c340d8e1034eaf04a12aec08be7, type: 2}
+    weight: 1
+  rareBlockChance: 0.05
+  rareBlocks:
+  - block: {fileID: 11400000, guid: 33b09b7570f8c8c4ba7c5c2a7ffbc291, type: 2}
+    weight: 1
+  - block: {fileID: 11400000, guid: 0dca3f35f9bd78947a9418ab84c02c85, type: 2}
+    weight: 1
+  - block: {fileID: 11400000, guid: ef7a65fc11644c341812b9f3ffc421cf, type: 2}
+    weight: 1
+  initialRerollCost: 3
+  rerollCostIncrease: 2

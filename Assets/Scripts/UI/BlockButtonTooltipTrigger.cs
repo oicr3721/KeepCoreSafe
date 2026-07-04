@@ -20,22 +20,22 @@ namespace KeepCoreSafe.UI
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            tooltip?.Show(data, eventData.position);
+            tooltip?.Show(this, data, eventData.position);
         }
 
         public void OnPointerMove(PointerEventData eventData)
         {
-            tooltip?.SetPosition(eventData.position);
+            tooltip?.SetPosition(this, eventData.position);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            tooltip?.Hide();
+            tooltip?.Hide(this);
         }
 
         private void OnDisable()
         {
-            tooltip?.Hide();
+            tooltip?.Hide(this);
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using KeepCoreSafe.Audio;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Enemies;
 using KeepCoreSafe.Managers;
@@ -62,6 +63,7 @@ namespace KeepCoreSafe.Blocks
 
             laserEndPosition = currentTarget.transform.position;
             currentTarget.TakeDamage(AttackData.AttackValue);
+            AudioManager.PlayAt(AttackData.AttackSound, transform.position);
             PlayLaser();
             cooldownRemaining = GetAdjustedCooldown(AttackData.ActionCooldown);
         }

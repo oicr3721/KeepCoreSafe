@@ -2,257 +2,132 @@
 
 # Project Overview
 
-## Title
-
-(TBD)
-
 ## Genre
 
-Top-Down Defense / Strategy / Roguelite
+Top-Down Defense / Match-Based Strategy / Roguelite
 
 ## High Concept
 
-The player designs a defensive structure by placing blocks around a Core.
-Combat is fully automatic. The player's role is to build, observe, analyze, and improve the defense structure between waves.
+The player protects a Core by arranging a small random set of colored basic blocks.
+Three connected blocks of the same color merge into a completed skill block.
+Combat is automatic; the player's decisions are placement, reroll timing, dismantling,
+and occasional shop choices.
 
-The game emphasizes **strategic placement** rather than real-time control.
-
----
-
-# Core Philosophy
-
-The most important design principle is:
-
-> **Winning should come from good planning, not fast reactions.**
-
-Players should never feel that they lost because they clicked too slowly.
-
-Instead, every success or failure should be explained by the quality of their defensive layout.
+The game emphasizes planning rather than fast reactions.
 
 ---
 
 # Core Gameplay Loop
 
-1. Arrange blocks.
-2. Start the enemy wave.
-3. Watch automatic combat.
-4. Analyze the result.
-5. Rearrange blocks.
-6. Repeat.
+1. Enter Preparation and receive 3-5 random blocks.
+2. Decide whether to spend points rerolling the complete grant.
+3. Place granted blocks on the Grid.
+4. Connect same-colored basic blocks to create skill blocks.
+5. Start the wave and observe automatic combat.
+6. Return to Preparation, receive a new grant, and repeat.
+7. On configured waves, choose from a data-driven shop event.
 
-This loop is the foundation of the game.
+If the Core is destroyed, the run ends immediately.
 
----
-
-# Core Objective
-
-Protect the Core for as long as possible.
-
-If the Core is destroyed,
-the run immediately ends.
+At run start, four random basic blocks from the active supply pool are placed in the
+cardinal cells around the Core. They are normal matchable and dismantlable blocks.
 
 ---
 
-# Player Role
+# Granted Blocks
 
-The player is **not** a character.
+The player cannot freely select or purchase arbitrary blocks during normal placement.
+Each Preparation phase grants a random set from `BlockSupplyData`.
 
-The player is a strategist and architect.
-
-The player does NOT:
-
-* Attack enemies directly
-* Control units during combat
-* Heal blocks manually
-* Reposition blocks during combat
-
-The player DOES:
-
-* Place blocks
-* Design defensive formations
-* Optimize adjacency bonuses
-* Rearrange the structure between waves
+- Grant count, weights, and rare chance are configurable.
+- A rare roll may grant an already-completed skill block.
+- Placing a granted block consumes that single granted item.
+- Placement itself costs no points.
 
 ---
 
-# Core System
+# Basic Colored Blocks
 
-## Grid
+Basic blocks have HP and act as solid obstacles, but have no active ability.
+Their color is defined by `BlockColorData`, not by hardcoded enums.
 
-The battlefield consists of a square grid.
+Prototype colors:
 
-Blocks can only be placed inside the grid.
+- Red
+- Blue
+- Green
+- Yellow (available as data; not in the default pool until a match rule is assigned)
 
-Only one block may occupy a cell.
-
----
-
-## Core Block
-
-There is exactly one Core.
-
-Rules:
-
-* Cannot be removed.
-* Cannot be moved.
-* Must always exist.
-* Game Over when destroyed.
+Colors and their skill results are separate data, so either can be extended independently.
 
 ---
 
-## Blocks
+# Match Conversion
 
-Each block has:
+- Matching uses cardinal adjacency only; diagonals never connect.
+- A match begins from the block most recently placed by the player.
+- The default requirement is three blocks, configurable per rule.
+- If four or more blocks are connected, only the required number discovered from the
+  most recently placed block is consumed.
+- The result skill block is placed at the most recently placed block's cell.
+- Completed skill blocks cannot match or transform again.
 
-* HP
-* Type
-* Passive ability
-* Adjacency effects
+Default mappings:
 
-When HP reaches zero,
-the block is destroyed.
+- Red -> AttackBlock
+- Blue -> SupportBlock
+- Green -> HealerBlock
 
----
-
-## Adjacency System
-
-The placement of blocks is the primary source of strategy.
-
-Blocks gain additional effects depending on neighboring blocks.
-
-Examples:
-
-* Turret next to Generator
-* Wall next to Healer
-* Special combinations between support blocks
-
-Adjacency effects should encourage thoughtful positioning rather than simple stat increases.
+Mappings and required counts are configured in `BlockMatchData`.
 
 ---
 
-## Enemy Waves
+# Skill Blocks
 
-Enemies arrive in waves.
+Skill blocks are completed buildings. During Combat they continuously perform their
+existing timer-based behavior:
 
-Every enemy has:
+- AttackBlock attacks enemies in its configured area.
+- HealerBlock repairs blocks in its configured area.
+- SupportBlock reduces adjacent skill cooldowns.
 
-* Movement behavior
-* Target priority
-* Attack behavior
-
-Enemies automatically choose targets according to their own rules.
-
-Different enemy types should create different strategic problems.
+Skill blocks are never treated as basic match pieces.
 
 ---
 
-## Combat
+# Points and Rerolls
 
-Combat is fully automatic.
+Points are not a placement currency. They are reserved for rerolls, shop purchases,
+upgrades, and future special actions.
 
-No direct player control is allowed during battle.
+- Rerolls replace the entire current grant.
+- Reroll cost increases after every reroll in the same Preparation phase.
+- Cost resets when a new Preparation phase begins.
+- Reroll becomes permanently unavailable for the phase after one granted block is used.
 
-Combat serves as feedback for the player's strategic decisions.
+Dismantling still returns a configured portion of the block's dismantle value, scaled
+by its remaining HP ratio.
 
 ---
 
-## Rearrangement Phase
+# Shop Events
 
-After each wave,
-players may reorganize their defense.
-
-Players may:
-
-* Move existing blocks
-
-Players may NOT:
-
-* Move the Core
-* Rearrange blocks during combat
+Shop events open after configured waves. Their schedule and offer list are data-driven.
+The initial concrete offer type grants a completed skill block to the current grant.
+Future upgrades should be implemented as new `ShopOfferData` subtypes without changing
+the shop schedule, payment, or UI flow.
 
 ---
 
 # Design Priorities
 
-When implementing new features,
-always prioritize these in order:
+1. Strategic placement
+2. Meaningful use of limited random pieces
+3. Readable matches and skill ranges
+4. Interesting reroll and shop decisions
+5. Replayability through changing grants
 
-1. Strategic Placement
-2. Readability
-3. Interesting Decisions
-4. Emergent Synergies
-5. Replayability
+Do not reintroduce free block purchasing or placement costs into the normal loop.
 
-Never sacrifice strategic depth for unnecessary complexity.
-
----
-
-# Things To Avoid
-
-Avoid mechanics that make player reflexes more important than planning.
-
-Examples:
-
-* Manual healing
-* Active combat abilities
-* Micro-management during waves
-* High APM gameplay
-
-The game should remain focused on planning and structure optimization.
-
----
-
-# Success Criteria
-
-Players should constantly ask themselves:
-
-* Where should this block go?
-* Which block should protect the Core?
-* How can I improve this formation?
-* Which adjacency creates the strongest defense?
-
-Instead of:
-
-* How fast can I click?
-* Did I use my skill at the perfect timing?
-
----
-
-# Coding Principles
-
-When implementing gameplay systems:
-
-* Keep systems modular.
-* Avoid unnecessary coupling.
-* Prefer composition over inheritance.
-* Keep gameplay logic independent from UI whenever possible.
-* Make systems easy to expand with new block types and enemy types.
-
----
-
-# Implementation Priority
-
-Prototype order:
-
-1. Grid
-2. Block Placement
-3. Core
-4. Enemy Movement
-5. Enemy Attack
-6. Block Destruction
-7. Wave System
-8. Adjacency System
-9. Basic UI
-
-Additional systems (leveling, progression, etc.) should only be implemented after the core gameplay loop is complete.
-
----
-
-# Important Rule For AI
-
-When generating code:
-
-* Do not invent gameplay features.
-* Do not add mechanics that are not described in this document.
-* If a required design decision is missing, ask before implementing.
-* Preserve the game's core philosophy: **planning over execution**.
+World blocks and Supply items expose the same tooltip information. Hovering a placed
+skill block also displays the same effect-area visualization used during placement.

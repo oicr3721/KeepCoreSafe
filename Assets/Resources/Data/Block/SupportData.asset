@@ -12,13 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92f54387d1844a948bbc65fea7996058, type: 3}
   m_Name: SupportData
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.SupportBlockData
-  displayName: Support
-  description: "지정된 방향의 블록이 더 자주 행동하도록 재사용 대기시간을 줄입니다."
+  displayName: "\uC9C0\uC6D0 \uBE14\uB85D"
+  description: "\uC9C0\uC815\uB41C \uBC94\uC704 \uC548\uC758 \uBE14\uB85D\uC774 \uB354
+    \uC790\uC8FC \uD589\uB3D9\uD558\uB3C4\uB85D \uC7AC\uC0AC\uC6A9 \uB300\uAE30\uC2DC\uAC04\uC744
+    \uC904\uC785\uB2C8\uB2E4."
   maxHP: 100
-  cost: 8
+  dismantleValue: 8
   sprite: {fileID: 8831050944492163324, guid: e4adadbff4951da40a04c2daa4382a23, type: 3}
   prefab: {fileID: 7005742919833205052, guid: ef48c69017ffd91418170f7382c9dbae, type: 3}
   additionalProperties: 0
+  destroyedSound:
+    clips:
+    - {fileID: 8300000, guid: d87057982a7accf4bba7906a2c99f46a, type: 3}
+    - {fileID: 8300000, guid: 5309eac36a18c854098ba9063e32c64e, type: 3}
+    - {fileID: 8300000, guid: c6d5817bfa4b0ad4dbb3214e35e331ad, type: 3}
+    volume: 1
+    pitchRange: {x: 0.96, y: 1.04}
+    spatialBlend: 0
   effectRange: 1
-  affectedDirections: 15
+  affectedDirections: 240
   cooldownMultiplier: 0.75

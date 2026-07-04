@@ -1,224 +1,97 @@
 # GAME_RULES.md
 
-# Prototype Scope
+# Core Loop
 
-This document defines the gameplay rules for the prototype only.
+Preparation -> Combat -> Preparation, until the Core is destroyed.
 
-The goal of this prototype is to verify whether the core gameplay loop is fun.
+On each Preparation entry:
 
-Do not implement future features unless explicitly requested.
+- Grant 3-5 random blocks from `BlockSupplyData`.
+- Reset the reroll count and reroll lock.
+- Permit placement, dismantling, and shop interaction.
 
----
-
-# Core Gameplay Loop
-
-1. Player places blocks on the grid.
-2. Combat begins.
-3. Enemies automatically attack.
-4. If the Core is destroyed, the game ends.
-5. If all enemies are defeated, the wave ends.
+During Combat, placement and dismantling are disabled.
 
 ---
 
-# Grid
+# Placement
 
-- The battlefield uses a square grid.
-- Blocks occupy grid cells permanently until moved or destroyed.
-- Multiple Blocks cannot occupy the same cell.
-- Enemies move between grid cells.
-- Multiple Enemies may move through, stand in, and target the same cell.
-- The Grid tracks Block occupancy only; Enemies never reserve cells.
-
----
-
-# Core
-
-- Exactly one Core Block must exist.
-- The Core can be placed anywhere on the grid.
-- If the Core HP reaches zero,
-  the game is over.
+- Blocks occupy exactly one Grid cell.
+- Only one Block may occupy a cell.
+- The Core is placed automatically at the Grid center and cannot be moved or dismantled.
+- On initial Core creation, random basic blocks are placed in its Up, Down, Left, and
+  Right cells using the configured basic supply pool. Duplicates are allowed.
+- Starting basic blocks follow normal matching, combat, and dismantling rules.
+- A granted item is consumed only after successful placement.
+- Placement costs zero points.
+- Unused granted items are discarded when Combat begins.
 
 ---
 
-# Blocks
+# Basic Blocks and Matching
 
-Every block has:
+- Basic blocks contain HP, a dismantle value, and `BlockColorData`.
+- They have no active Combat behavior.
+- Only basic blocks participate in matches.
+- Same-color connectivity uses Up, Right, Down, and Left only.
+- A match check starts after a successful basic-block placement.
+- The search starts from the last placed block and consumes the rule's required count.
+- The completed skill block appears at the last placed cell.
+- Skill blocks do not participate in later matches.
 
-- Max HP
-- Current HP
-- BlockProperty
-
-Every block occupies exactly one grid cell.
-
-Prototype Blocks
-
-- Core
-- Wall
-- Healer
+Default rules are Red -> Attack, Blue -> Support, and Green -> Healer, with a count of 3.
 
 ---
 
-# BlockProperty
+# Grant and Rare Rules
 
-Do NOT use Unity Tag for gameplay logic.
-
-Use a Flags Enum named BlockProperty.
-
-A block may have multiple properties.
-
-Example
-
-Wall | Mechanical
-
-Healer | Mechanical
-
-Core
-
-Future blocks may contain any combination of properties.
+- Grant size, basic weights, rare weights, and rare chance are Inspector data.
+- Each granted slot rolls rare chance independently.
+- A rare result grants a completed skill block directly.
+- Rare results play a highlight animation in the grant UI and when placed.
 
 ---
 
-# Adjacency
+# Reroll
 
-Adjacency is selected by BlockData flags.
-
-- Up
-- Down
-- Left
-- Right
-- Four diagonal directions
-- Cardinal and diagonal grouped categories
-- Everything square range
-
-EffectRange controls the number of grid cells affected.
+- A reroll replaces every currently granted block.
+- Rerolls spend PlacePoint.
+- Cost is `InitialCost + RerollCount * CostIncrease`.
+- Using any granted block locks reroll for the rest of that Preparation phase.
+- Entering a new Preparation phase resets cost and lock state.
 
 ---
 
-# Combat
+# Dismantling
 
-Combat is fully automatic.
+Refund is:
 
-The player cannot move blocks during combat.
+`floor(DismantleValue * RefundRate * CurrentHP / MaxHP)`
 
-Every unit attacks using Attack Cooldown.
-
-Combat runs in real time.
+The Core cannot be dismantled. Match consumption never gives a dismantle refund.
 
 ---
 
-# Enemy
+# Shop
 
-Prototype contains two enemy types.
-
-- Melee Enemy
-- Ranged Enemy
-
-Ranged enemies keep their configured attack distance and fire curved missiles.
+- The default schedule begins after Wave 3 and repeats every 3 waves.
+- Schedule, explicit extra waves, offer count, offers, and costs are ScriptableObject data.
+- A purchase spends PlacePoint only if its offer effect can be applied.
+- The prototype offer effect grants a completed skill block to the current grant.
 
 ---
 
-# Enemy Target Selection
+# Combat, Enemy, and Camera
 
-Every enemy owns
-
-- Detection Radius
-- Priority List
-
-Target selection process
-
-1. Search every block inside Detection Radius.
-2. Sort candidates using Priority List.
-3. Select the highest priority target.
-4. Continue attacking until the target is destroyed.
-5. When the target disappears,
-   repeat the search.
-
-Enemies NEVER search the entire map.
-
-Priority only affects targets already inside Detection Radius.
+Existing automatic Combat, Grid A*, enemy overlap rules, health bars, camera controls,
+time scale, Core death presentation, and Game Over behavior remain unchanged.
 
 ---
 
-# Enemy Movement
+# Hover Readability
 
-Enemies use A* paths over the Grid.
-
-- Blocks are obstacles.
-- Enemies move one cell at a time.
-- If no open route exists, enemies attack a blocking Block.
-- If a Core approach is unavailable, enemies select the closest reachable block-free cell.
-- Paths are recalculated after the blocking Block is destroyed.
-- A fixed per-Enemy cell offset and weak separation steering reduce visual stacking.
-- Separation never changes the A* path and does not use Enemy-to-Enemy collisions.
-- Equal-cost paths and equivalent blocking targets are distributed by a stable per-Enemy seed.
-- A preferred Core approach may be used when it is no more than four cells longer than the shortest path.
-- Enemies outside the Grid enter from the nearest boundary rather than considering the full perimeter.
-
----
-
-# Camera
-
-- Middle-mouse drag pans in Preparation and Combat.
-- Mouse-wheel input controls smooth orthographic zoom.
-- Preparation and GameOver return the camera to the Core and default zoom.
-
----
-
-# Damage
-
-Blocks receive damage.
-
-If Current HP reaches zero,
-
-the block is destroyed.
-
-Destroyed blocks disappear immediately.
-
-Block HP bars follow the current phase.
-
-- Combat: show after an HP change, then hide after the configured duration.
-- Preparation: remain visible only while Current HP is below Max HP.
-- Above 50% HP uses the healthy color.
-- 50% HP or below uses the warning color.
-- 15% HP or below uses the critical color.
-
-Visibility duration, thresholds, colors, and layout are prefab settings.
-
----
-
-# Healing
-
-Healer blocks restore HP to nearby friendly blocks.
-
-Healing cannot increase HP above Max HP.
-
----
-
-# Game States
-
-Preparation
-
-↓
-
-Combat
-
-↓
-
-Game Over
-
-The prototype does not require additional game states.
-
----
-
-# Prototype Goal
-
-The prototype should verify
-
-- Grid placement
-- Enemy targeting
-- Automatic combat
-- Block destruction
-- Healing
-- Basic adjacency system
-
-without implementing advanced gameplay systems.
+- Supply items and placed world Blocks use one shared tooltip view.
+- The tooltip displays name, description, HP, dismantle value, and role-specific values.
+- Hovering a placed area-effect Block displays its configured Grid effect range.
+- Range-less Blocks never display an effect range.
+- World range visualization hides immediately when the pointer leaves the Block.

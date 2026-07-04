@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9b31c2f68768da46a9bd6f82401b2ae, type: 3}
+  m_Name: ShopEventData
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.ShopEventData
+  firstWave: 3
+  waveInterval: 3
+  additionalWaves: 
+  offersPerEvent: 3
+  offers:
+  - {fileID: 11400000, guid: f2f8fb9cf81a4c648a2d7d19dd2b1f02, type: 2}
+  - {fileID: 11400000, guid: bb2c2535ad1ecac40afff28df3bdc61a, type: 2}
+  - {fileID: 11400000, guid: ebcb2e2103ccf344c9f7044651224f69, type: 2}

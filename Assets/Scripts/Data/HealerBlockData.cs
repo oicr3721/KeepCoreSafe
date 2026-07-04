@@ -1,4 +1,5 @@
 using KeepCoreSafe.Blocks;
+using KeepCoreSafe.Audio;
 using UnityEngine;
 
 namespace KeepCoreSafe.Data
@@ -9,7 +10,12 @@ namespace KeepCoreSafe.Data
         [SerializeField, Min(0)]
         private int healValue;
 
+        [Header("Audio")]
+        [Tooltip("Played when a heal projectile reaches a damaged block and restores HP.")]
+        [SerializeField] private AudioCue healSound = new();
+
         public int HealValue => healValue;
+        public AudioCue HealSound => healSound;
         public override BlockProperty Properties => base.Properties | BlockProperty.Healer;
     }
 }

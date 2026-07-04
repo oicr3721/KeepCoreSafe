@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using KeepCoreSafe.Audio;
 using KeepCoreSafe.Blocks;
 using UnityEngine;
 
@@ -68,6 +69,7 @@ namespace KeepCoreSafe.Enemies
             if (attackCooldownRemaining <= 0f)
             {
                 currentTarget.TakeDamage(Data.AttackDamage);
+                AudioManager.PlayAt(Data.AttackSound, transform.position);
                 attackCooldownRemaining = Data.AttackCooldown;
             }
         }

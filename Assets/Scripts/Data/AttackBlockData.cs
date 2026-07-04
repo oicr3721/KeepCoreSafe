@@ -1,4 +1,5 @@
 using KeepCoreSafe.Blocks;
+using KeepCoreSafe.Audio;
 using UnityEngine;
 
 namespace KeepCoreSafe.Data
@@ -9,7 +10,12 @@ namespace KeepCoreSafe.Data
         [SerializeField, Min(0)]
         private int attackValue;
 
+        [Header("Audio")]
+        [Tooltip("Played after this block successfully damages an enemy.")]
+        [SerializeField] private AudioCue attackSound = new();
+
         public int AttackValue => attackValue;
+        public AudioCue AttackSound => attackSound;
         public override BlockProperty Properties => base.Properties | BlockProperty.Attack;
     }
 }

@@ -96,7 +96,7 @@ namespace KeepCoreSafe.UI
         private static void Restart()
         {
             Time.timeScale = 1f;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            SceneLoader.Load(SceneType.Title);
         }
 
         private void OnDestroy()

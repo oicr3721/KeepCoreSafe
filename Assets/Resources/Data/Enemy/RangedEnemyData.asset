@@ -15,14 +15,19 @@ MonoBehaviour:
   displayName: Ranged Enemy
   maxHP: 50
   moveSpeed: 1.5
-  attackDamage: 7
+  attackDamage: 3
   attackCooldown: 1.4
   repathInterval: 0.4
   maxPreferredPathExtraCells: 4
   sprite: {fileID: 7272484427156038481, guid: e4adadbff4951da40a04c2daa4382a23, type: 3}
-  visualColor: {r: 0.61552155, g: 0.82375014, b: 0.9811321, a: 1}
   prefab: {fileID: 5133716904113855213, guid: a03d69610f6d728489aeb0c646b7a092, type: 3}
-  targetPriority: 0100000002000000100000000400000020000000
+  targetPriority: 0100000010000000040000002000000002000000
+  attackSound:
+    clips:
+    - {fileID: 8300000, guid: 39783c5965632d240a38f4bb1c7f69b3, type: 3}
+    volume: 1
+    pitchRange: {x: 0.96, y: 1.04}
+    spatialBlend: 0
   attackRange: 2
   attackRangeTolerance: 0.25
   projectileSpeed: 7
