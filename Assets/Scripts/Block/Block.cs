@@ -13,34 +13,49 @@ namespace KeepCoreSafe.Blocks
         [SerializeField]
         private BlockData data;
 
-        private GameManager gameManager;
-        private GridManager gridManager;
+        [Header("Prefab References")]
+        [SerializeField] private SpriteRenderer visualRenderer;
+        [SerializeField] private BoxCollider2D blockCollider;
+        [SerializeField] private DamageFeedback damageFeedback;
+        [SerializeField] private BlockHealthBar healthBarPrefab;
+
+        [Header("Placement Animation")]
+        [SerializeField, Min(1f)] private float placementOvershoot = 1.08f;
+        [SerializeField, Min(0f)] private float placementGrowDuration = 0.16f;
+        [SerializeField, Min(0f)] private float placementSettleDuration = 0.08f;
+
+        [Header("Dismantle Animation")]
+        [SerializeField, Min(0f)] private float dismantleShakeDuration = 0.12f;
+        [SerializeField, Min(0f)] private float dismantleShakeAngle = 12f;
+        [SerializeField, Min(1)] private int dismantleShakeVibrato = 8;
+        [SerializeField, Range(0f, 180f)] private float dismantleShakeRandomness = 20f;
+        [SerializeField, Min(0f)] private float dismantleScaleDuration = 0.16f;
+        [SerializeField, Min(0f)] private float dismantleFadeDuration = 0.14f;
+
         private bool isDead;
-        private DamageFeedback damageFeedback;
         private bool isBeingDismantled;
+        private BlockHealthBar healthBar;
 
         public BlockData Data => data;
-        public int MaxHP => data != null ? data.MaxHP : 1;
-        public int CurrentHP { get; private set; }
+
+        public ObservableValue HP = new();
+
         public int Cost => data != null ? data.Cost : 0;
         public BlockProperty BlockProperty => data != null ? data.Properties : BlockProperty.None;
         public Vector2Int GridPosition { get; private set; }
         public bool HasGridPosition { get; private set; }
 
-        public event Action<int, int> HealthChanged;
+        //public event Action<int, int> HealthChanged;
         public event Action<Block> Died;
 
         protected virtual void Awake()
         {
-            EnsureCollider();
-            EnsureHealthBar();
+            if (blockCollider == null)
+                blockCollider = GetComponent<BoxCollider2D>();
         }
 
         protected virtual void Start()
         {
-            gameManager = FindFirstObjectByType<GameManager>();
-            gridManager = FindFirstObjectByType<GridManager>();
-
             if (data == null)
             {
                 Debug.LogError($"{name} has no BlockData.", this);
@@ -50,9 +65,9 @@ namespace KeepCoreSafe.Blocks
         public void Initialize(BlockData blockData)
         {
             data = blockData;
-            CurrentHP = data.MaxHP;
+            HP.Initialize(data.MaxHP, data.MaxHP);
             ApplySprite();
-            NotifyHealthChanged();
+            CreateHealthBar();
         }
 
         protected virtual void Update()
@@ -69,16 +84,15 @@ namespace KeepCoreSafe.Blocks
 
         public void TakeDamage(int amount)
         {
-            if (amount <= 0 || CurrentHP <= 0)
+            if (amount <= 0 || HP.CurrentValue <= 0)
             {
                 return;
             }
 
-            CurrentHP = Mathf.Max(0, CurrentHP - amount);
+            HP.SubtractValue(amount);
             damageFeedback?.Play();
-            NotifyHealthChanged();
 
-            if (CurrentHP == 0)
+            if (HP.CurrentValue == 0)
             {
                 Die();
             }
@@ -86,19 +100,12 @@ namespace KeepCoreSafe.Blocks
 
         public void Heal(int amount)
         {
-            if (amount <= 0 || CurrentHP <= 0)
+            if (amount <= 0 || HP.CurrentValue <= 0)
             {
                 return;
             }
 
-            int healedHP = Mathf.Min(MaxHP, CurrentHP + amount);
-            if (healedHP == CurrentHP)
-            {
-                return;
-            }
-
-            CurrentHP = healedHP;
-            NotifyHealthChanged();
+            HP.AddValue(amount);
         }
 
         public virtual void Die()
@@ -121,8 +128,8 @@ namespace KeepCoreSafe.Blocks
 
             DOTween.Sequence()
                 .SetTarget(transform)
-                .Append(transform.DOScale(finalScale * 1.08f, 0.16f).SetEase(Ease.OutBack))
-                .Append(transform.DOScale(finalScale, 0.08f).SetEase(Ease.OutQuad));
+                .Append(transform.DOScale(finalScale * placementOvershoot, placementGrowDuration).SetEase(Ease.OutBack))
+                .Append(transform.DOScale(finalScale, placementSettleDuration).SetEase(Ease.OutQuad));
         }
 
         public void PlayDismantleAnimation(Action onComplete)
@@ -132,21 +139,20 @@ namespace KeepCoreSafe.Blocks
 
             isBeingDismantled = true;
             transform.DOKill();
-            if (TryGetComponent(out Collider2D blockCollider))
+            if (blockCollider != null)
                 blockCollider.enabled = false;
 
-            SpriteRenderer visual = GetComponentInChildren<SpriteRenderer>();
             Sequence sequence = DOTween.Sequence().SetTarget(transform);
             sequence.Append(transform.DOShakeRotation(
-                0.12f,
-                new Vector3(0f, 0f, 12f),
-                8,
-                20f,
+                dismantleShakeDuration,
+                new Vector3(0f, 0f, dismantleShakeAngle),
+                dismantleShakeVibrato,
+                dismantleShakeRandomness,
                 true,
                 ShakeRandomnessMode.Harmonic));
-            sequence.Append(transform.DOScale(Vector3.zero, 0.16f).SetEase(Ease.InBack));
-            if (visual != null)
-                sequence.Join(visual.DOFade(0f, 0.14f));
+            sequence.Append(transform.DOScale(Vector3.zero, dismantleScaleDuration).SetEase(Ease.InBack));
+            if (visualRenderer != null)
+                sequence.Join(visualRenderer.DOFade(0f, dismantleFadeDuration));
             sequence.OnComplete(() => onComplete?.Invoke());
         }
 
@@ -163,62 +169,55 @@ namespace KeepCoreSafe.Blocks
 
         protected float GetAdjustedCooldown(float baseCooldown)
         {
-            if (!HasGridPosition || gridManager == null)
+            if (!HasGridPosition || GridManager.Instance == null)
             {
                 return baseCooldown;
             }
 
-            foreach (Block adjacentBlock in gridManager.GetBlocks())
+            foreach (Block adjacentBlock in GridManager.Instance.GetBlocks())
             {
                 if (adjacentBlock is SupportBlock supportBlock
-                    && supportBlock.Data != null
-                    && supportBlock.Data.AffectsOffset(GridPosition - supportBlock.GridPosition))
+                    && supportBlock.Data is SupportBlockData supportData
+                    && supportData.AffectsOffset(GridPosition - supportBlock.GridPosition))
                 {
-                    return baseCooldown * supportBlock.Data.CooldownMultiplier;
+                    return baseCooldown * supportData.CooldownMultiplier;
                 }
             }
 
             return baseCooldown;
         }
 
-        private void EnsureHealthBar()
+        private void CreateHealthBar()
         {
-            if (!TryGetComponent(out BlockHealthBar _))
+            if (healthBar == null && healthBarPrefab != null)
             {
-                gameObject.AddComponent<BlockHealthBar>();
+                healthBar = Instantiate(healthBarPrefab, GameDefaultUI.BlockHPBarRoot);
+                healthBar.Initialize(this);
             }
-        }
-
-        private void EnsureCollider()
-        {
-            if (!TryGetComponent(out BoxCollider2D _))
+            else if (healthBarPrefab == null)
             {
-                gameObject.AddComponent<BoxCollider2D>();
+                Debug.LogError($"{name} has no BlockHealthBar prefab assigned.", this);
             }
-        }
-
-        private void NotifyHealthChanged()
-        {
-            HealthChanged?.Invoke(CurrentHP, MaxHP);
         }
 
         private void ApplySprite()
         {
-            SpriteRenderer renderer = DamageFeedback.GetOrCreateVisualRenderer(gameObject);
+            if (visualRenderer == null)
+            {
+                Debug.LogError($"{name} has no visual renderer assigned.", this);
+                return;
+            }
 
-            renderer.sprite = data.Sprite;
-            renderer.color = Color.white;
-            renderer.sortingOrder = 1;
-
-            if (!TryGetComponent(out damageFeedback))
-                damageFeedback = gameObject.AddComponent<DamageFeedback>();
-
-            damageFeedback.Initialize(renderer, Color.white);
+            visualRenderer.sprite = data.Sprite;
+            visualRenderer.color = Color.white;
+            damageFeedback?.Initialize(visualRenderer, Color.white);
         }
 
         protected virtual void OnDestroy()
         {
             transform.DOKill();
+            if(healthBar != null)
+                Destroy(healthBar.gameObject);
         }
 
     }

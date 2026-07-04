@@ -8,27 +8,30 @@ namespace KeepCoreSafe.Blocks
 {
     public sealed class AttackBlock : Block
     {
-        private const float LaserDuration = 0.14f;
-
         private readonly List<Enemy> candidates = new();
-        private GridManager gridManager;
+
+        [Header("Laser")]
+        [SerializeField] private LineRenderer laser;
+        [SerializeField, Min(0.01f)] private float laserDuration = 0.14f;
+        [SerializeField, Min(0.1f)] private float laserDrawSpeed = 2.5f;
+        [SerializeField, Range(0f, 1f)] private float laserFadeStart = 0.55f;
+        [SerializeField] private Color laserStartColor = Color.white;
+        [SerializeField] private Color laserEndColor = new Color(1f, 0.18f, 0.08f, 1f);
+        [SerializeField, Min(0f)] private float initialWidthMultiplier = 1.4f;
+        [SerializeField, Min(0f)] private float finalWidthMultiplier = 0.25f;
+
         private Enemy currentTarget;
-        private LineRenderer laser;
-        private Material laserMaterial;
         private float cooldownRemaining;
         private float laserRemaining;
         private Vector3 laserEndPosition;
 
+        private AttackBlockData AttackData => Data as AttackBlockData;
+
         protected override void Awake()
         {
             base.Awake();
-            CreateLaserRenderer();
-        }
-
-        protected override void Start()
-        {
-            base.Start();
-            gridManager = FindFirstObjectByType<GridManager>();
+            if (laser != null)
+                laser.enabled = false;
         }
 
         protected override void Update()
@@ -43,6 +46,9 @@ namespace KeepCoreSafe.Blocks
 
         protected override void OnCombatUpdate(float deltaTime)
         {
+            if (AttackData == null)
+                return;
+
             UpdateLaser(deltaTime);
             cooldownRemaining -= deltaTime;
             if (cooldownRemaining > 0f)
@@ -55,15 +61,15 @@ namespace KeepCoreSafe.Blocks
                 return;
 
             laserEndPosition = currentTarget.transform.position;
-            currentTarget.TakeDamage(Data.AttackValue);
+            currentTarget.TakeDamage(AttackData.AttackValue);
             PlayLaser();
-            cooldownRemaining = GetAdjustedCooldown(Data.ActionCooldown);
+            cooldownRemaining = GetAdjustedCooldown(AttackData.ActionCooldown);
         }
 
         private Enemy FindRandomEnemyInEffectArea()
         {
             candidates.Clear();
-            if (gridManager == null || !HasGridPosition)
+            if (GridManager.Instance == null || !HasGridPosition)
                 return null;
 
             foreach (Enemy enemy in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
@@ -71,9 +77,12 @@ namespace KeepCoreSafe.Blocks
                 if (enemy == null || enemy.IsDead)
                     continue;
 
-                Vector2Int enemyCell = gridManager.WorldToGrid(enemy.transform.position);
+                Vector2Int enemyCell = GridManager.Instance.WorldToGrid(enemy.transform.position);
                 Vector2Int offset = enemyCell - GridPosition;
-                if (GridEffectArea.ContainsOffset(offset, Data.AffectedDirections, Data.EffectRange))
+                if (GridEffectArea.ContainsOffset(
+                        offset,
+                        AttackData.AffectedDirections,
+                        AttackData.EffectRange))
                     candidates.Add(enemy);
             }
 
@@ -82,29 +91,12 @@ namespace KeepCoreSafe.Blocks
                 : candidates[Random.Range(0, candidates.Count)];
         }
 
-        private void CreateLaserRenderer()
-        {
-            laser = gameObject.AddComponent<LineRenderer>();
-            laser.useWorldSpace = true;
-            laser.positionCount = 2;
-            laser.numCapVertices = 4;
-            laser.sortingOrder = 12;
-            laser.startWidth = 0.08f;
-            laser.endWidth = 0.035f;
-
-            Shader shader = Shader.Find("Sprites/Default");
-            if (shader != null)
-            {
-                laserMaterial = new Material(shader) { name = "Attack Laser Material" };
-                laser.sharedMaterial = laserMaterial;
-            }
-
-            laser.enabled = false;
-        }
-
         private void PlayLaser()
         {
-            laserRemaining = LaserDuration;
+            if (laser == null)
+                return;
+
+            laserRemaining = laserDuration;
             laser.enabled = true;
             laser.SetPosition(0, transform.position);
             laser.SetPosition(1, transform.position);
@@ -116,27 +108,29 @@ namespace KeepCoreSafe.Blocks
                 return;
 
             laserRemaining = Mathf.Max(0f, laserRemaining - deltaTime);
-            float progress = 1f - laserRemaining / LaserDuration;
+            float progress = 1f - laserRemaining / laserDuration;
             Vector3 end = currentTarget != null ? currentTarget.transform.position : laserEndPosition;
             laserEndPosition = end;
             laser.SetPosition(0, transform.position);
-            laser.SetPosition(1, Vector3.Lerp(transform.position, end, Mathf.Clamp01(progress * 2.5f)));
+            laser.SetPosition(1, Vector3.Lerp(
+                transform.position,
+                end,
+                Mathf.Clamp01(progress * laserDrawSpeed)));
 
-            float fade = 1f - Mathf.InverseLerp(0.55f, 1f, progress);
-            Color color = new Color(1f, 0.18f, 0.08f, fade);
-            laser.startColor = Color.white * new Color(1f, 1f, 1f, fade);
-            laser.endColor = color;
-            laser.widthMultiplier = Mathf.Lerp(1.4f, 0.25f, progress);
+            float fade = 1f - Mathf.InverseLerp(laserFadeStart, 1f, progress);
+            Color startColor = laserStartColor;
+            Color endColor = laserEndColor;
+            startColor.a *= fade;
+            endColor.a *= fade;
+            laser.startColor = startColor;
+            laser.endColor = endColor;
+            laser.widthMultiplier = Mathf.Lerp(
+                initialWidthMultiplier,
+                finalWidthMultiplier,
+                progress);
 
             if (laserRemaining <= 0f)
                 laser.enabled = false;
-        }
-
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-            if (laserMaterial != null)
-                Destroy(laserMaterial);
         }
     }
 }

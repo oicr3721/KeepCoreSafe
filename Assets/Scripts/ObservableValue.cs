@@ -15,12 +15,23 @@ public class ObservableValue
     public float CurrentValue => currentValue;
     public float MaxValue => maxValue;
 
+    public void Initialize(float current, float max)
+    {
+        currentValue = current;
+        maxValue = max;
+    }
+
     public void SetValue(float value)
     {
+        float prevValue = currentValue;
+
         currentValue = Mathf.Clamp(value, 0f, maxValue);
 
         if (currentValue < 0.0001f)
             currentValue = 0f;
+
+        if (prevValue == currentValue)
+            return;
 
         OnValueChanged?.Invoke(
             currentValue,

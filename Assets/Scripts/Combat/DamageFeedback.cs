@@ -66,21 +66,5 @@ namespace KeepCoreSafe.Combat
             targetRenderer.color = baseColor;
             remaining = 0f;
         }
-
-        public static SpriteRenderer GetOrCreateVisualRenderer(GameObject owner)
-        {
-            Transform visual = owner.transform.Find("Visual");
-            if (visual == null)
-            {
-                GameObject visualObject = new GameObject("Visual");
-                visual = visualObject.transform;
-                visual.SetParent(owner.transform, false);
-            }
-
-            if (!visual.TryGetComponent(out SpriteRenderer renderer))
-                renderer = visual.gameObject.AddComponent<SpriteRenderer>();
-
-            return renderer;
-        }
     }
 }

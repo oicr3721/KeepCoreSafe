@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Combat;
+using KeepCoreSafe.Data;
 using UnityEngine;
 
 namespace KeepCoreSafe.Enemies
@@ -18,6 +19,8 @@ namespace KeepCoreSafe.Enemies
         private bool isFallbackPlan;
         private bool planHadBlocker;
 
+        private RangedEnemyData RangedData => Data as RangedEnemyData;
+
         protected override void Start()
         {
             base.Start();
@@ -27,6 +30,9 @@ namespace KeepCoreSafe.Enemies
         protected override void OnCombatUpdate(float deltaTime)
         {
             base.OnCombatUpdate(deltaTime);
+
+            if (RangedData == null)
+                return;
 
             repathCooldownRemaining -= deltaTime;
             if (ContinueCellMovement(deltaTime))
@@ -64,8 +70,8 @@ namespace KeepCoreSafe.Enemies
             }
 
             int cellDistance = GetCellDistance(currentCell, currentTarget.GridPosition);
-            float minimumRange = Mathf.Max(1f, Data.AttackRange - Data.AttackRangeTolerance);
-            float maximumRange = Data.AttackRange + Data.AttackRangeTolerance;
+            float minimumRange = Mathf.Max(1f, RangedData.AttackRange - RangedData.AttackRangeTolerance);
+            float maximumRange = RangedData.AttackRange + RangedData.AttackRangeTolerance;
 
             if (cellDistance < minimumRange)
             {
@@ -113,7 +119,7 @@ namespace KeepCoreSafe.Enemies
             pathCells = path.Cells;
             pathIndex = 0;
             hasPlan = true;
-            repathCooldownRemaining = 0.4f;
+            repathCooldownRemaining = Data.RepathInterval;
         }
 
         private void Attack(float deltaTime)
@@ -122,14 +128,22 @@ namespace KeepCoreSafe.Enemies
             if (attackCooldownRemaining > 0f)
                 return;
 
-            GameObject missileObject = new GameObject("Ranged Missile");
-            missileObject.transform.position = transform.position;
-            MissileProjectile missile = missileObject.AddComponent<MissileProjectile>();
+            if (RangedData.ProjectilePrefab == null)
+            {
+                Debug.LogError($"{name} has no projectile prefab assigned.", this);
+                attackCooldownRemaining = Data.AttackCooldown;
+                return;
+            }
+
+            MissileProjectile missile = Instantiate(
+                RangedData.ProjectilePrefab,
+                transform.position,
+                Quaternion.identity);
             missile.Launch(
                 currentTarget,
                 Data.AttackDamage,
-                Data.ProjectileSpeed,
-                Data.ProjectileArcHeight);
+                RangedData.ProjectileSpeed,
+                RangedData.ProjectileArcHeight);
             attackCooldownRemaining = Data.AttackCooldown;
         }
 

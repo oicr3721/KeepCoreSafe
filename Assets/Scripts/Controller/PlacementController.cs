@@ -16,10 +16,14 @@ public sealed class PlacementController : MonoBehaviour
     [SerializeField] private PlacementVisualizer effectVisualizer;
 
     [Header("Dismantle Preview")]
+    [SerializeField] private RectTransform placementControlText;
     [SerializeField] private TMP_Text dismantleRefundText;
+    [SerializeField] private TMP_Text placementCostText;
+    [SerializeField, Range(0f, 1f)] private float dismantleRefundRate = 0.5f;
+    [SerializeField] private Vector2 dismantlePreviewOffset = new Vector2(22f, 26f);
 
     [Header("Core")]
-    [SerializeField] private BlockData coreBlockData;
+    [SerializeField] private CoreBlockData coreBlockData;
 
     private BlockData selectedBlock;
     private ObservableValue placePoint;
@@ -60,7 +64,7 @@ public sealed class PlacementController : MonoBehaviour
             return;
         }
 
-        UpdateRefundPreview(pos);
+        UpdateControlPreview(pos);
         if (Mouse.current.rightButton.wasPressedThisFrame)
         {
             TryDismantle(pos);
@@ -131,27 +135,40 @@ public sealed class PlacementController : MonoBehaviour
     {
         if (GridManager.Instance.TryRemoveBlock(pos, out Block block))
         {
-            placePoint.AddValue(CalculateDismantleRefund(block));
+            placePoint.AddValue(CalculateDismantleRefund(block, dismantleRefundRate));
             block.PlayDismantleAnimation(() => Destroy(block.gameObject));
             SetRefundPreviewVisible(false);
         }
     }
 
-    private void UpdateRefundPreview(Vector2Int pos)
+    private void UpdateControlPreview(Vector2Int pos)
     {
         if (dismantleRefundText == null
             || !GridManager.Instance.TryGetBlock(pos, out Block block))
         {
             SetRefundPreviewVisible(false);
-            return;
+        }
+        else
+        {
+            bool isCore = (block.BlockProperty & BlockProperty.Core) != 0;
+            dismantleRefundText.text = isCore
+                ? "Core cannot be dismantled"
+                : $"Refund +{CalculateDismantleRefund(block, dismantleRefundRate):0.#}";
+            SetRefundPreviewVisible(true);
         }
 
-        bool isCore = (block.BlockProperty & BlockProperty.Core) != 0;
-        dismantleRefundText.text = isCore
-            ? "Core cannot be dismantled"
-            : $"Refund +{CalculateDismantleRefund(block):0.#}";
-        dismantleRefundText.rectTransform.position = Mouse.current.position.ReadValue() + new Vector2(22f, 26f);
-        SetRefundPreviewVisible(true);
+        if (placementCostText == null || selectedBlock == null)
+        {
+            SetCostPreviewVisible(false);
+        }
+        else
+        {
+            placementCostText.text = $"Cost -{selectedBlock.Cost:0.#}";
+
+            SetCostPreviewVisible(true);
+        }
+
+        placementControlText.position = Mouse.current.position.ReadValue() + dismantlePreviewOffset;
     }
 
     private void SetRefundPreviewVisible(bool visible)
@@ -163,42 +180,34 @@ public sealed class PlacementController : MonoBehaviour
         }
     }
 
-    public static float CalculateDismantleRefund(Block block)
+    private void SetCostPreviewVisible(bool visible)
     {
-        if (block == null || block.MaxHP <= 0)
+        if (placementCostText != null
+            && placementCostText.gameObject.activeSelf != visible)
+        {
+            placementCostText.gameObject.SetActive(visible);
+        }
+    }
+
+    public static float CalculateDismantleRefund(Block block, float refundRate = 0.5f)
+    {
+        if (block == null || block.HP.MaxValue <= 0)
             return 0f;
 
-        return Mathf.FloorToInt(block.Cost * 0.5f * ((float)block.CurrentHP / block.MaxHP));
+        return Mathf.FloorToInt(block.Cost * refundRate * ((float)block.HP.CurrentValue / block.HP.MaxValue));
     }
 
     private Block CreateBlock(BlockData data)
     {
-        GameObject go = new GameObject(data.name);
-
-        Block block = null;
-
-        if ((data.Properties & BlockProperty.Attack) != 0)
+        if (data == null || data.Prefab == null)
         {
-            block = go.AddComponent<AttackBlock>();
-        }
-        else if ((data.Properties & BlockProperty.Healer) != 0)
-        {
-            block = go.AddComponent<HealerBlock>();
-        }
-        else if ((data.Properties & BlockProperty.Support) != 0)
-        {
-            block = go.AddComponent<SupportBlock>();
-        }
-        else if ((data.Properties & BlockProperty.Core) != 0)
-        {
-            block = go.AddComponent<CoreBlock>();
-        }
-        else if((data.Properties & BlockProperty.Wall) != 0)
-        {
-            block = go.AddComponent<WallBlock>();
+            Debug.LogError($"{data?.name ?? "BlockData"} has no Block prefab assigned.", data);
+            return null;
         }
 
-        block?.Initialize(data);
+        Block block = Instantiate(data.Prefab);
+        block.name = data.DisplayName;
+        block.Initialize(data);
         return block;
     }
 
@@ -208,7 +217,7 @@ public sealed class PlacementController : MonoBehaviour
             return;
 
         if (coreBlockData == null)
-            coreBlockData = Resources.Load<BlockData>("Data/Block/CoreData");
+            coreBlockData = Resources.Load<CoreBlockData>("Data/Block/CoreData");
 
         if (coreBlockData == null)
         {
@@ -220,6 +229,8 @@ public sealed class PlacementController : MonoBehaviour
             GridManager.Instance.Width / 2,
             GridManager.Instance.Height / 2);
         Block core = CreateBlock(coreBlockData);
+        if (core == null)
+            return;
 
         if (!GridManager.Instance.TryPlaceBlock(core, center))
         {
@@ -253,6 +264,8 @@ public sealed class PlacementController : MonoBehaviour
     public void Confirm()
     {
         selectedBlock = null;
+        SetRefundPreviewVisible(false);
+        SetCostPreviewVisible(false);
         GameManager.Instance.TryStartCombat();
     }
 }

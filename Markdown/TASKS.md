@@ -146,9 +146,21 @@
 
 ---
 
+# Phase 12 - Specialized Data & Prefab Runtime
+
+* [x] Split BlockData into role-specific data types
+* [x] Split EnemyData into MeleeEnemyData and RangedEnemyData
+* [x] Keep BlockProperty as an automatic targeting/filtering tag
+* [x] Replace runtime GameObject/component construction with prefabs
+* [x] Add phase-aware Block health-bar visibility
+* [x] Add configurable health thresholds, colors, duration, and layout
+* [x] Move remaining touched gameplay and presentation values to serialized settings
+
+---
+
 # Current Task
 
-Seeded path diversity and repeat-safe damage feedback complete.
+Data specialization, prefab migration, and phase-aware Block health bars complete.
 
 Always complete one feature before moving to the next.
 

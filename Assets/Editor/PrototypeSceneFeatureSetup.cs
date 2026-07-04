@@ -18,7 +18,6 @@ namespace KeepCoreSafe.Editor
         [MenuItem("Keep Core Safe/Setup Timer, Speed, and Placement Effects")]
         public static void SetupScene()
         {
-            SetupRangedEnemyData();
             var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             SetupPlacementEffects();
             SetupSpeedButton();
@@ -82,7 +81,7 @@ namespace KeepCoreSafe.Editor
 
             controllerObject.FindProperty("effectVisualizer").objectReferenceValue = visualizer;
             controllerObject.FindProperty("coreBlockData").objectReferenceValue =
-                AssetDatabase.LoadAssetAtPath<BlockData>("Assets/Resources/Data/Block/CoreData.asset");
+                AssetDatabase.LoadAssetAtPath<CoreBlockData>("Assets/Resources/Data/Block/CoreData.asset");
             controllerObject.FindProperty("dismantleRefundText").objectReferenceValue =
                 GetOrCreateRefundText();
             controllerObject.ApplyModifiedPropertiesWithoutUndo();
@@ -219,34 +218,6 @@ namespace KeepCoreSafe.Editor
             return button;
         }
 
-        private static void SetupRangedEnemyData()
-        {
-            const string path = "Assets/Resources/Data/Enemy/RangedEnemyData.asset";
-            EnemyData rangedData = AssetDatabase.LoadAssetAtPath<EnemyData>(path);
-            if (rangedData == null)
-            {
-                rangedData = ScriptableObject.CreateInstance<EnemyData>();
-                AssetDatabase.CreateAsset(rangedData, path);
-            }
-
-            EnemyData meleeData = AssetDatabase.LoadAssetAtPath<EnemyData>(
-                "Assets/Resources/Data/Enemy/MeleeEnemyData.asset");
-            rangedData.ConfigurePrototype(
-                "Ranged Enemy",
-                25,
-                1.25f,
-                7,
-                1.4f,
-                3f,
-                meleeData != null ? meleeData.Sprite : null,
-                new[] { BlockProperty.Core, BlockProperty.Wall },
-                new Color(0.65f, 0.85f, 1f, 1f),
-                0.25f,
-                7f,
-                0.75f);
-            EditorUtility.SetDirty(rangedData);
-        }
-
         private static void SetupWaveManager()
         {
             WaveManager waveManager = Object.FindFirstObjectByType<WaveManager>(FindObjectsInactive.Include);
@@ -254,7 +225,7 @@ namespace KeepCoreSafe.Editor
 
             SerializedObject waveObject = new SerializedObject(waveManager);
             waveObject.FindProperty("rangedEnemyData").objectReferenceValue =
-                AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/Resources/Data/Enemy/RangedEnemyData.asset");
+                AssetDatabase.LoadAssetAtPath<RangedEnemyData>("Assets/Resources/Data/Enemy/RangedEnemyData.asset");
             waveObject.ApplyModifiedPropertiesWithoutUndo();
         }
 

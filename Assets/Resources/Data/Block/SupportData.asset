@@ -9,17 +9,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 859f9a5add2359241bbfa8e71fe75f5b, type: 3}
+  m_Script: {fileID: 11500000, guid: 92f54387d1844a948bbc65fea7996058, type: 3}
   m_Name: SupportData
-  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.BlockData
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.SupportBlockData
   displayName: Support
-  properties: 32
   maxHP: 100
-  cost: 2
-  attackValue: 0
-  healValue: 0
-  actionCooldown: 1
-  effectRange: 1
-  cooldownMultiplier: 0.75
+  cost: 8
   sprite: {fileID: 4183758239832987388, guid: 42a7c04790a898c47a9e63e8836c9a27, type: 3}
+  prefab: {fileID: 7005742919833205052, guid: ef48c69017ffd91418170f7382c9dbae, type: 3}
+  additionalProperties: 0
+  effectRange: 1
   affectedDirections: 15
+  cooldownMultiplier: 0.75

@@ -10,8 +10,6 @@ namespace KeepCoreSafe.Enemies
 {
     public sealed class GridPathfinder
     {
-        private const int MaxPreferredPathExtraCells = 4;
-
         public static readonly Vector2Int[] Directions =
         {
             Vector2Int.up,
@@ -65,7 +63,7 @@ namespace KeepCoreSafe.Enemies
                 List<Vector2Int> selectedPath = shortestPath;
                 List<Vector2Int> preferredGoal = new List<Vector2Int> { coreGoals[0] };
                 if (TryFindPath(start, preferredGoal, core.GridPosition, out List<Vector2Int> preferredPath)
-                    && preferredPath.Count <= shortestPath.Count + MaxPreferredPathExtraCells)
+                    && preferredPath.Count <= shortestPath.Count + enemyData.MaxPreferredPathExtraCells)
                 {
                     selectedPath = preferredPath;
                 }

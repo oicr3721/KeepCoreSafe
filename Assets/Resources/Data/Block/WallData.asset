@@ -9,17 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 859f9a5add2359241bbfa8e71fe75f5b, type: 3}
+  m_Script: {fileID: 11500000, guid: b34f3486bf574d2097781076d69a5fd5, type: 3}
   m_Name: WallData
-  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.BlockData
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.WallBlockData
   displayName: Wall
-  properties: 2
   maxHP: 100
   cost: 2
-  attackValue: 0
-  healValue: 0
-  actionCooldown: 1
-  effectRange: 0
-  cooldownMultiplier: 1
   sprite: {fileID: -5356574185940491189, guid: 5f7eba390e6a4cc498a31ef2325162df, type: 3}
-  affectedDirections: 0
+  prefab: {fileID: 2008381815392251027, guid: fda390f54e8b79d4fb687eebe3d069b0, type: 3}
+  additionalProperties: 0

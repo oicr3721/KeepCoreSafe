@@ -9,18 +9,22 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bb75bc9d86a92804d9656757ba1fc454, type: 3}
+  m_Script: {fileID: 11500000, guid: 1951bb01e1e4418fbc35f29731826c71, type: 3}
   m_Name: RangedEnemyData
-  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.EnemyData
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.RangedEnemyData
   displayName: Ranged Enemy
   maxHP: 50
   moveSpeed: 1.5
   attackDamage: 7
   attackCooldown: 1.4
-  attackRange: 2
+  repathInterval: 0.4
+  maxPreferredPathExtraCells: 4
   sprite: {fileID: -5356574185940491189, guid: 5f7eba390e6a4cc498a31ef2325162df, type: 3}
   visualColor: {r: 0.61552155, g: 0.82375014, b: 0.9811321, a: 1}
+  prefab: {fileID: 5133716904113855213, guid: a03d69610f6d728489aeb0c646b7a092, type: 3}
+  targetPriority: 0100000002000000100000000400000020000000
+  attackRange: 2
   attackRangeTolerance: 0.25
   projectileSpeed: 7
   projectileArcHeight: 0.75
-  targetPriority: 0100000002000000100000000400000020000000
+  projectilePrefab: {fileID: 9159585716688584966, guid: ec3bd02d73507b54687e45fe029039e4, type: 3}

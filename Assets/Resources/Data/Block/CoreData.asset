@@ -9,17 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 859f9a5add2359241bbfa8e71fe75f5b, type: 3}
+  m_Script: {fileID: 11500000, guid: 3068589c2e484a4ab500ca913305ed4f, type: 3}
   m_Name: CoreData
-  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.BlockData
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.CoreBlockData
   displayName: Core
-  properties: 1
   maxHP: 100
   cost: 0
-  attackValue: 0
-  healValue: 0
-  actionCooldown: 1
-  effectRange: 0
-  cooldownMultiplier: 1
   sprite: {fileID: 1170115753450382605, guid: f426aa947a2beba4baa03253848215b7, type: 3}
-  affectedDirections: 0
+  prefab: {fileID: 6595445646424716651, guid: f44b028d3bd7a334fb493b74fb5d5d27, type: 3}
+  additionalProperties: 0

@@ -16,15 +16,18 @@ namespace KeepCoreSafe.Managers
         [SerializeField, Min(0.05f)]
         private float spawnInterval = 0.4f;
 
+        [SerializeField, Min(0f)]
+        private float spawnMargin = 1.2f;
+
         [SerializeField]
         [FormerlySerializedAs("enemyData")]
-        private EnemyData meleeEnemyData;
+        private MeleeEnemyData meleeEnemyData;
 
         [SerializeField, Range(0, 30)]
         private int rangedEnemiesPerWave = 10;
 
         [SerializeField]
-        private EnemyData rangedEnemyData;
+        private RangedEnemyData rangedEnemyData;
 
         private readonly HashSet<Enemy> activeEnemies = new();
         private Coroutine spawnRoutine;
@@ -39,9 +42,9 @@ namespace KeepCoreSafe.Managers
         {
             worldCamera = Camera.main;
             if (meleeEnemyData == null)
-                meleeEnemyData = Resources.Load<EnemyData>("Data/Enemy/MeleeEnemyData");
+                meleeEnemyData = Resources.Load<MeleeEnemyData>("Data/Enemy/MeleeEnemyData");
             if (rangedEnemyData == null)
-                rangedEnemyData = Resources.Load<EnemyData>("Data/Enemy/RangedEnemyData");
+                rangedEnemyData = Resources.Load<RangedEnemyData>("Data/Enemy/RangedEnemyData");
         }
 
         public void StartWave(int waveIndex)
@@ -101,14 +104,19 @@ namespace KeepCoreSafe.Managers
 
         private void SpawnEnemy(bool spawnRanged)
         {
-            GameObject enemyObject = new GameObject(spawnRanged ? "Ranged Enemy" : "Melee Enemy");
-            enemyObject.transform.position = GetRandomSpawnPosition();
-            enemyObject.transform.localScale = Vector3.one * 0.45f;
+            EnemyData data = spawnRanged ? rangedEnemyData : meleeEnemyData;
+            if (data == null || data.Prefab == null)
+            {
+                Debug.LogError($"{data?.name ?? "EnemyData"} has no Enemy prefab assigned.", data);
+                return;
+            }
 
-            Enemy enemy = spawnRanged
-                ? enemyObject.AddComponent<RangedEnemy>()
-                : enemyObject.AddComponent<MeleeEnemy>();
-            enemy.Initialize(spawnRanged ? rangedEnemyData : meleeEnemyData);
+            Enemy enemy = Instantiate(
+                data.Prefab,
+                GetRandomSpawnPosition(),
+                Quaternion.identity);
+            enemy.name = data.DisplayName;
+            enemy.Initialize(data);
             enemy.Died += HandleEnemyDied;
             activeEnemies.Add(enemy);
         }
@@ -120,14 +128,12 @@ namespace KeepCoreSafe.Managers
             Vector3 center = worldCamera.transform.position;
             float x = UnityEngine.Random.Range(-halfWidth, halfWidth);
             float y = UnityEngine.Random.Range(-halfHeight, halfHeight);
-            const float margin = 1.2f;
-
             return UnityEngine.Random.Range(0, 4) switch
             {
-                0 => new Vector3(center.x - halfWidth - margin, center.y + y, 0f),
-                1 => new Vector3(center.x + halfWidth + margin, center.y + y, 0f),
-                2 => new Vector3(center.x + x, center.y - halfHeight - margin, 0f),
-                _ => new Vector3(center.x + x, center.y + halfHeight + margin, 0f)
+                0 => new Vector3(center.x - halfWidth - spawnMargin, center.y + y, 0f),
+                1 => new Vector3(center.x + halfWidth + spawnMargin, center.y + y, 0f),
+                2 => new Vector3(center.x + x, center.y - halfHeight - spawnMargin, 0f),
+                _ => new Vector3(center.x + x, center.y + halfHeight + spawnMargin, 0f)
             };
         }
 

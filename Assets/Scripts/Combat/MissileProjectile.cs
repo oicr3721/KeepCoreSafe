@@ -6,10 +6,16 @@ namespace KeepCoreSafe.Combat
 {
     public sealed class MissileProjectile : MonoBehaviour
     {
-        private static Material sharedMaterial;
+        [Header("Prefab References")]
+        [SerializeField] private LineRenderer trail;
+
+        [Header("Trail")]
+        [SerializeField] private Color trailStartColor = new Color(1f, 0.45f, 0.08f, 0.35f);
+        [SerializeField] private Color trailEndColor = new Color(1f, 0.95f, 0.35f, 1f);
+        [SerializeField, Range(0f, 1f)] private float endFadeAmount = 0.45f;
+        [SerializeField, Min(0.01f)] private float minimumFlightDuration = 0.08f;
 
         private Block target;
-        private LineRenderer trail;
         private Vector3 startPosition;
         private Vector3 previousPosition;
         private Vector2 arcDirection;
@@ -23,14 +29,22 @@ namespace KeepCoreSafe.Combat
             target = attackTarget;
             damage = attackDamage;
             arcHeight = height;
+            elapsed = 0f;
             startPosition = transform.position;
             previousPosition = startPosition;
 
             Vector2 direction = ((Vector2)target.transform.position - (Vector2)startPosition).normalized;
             float side = Random.value < 0.5f ? -1f : 1f;
             arcDirection = new Vector2(-direction.y, direction.x) * side;
-            duration = Mathf.Max(0.08f, Vector2.Distance(startPosition, target.transform.position) / speed);
-            CreateTrail();
+            duration = Mathf.Max(
+                minimumFlightDuration,
+                Vector2.Distance(startPosition, target.transform.position) / speed);
+
+            if (trail != null)
+            {
+                trail.SetPosition(0, transform.position);
+                trail.SetPosition(1, transform.position);
+            }
         }
 
         private void Update()
@@ -48,41 +62,25 @@ namespace KeepCoreSafe.Combat
             Vector3 arc = (Vector3)(arcDirection * (Mathf.Sin(progress * Mathf.PI) * arcHeight));
             transform.position = linear + arc;
 
-            trail.SetPosition(0, previousPosition);
-            trail.SetPosition(1, transform.position);
+            if (trail != null)
+            {
+                trail.SetPosition(0, previousPosition);
+                trail.SetPosition(1, transform.position);
+                float fade = 1f - progress * endFadeAmount;
+                Color startColor = trailStartColor;
+                Color endColor = trailEndColor;
+                startColor.a *= fade;
+                endColor.a *= fade;
+                trail.startColor = startColor;
+                trail.endColor = endColor;
+            }
+
             previousPosition = transform.position;
+            if (progress < 1f)
+                return;
 
-            float fade = 1f - progress * 0.45f;
-            trail.startColor = new Color(1f, 0.45f, 0.08f, fade * 0.35f);
-            trail.endColor = new Color(1f, 0.95f, 0.35f, fade);
-
-            if (progress >= 1f)
-            {
-                target.TakeDamage(damage);
-                Destroy(gameObject);
-            }
-        }
-
-        private void CreateTrail()
-        {
-            trail = gameObject.AddComponent<LineRenderer>();
-            trail.useWorldSpace = true;
-            trail.positionCount = 2;
-            trail.numCapVertices = 4;
-            trail.startWidth = 0.04f;
-            trail.endWidth = 0.12f;
-            trail.sortingOrder = 15;
-
-            if (sharedMaterial == null)
-            {
-                Shader shader = Shader.Find("Sprites/Default");
-                if (shader != null)
-                    sharedMaterial = new Material(shader) { name = "Missile Trail Material" };
-            }
-
-            trail.sharedMaterial = sharedMaterial;
-            trail.SetPosition(0, transform.position);
-            trail.SetPosition(1, transform.position);
+            target.TakeDamage(damage);
+            Destroy(gameObject);
         }
     }
 }

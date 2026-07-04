@@ -1,104 +1,108 @@
 using KeepCoreSafe.Blocks;
+using KeepCoreSafe.Managers;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace KeepCoreSafe.UI
 {
-    [RequireComponent(typeof(Block))]
-    public sealed class BlockHealthBar : MonoBehaviour
+    public sealed class BlockHealthBar : SliderUI
     {
-        private const float BarWidth = 0.6f;
-        private const float BarHeight = 0.1f;
-        private const float BarYOffset = 0.68f;
+        [Header("References")]
+        [SerializeField] private GameObject visualRoot;
+        [SerializeField] private Image fill;
+        [SerializeField] private UIFollowTarget uiFollowTarget;
 
-        private static Sprite whiteSprite;
+        [Header("Visibility")]
+        [SerializeField, Min(0f)] private float combatVisibleDuration = 1.25f;
 
-        private Block block;
-        private Transform fillTransform;
+        [Header("Health Colors")]
+        [SerializeField] private Color healthyColor = new Color(0.55f, 1f, 0.35f, 1f);
+        [SerializeField] private Color warningColor = new Color(1f, 0.55f, 0.1f, 1f);
+        [SerializeField] private Color criticalColor = new Color(1f, 0.12f, 0.08f, 1f);
+        [SerializeField, Range(0f, 1f)] private float warningThreshold = 0.5f;
+        [SerializeField, Range(0f, 1f)] private float criticalThreshold = 0.15f;
 
-        private void Awake()
+        private float combatVisibilityRemaining;
+
+        public void Initialize(Block owner)
         {
-            block = GetComponent<Block>();
+            Initialize(owner.HP);
 
-            if (whiteSprite == null)
-                whiteSprite = CreateWhiteSprite();
+            GameManager.PhaseChanged -= HandlePhaseChanged;
+            GameManager.PhaseChanged += HandlePhaseChanged;
 
-            CreateVisuals();
+            uiFollowTarget.SetTarget(owner.transform);
         }
 
-        private void OnEnable()
+        private void Update()
         {
-            block.HealthChanged += UpdateBar;
-            UpdateBar(block.CurrentHP, block.MaxHP);
+            if (GameManager.Phase != GamePhase.Combat
+                || combatVisibilityRemaining <= 0f)
+            {
+                return;
+            }
+
+            combatVisibilityRemaining = Mathf.Max(
+                0f,
+                combatVisibilityRemaining - Time.unscaledDeltaTime);
+            if (combatVisibilityRemaining <= 0f)
+                SetVisible(false);
         }
 
-        private void OnDisable()
+        private void HandlePhaseChanged(GamePhase phase)
         {
-            if (block != null)
-                block.HealthChanged -= UpdateBar;
+            combatVisibilityRemaining = GameManager.Phase == GamePhase.Preparation
+                ? 0f
+                : combatVisibleDuration;
+            RefreshVisibility();
         }
 
-        private void CreateVisuals()
+        private void RefreshVisibility()
         {
-            CreateBarPart(
-                "Background",
-                new Color(0.15f, 0.15f, 0.15f),
-                new Vector3(BarWidth + 0.08f, BarHeight + 0.06f, 1f),
-                10);
+            if (source == null)
+            {
+                SetVisible(false);
+                return;
+            }
 
-            SpriteRenderer fill = CreateBarPart(
-                "Fill",
-                Color.green,
-                new Vector3(BarWidth, BarHeight, 1f),
-                11);
-
-            fillTransform = fill.transform;
+            bool visible = (GameManager.Phase == GamePhase.Preparation
+                           && source.CurrentValue < source.MaxValue);
+            SetVisible(visible);
         }
 
-        private SpriteRenderer CreateBarPart(
-            string name,
-            Color color,
-            Vector3 scale,
-            int sortingOrder)
+        protected override void OnRefresh()
         {
-            GameObject obj = new GameObject(name);
-            obj.transform.SetParent(transform, false);
-            obj.transform.localPosition = new Vector3(0f, BarYOffset, 0f);
-            obj.transform.localScale = scale;
+            if (source == null) return;
 
-            SpriteRenderer renderer = obj.AddComponent<SpriteRenderer>();
-            renderer.sprite = whiteSprite;
-            renderer.color = color;
-            renderer.sortingOrder = sortingOrder;
+            float ratio = source.MaxValue <= 0 
+                ? 0f 
+                : Mathf.Clamp01((float)source.CurrentValue / source.MaxValue);
 
-            return renderer;
+            fill.color = ratio <= criticalThreshold
+                ? criticalColor
+                : ratio <= warningThreshold ? warningColor : healthyColor;
+
+            if (GameManager.Phase == GamePhase.Combat)
+            {
+                combatVisibilityRemaining = combatVisibleDuration;
+                SetVisible(true);
+            }
+            else
+            {
+                RefreshVisibility();
+            }
         }
 
-        private void UpdateBar(int currentHP, int maxHP)
+        private void SetVisible(bool visible)
         {
-            float ratio = maxHP <= 0 ? 0f : (float)currentHP / maxHP;
-
-            fillTransform.localScale = new Vector3(
-                ratio * BarWidth,
-                BarHeight,
-                1f);
-
-            fillTransform.localPosition = new Vector3(
-                -(BarWidth - ratio * BarWidth) * 0.5f,
-                BarYOffset,
-                0f);
+            if (visualRoot != null && visualRoot.activeSelf != visible)
+                visualRoot.SetActive(visible);
         }
 
-        private static Sprite CreateWhiteSprite()
+        protected override void OnDestroy()
         {
-            Texture2D tex = new Texture2D(1, 1);
-            tex.SetPixel(0, 0, Color.white);
-            tex.Apply();
-
-            return Sprite.Create(
-                tex,
-                new Rect(0, 0, 1, 1),
-                Vector2.one * 0.5f,
-                1f);
+            base.OnDestroy();
+            GameManager.PhaseChanged -= HandlePhaseChanged;
         }
     }
 }

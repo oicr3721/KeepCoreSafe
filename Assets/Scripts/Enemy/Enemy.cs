@@ -15,9 +15,18 @@ namespace KeepCoreSafe.Enemies
         [SerializeField]
         private EnemyData data;
 
+        [Header("Prefab References")]
+        [SerializeField] private Rigidbody2D body;
+        [SerializeField] private Collider2D collisionCollider;
+        [SerializeField] private SpriteRenderer visualRenderer;
+        [SerializeField] private DamageFeedback damageFeedback;
+
         [Header("Visual Movement")]
         [SerializeField, Range(0f, 0.4f)]
-        private float personalOffsetRatio = 0.25f;
+        private float minimumPersonalOffsetRatio = 0.2f;
+
+        [SerializeField, Range(0f, 0.4f)]
+        private float maximumPersonalOffsetRatio = 0.25f;
 
         [SerializeField, Range(0.1f, 1f)]
         private float separationRadiusInCells = 0.55f;
@@ -25,8 +34,10 @@ namespace KeepCoreSafe.Enemies
         [SerializeField, Range(0f, 0.5f)]
         private float separationStrength = 0.2f;
 
+        [SerializeField, Min(0.001f)]
+        private float minimumSnapDistance = 0.02f;
+
         private bool isDead;
-        private DamageFeedback damageFeedback;
         private bool isMovingToCell;
         private Vector2Int movementDestination;
         private Vector2 personalCellOffset;
@@ -113,7 +124,7 @@ namespace KeepCoreSafe.Enemies
 
             Vector2 destination = GetCellWorldPosition(movementDestination);
             Vector2 offset = destination - Body.position;
-            float snapDistance = Mathf.Max(0.02f, Data.MoveSpeed * Time.fixedDeltaTime);
+            float snapDistance = Mathf.Max(minimumSnapDistance, Data.MoveSpeed * Time.fixedDeltaTime);
             if (offset.sqrMagnitude <= snapDistance * snapDistance)
             {
                 Body.position = destination;
@@ -186,20 +197,21 @@ namespace KeepCoreSafe.Enemies
 
         private void EnsurePhysicsComponents()
         {
-            if (!TryGetComponent(out CircleCollider2D circleCollider))
-            {
-                circleCollider = gameObject.AddComponent<CircleCollider2D>();
-            }
-
-            CollisionCollider = circleCollider;
-            IgnoreOtherEnemies();
-
-            if (!TryGetComponent(out Rigidbody2D body))
-            {
-                body = gameObject.AddComponent<Rigidbody2D>();
-            }
+            if (collisionCollider == null)
+                collisionCollider = GetComponent<Collider2D>();
+            if (body == null)
+                body = GetComponent<Rigidbody2D>();
 
             Body = body;
+            CollisionCollider = collisionCollider;
+            if (Body == null || CollisionCollider == null)
+            {
+                Debug.LogError($"{name} prefab is missing Rigidbody2D or Collider2D.", this);
+                enabled = false;
+                return;
+            }
+
+            IgnoreOtherEnemies();
             Body.bodyType = RigidbodyType2D.Dynamic;
             Body.gravityScale = 0f;
             Body.freezeRotation = true;
@@ -209,16 +221,15 @@ namespace KeepCoreSafe.Enemies
 
         private void ApplySprite()
         {
-            SpriteRenderer renderer = DamageFeedback.GetOrCreateVisualRenderer(gameObject);
+            if (visualRenderer == null)
+            {
+                Debug.LogError($"{name} prefab has no visual renderer assigned.", this);
+                return;
+            }
 
-            renderer.sprite = data.Sprite;
-            renderer.color = data.VisualColor;
-            renderer.sortingOrder = 2;
-
-            if (!TryGetComponent(out damageFeedback))
-                damageFeedback = gameObject.AddComponent<DamageFeedback>();
-
-            damageFeedback.Initialize(renderer, data.VisualColor);
+            visualRenderer.sprite = data.Sprite;
+            visualRenderer.color = data.VisualColor;
+            damageFeedback?.Initialize(visualRenderer, data.VisualColor);
         }
 
         private void IgnoreOtherEnemies()
@@ -244,8 +255,11 @@ namespace KeepCoreSafe.Enemies
             if (direction.sqrMagnitude < 0.01f)
                 direction = Vector2.right;
 
-            float radius = GridManager.CellSize * personalOffsetRatio;
-            personalCellOffset = direction * UnityEngine.Random.Range(radius * 0.8f, radius);
+            float minimumRadius = GridManager.CellSize * minimumPersonalOffsetRatio;
+            float maximumRadius = GridManager.CellSize * maximumPersonalOffsetRatio;
+            personalCellOffset = direction * UnityEngine.Random.Range(
+                Mathf.Min(minimumRadius, maximumRadius),
+                Mathf.Max(minimumRadius, maximumRadius));
         }
 
         private Vector2 CalculateSeparationVelocity()

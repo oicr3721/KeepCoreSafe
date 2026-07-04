@@ -120,6 +120,18 @@ Every Block contains
 - Current HP
 - BlockProperty
 
+Block runtime behavior is selected by its prefab component and matching data subtype.
+
+BlockData hierarchy
+
+- BlockData: display name, HP, cost, sprite, prefab
+- AreaBlockData: effect range and affected directions
+- TimedAreaBlockData: action cooldown
+- AttackBlockData: attack value
+- HealerBlockData: heal value
+- SupportBlockData: cooldown multiplier
+- CoreBlockData / WallBlockData: common data only
+
 Every Block exposes
 
 - TakeDamage()
@@ -145,11 +157,15 @@ BlockProperty
 - Healer
 - Mechanical
 
-A block may contain multiple properties.
+A block may contain multiple properties when future targeting tags require it.
 
 Example
 
 Wall | Mechanical
+
+The primary role property is supplied by the concrete BlockData subtype rather than
+being selected manually. BlockProperty remains a targeting and filtering tag; it no
+longer decides which runtime component is created.
 
 ---
 
@@ -178,6 +194,10 @@ Enemy is responsible for
 - Movement
 - Target Selection
 - Attacking
+
+EnemyData contains only shared movement, health, attack, visual, priority, and prefab data.
+MeleeEnemyData identifies melee configuration, while RangedEnemyData alone exposes
+range, tolerance, missile speed, arc height, and projectile prefab fields.
 
 Enemy movement queries the Grid for A* paths, but does not reserve or occupy cells.
 
@@ -318,6 +338,11 @@ Runtime
 - Position
 
 Do not store runtime values inside ScriptableObjects.
+
+Runtime gameplay objects are instantiated from configured prefabs. BlockData and
+EnemyData reference their matching prefabs, RangedEnemyData references its projectile,
+and scene systems reference the health-bar and grid-line prefabs. Runtime scripts do
+not construct gameplay GameObjects or attach required components dynamically.
 
 ---
 

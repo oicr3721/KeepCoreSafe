@@ -9,17 +9,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 859f9a5add2359241bbfa8e71fe75f5b, type: 3}
+  m_Script: {fileID: 11500000, guid: 91629a28f8a241f8902543caf0c2d7a6, type: 3}
   m_Name: HealerData
-  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.BlockData
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.HealerBlockData
   displayName: Healer
-  properties: 4
   maxHP: 100
-  cost: 3
-  attackValue: 0
-  healValue: 15
-  actionCooldown: 2
-  effectRange: 1
-  cooldownMultiplier: 1
+  cost: 10
   sprite: {fileID: -3152180383845805149, guid: 0e62c153595481d41949642498192141, type: 3}
+  prefab: {fileID: 544130411324589891, guid: 63352878e856a79478f35914d23e4b9f, type: 3}
+  additionalProperties: 0
+  effectRange: 1
   affectedDirections: 15
+  actionCooldown: 2
+  healValue: 15

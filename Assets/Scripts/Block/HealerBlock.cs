@@ -1,36 +1,35 @@
 using KeepCoreSafe.Managers;
+using KeepCoreSafe.Data;
 using UnityEngine;
 
 namespace KeepCoreSafe.Blocks
 {
     public sealed class HealerBlock : Block
     {
-        private GridManager gridManager;
         private float cooldownRemaining;
 
-        protected override void Start()
-        {
-            base.Start();
-            gridManager = FindFirstObjectByType<GridManager>();
-        }
+        private HealerBlockData HealerData => Data as HealerBlockData;
 
         protected override void OnCombatUpdate(float deltaTime)
         {
+            if (HealerData == null)
+                return;
+
             cooldownRemaining -= deltaTime;
-            if (cooldownRemaining > 0f || gridManager == null || !HasGridPosition)
+            if (cooldownRemaining > 0f || GridManager.Instance == null || !HasGridPosition)
             {
                 return;
             }
 
-            foreach (Block adjacentBlock in gridManager.GetBlocksInEffectArea(
+            foreach (Block adjacentBlock in GridManager.Instance.GetBlocksInEffectArea(
                          GridPosition,
-                         Data.AffectedDirections,
-                         Data.EffectRange))
+                         HealerData.AffectedDirections,
+                         HealerData.EffectRange))
             {
-                adjacentBlock.Heal(Data.HealValue);
+                adjacentBlock.Heal(HealerData.HealValue);
             }
 
-            cooldownRemaining = GetAdjustedCooldown(Data.ActionCooldown);
+            cooldownRemaining = GetAdjustedCooldown(HealerData.ActionCooldown);
         }
     }
 }

@@ -9,17 +9,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 859f9a5add2359241bbfa8e71fe75f5b, type: 3}
+  m_Script: {fileID: 11500000, guid: 93e4f4b051764f0db78519927bff8fd5, type: 3}
   m_Name: AttackData
-  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.BlockData
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.AttackBlockData
   displayName: Attack
-  properties: 16
   maxHP: 100
   cost: 3
-  attackValue: 20
-  healValue: 0
-  actionCooldown: 1
-  effectRange: 2
-  cooldownMultiplier: 1
   sprite: {fileID: -7008412969330441016, guid: 5d7a9309e5a0ae24c9728b799e1920e1, type: 3}
+  prefab: {fileID: 1648904487270295617, guid: 2c76254eaf07ef34681b13ab2f637bbd, type: 3}
+  additionalProperties: 0
+  effectRange: 2
   affectedDirections: 256
+  actionCooldown: 1
+  attackValue: 20

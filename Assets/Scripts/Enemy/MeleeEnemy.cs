@@ -94,7 +94,7 @@ namespace KeepCoreSafe.Enemies
             pathCells = path.Cells;
             pathIndex = 0;
             hasPlan = true;
-            repathCooldownRemaining = 0.4f;
+            repathCooldownRemaining = Data.RepathInterval;
         }
 
         private void SkipCurrentPathCell()

@@ -9,18 +9,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bb75bc9d86a92804d9656757ba1fc454, type: 3}
+  m_Script: {fileID: 11500000, guid: ef3af979359043ee8bd3762ebfddc091, type: 3}
   m_Name: MeleeEnemyData
-  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.EnemyData
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.MeleeEnemyData
   displayName: Melee Enemy
   maxHP: 150
   moveSpeed: 2
   attackDamage: 12
   attackCooldown: 1
-  attackRange: 1
+  repathInterval: 0.4
+  maxPreferredPathExtraCells: 4
   sprite: {fileID: -5356574185940491189, guid: 5f7eba390e6a4cc498a31ef2325162df, type: 3}
   visualColor: {r: 0.9528302, g: 0.73085827, b: 0.4539427, a: 1}
-  attackRangeTolerance: 0.08
-  projectileSpeed: 7
-  projectileArcHeight: 0.7
+  prefab: {fileID: 389284933144154984, guid: b8867c48a34f3fe48a6e8f39add604ed, type: 3}
   targetPriority: 0100000002000000100000000400000020000000

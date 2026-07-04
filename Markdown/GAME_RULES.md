@@ -174,6 +174,16 @@ the block is destroyed.
 
 Destroyed blocks disappear immediately.
 
+Block HP bars follow the current phase.
+
+- Combat: show after an HP change, then hide after the configured duration.
+- Preparation: remain visible only while Current HP is below Max HP.
+- Above 50% HP uses the healthy color.
+- 50% HP or below uses the warning color.
+- 15% HP or below uses the critical color.
+
+Visibility duration, thresholds, colors, and layout are prefab settings.
+
 ---
 
 # Healing
