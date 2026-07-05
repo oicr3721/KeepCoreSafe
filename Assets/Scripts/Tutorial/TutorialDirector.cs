@@ -36,7 +36,7 @@ namespace KeepCoreSafe.Tutorial
         private Block wrongGreenBlock;
         private bool wrongGreenBlockDismantled;
         private int redBlocksPlaced;
-        private bool shockwaveCompleted;
+        private ClearType clearType;
         private bool gameOver;
         private Vector2Int greenTarget;
 
@@ -114,7 +114,7 @@ namespace KeepCoreSafe.Tutorial
                 yield break;
             }
 
-            if (shockwaveCompleted)
+            if (clearType == ClearType.ShockWave)
                 yield return Say("이렇게 충격파가 충전될 때까지 버틸 수만 있다면 모든 적을 한 번에 제거할 수 있어.");
             else
                 yield return Say("좋아! 적을 모두 처치했네. 물론 이렇게 적을 먼저 쓰러뜨릴 수도 있지만, 그렇지 못하더라도 충격파가 충전될 때까지만 버티면 모든 적을 제거할 수 있어. 하지만 최고의 방어는 최고의 공격이기도 하지.");
@@ -161,9 +161,9 @@ namespace KeepCoreSafe.Tutorial
                 attackCreated = true;
         }
 
-        private void HandleStageCleared(int _)
+        private void HandleStageCleared(int _, ClearType clearType)
         {
-            shockwaveCompleted = true;
+            this.clearType = clearType;
         }
 
         private void HandlePhaseChanged(GamePhase phase)

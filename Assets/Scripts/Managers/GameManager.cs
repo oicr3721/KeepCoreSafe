@@ -49,7 +49,7 @@ namespace KeepCoreSafe.Managers
         public static event Action<GamePhase> PhaseChanged;
         public static event Action<float> TimeScaleChanged;
         public static event Action<int> WaveStarted;
-        public static event Action<int> StageCleared;
+        public static event Action<int, ClearType> StageCleared;
 
         private void Awake()
         {
@@ -118,6 +118,7 @@ namespace KeepCoreSafe.Managers
         {
             if (Phase == GamePhase.Combat && !isCoreDestructionPlaying && !isStageClearPlaying)
             {
+                StageCleared?.Invoke(WaveIndex, ClearType.KillAllEnemies);
                 SetPhase(GamePhase.Preparation);
             }
         }
@@ -236,7 +237,7 @@ namespace KeepCoreSafe.Managers
             RestoreNormalTimeScale();
             waveManager.StopWave();
             isStageClearPlaying = false;
-            StageCleared?.Invoke(WaveIndex);
+            StageCleared?.Invoke(WaveIndex, ClearType.ShockWave);
             SetPhase(GamePhase.Preparation);
         }
 

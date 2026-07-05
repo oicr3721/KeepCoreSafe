@@ -4130,7 +4130,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.GridSystem.GridVisualizer
   linePrefab: {fileID: 51490635874834781, guid: 357a70707adaec14d8ca172152f535df, type: 3}
-  lineColor: {r: 0.22352941, g: 0.23529412, b: 0.39607844, a: 0.8}
+  lineColor: {r: 0.12580442, g: 0.11463154, b: 0.1509434, a: 0.77254903}
   lineWidth: 0.03
   sortingOrder: -1
 --- !u!114 &1390296942
@@ -5758,7 +5758,6 @@ MonoBehaviour:
   canvasGroup: {fileID: 1650187848}
   label: {fileID: 1650187846}
   title: STAGE CLEAR
-  subtitle: SHOCKWAVE DEPLOYED
   slideOffset: {x: 0, y: 38}
   fadeInDuration: 0.2
   visibleDuration: 1.2
@@ -6449,7 +6448,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.15485936, g: 0.13794944, b: 0.18867922, a: 1}
+  m_BackGroundColor: {r: 0.08627451, g: 0.0627451, b: 0.105882354, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0

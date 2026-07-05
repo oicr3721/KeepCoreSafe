@@ -1,17 +1,30 @@
 using DG.Tweening;
 using KeepCoreSafe.Managers;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+
+public enum ClearType
+{
+    ShockWave,
+    KillAllEnemies
+}
 
 namespace KeepCoreSafe.UI
 {
     public sealed class StageClearAnnouncementUI : MonoBehaviour
     {
+        private static readonly Dictionary<ClearType, string> clearTable = new()
+    {
+        { ClearType.ShockWave, "SHOCKWAVE DEPLOYED" },
+        { ClearType.KillAllEnemies, "All ENEMIES KILLED" },
+    };
+
+
         [SerializeField] private RectTransform visualRoot;
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private TMP_Text label;
         [SerializeField] private string title = "STAGE CLEAR";
-        [SerializeField] private string subtitle = "SHOCKWAVE DEPLOYED";
 
         [Header("Animation")]
         [SerializeField] private Vector2 slideOffset = new(0f, 38f);
@@ -40,14 +53,14 @@ namespace KeepCoreSafe.UI
             canvasGroup?.DOKill(false);
         }
 
-        private void Show(int waveIndex)
+        private void Show(int waveIndex, ClearType clearType)
         {
             if (visualRoot == null || canvasGroup == null || label == null)
                 return;
 
             visualRoot.DOKill(false);
             canvasGroup.DOKill(false);
-            label.text = $"{title}\n<size=45%>{subtitle}</size>";
+            label.text = $"{title}\n<size=45%>{clearTable[clearType]}</size>";
             visualRoot.anchoredPosition = shownPosition + slideOffset;
             canvasGroup.alpha = 0f;
 
