@@ -17,7 +17,7 @@ MonoBehaviour:
     \uC218\uB9AC\uD574 \uCCB4\uB825\uC744 \uD68C\uBCF5\uD569\uB2C8\uB2E4."
   maxHP: 100
   dismantleValue: 10
-  sprite: {fileID: -6516952278035918218, guid: e4adadbff4951da40a04c2daa4382a23, type: 3}
+  sprite: {fileID: 7086454038150168702, guid: a863abfa2dbd1e440825cebc95867066, type: 3}
   prefab: {fileID: 544130411324589891, guid: 63352878e856a79478f35914d23e4b9f, type: 3}
   additionalProperties: 0
   destroyedSound:

@@ -6,7 +6,8 @@ public enum SceneType
 {
     Title,
     Game,
-    Tutorial
+    Tutorial,
+    Prologue
 }
 
 public static class SceneLoader
@@ -16,6 +17,7 @@ public static class SceneLoader
         { SceneType.Title, "TitleScene" },
         { SceneType.Game, "GameScene" },
         { SceneType.Tutorial, "TutorialScene" },
+        { SceneType.Prologue, "PrologueScene" },
     };
 
     public static void Load(SceneType scene)

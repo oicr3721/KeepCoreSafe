@@ -3,13 +3,10 @@ using UnityEngine;
 
 namespace KeepCoreSafe.GridSystem
 {
-    [RequireComponent(typeof(GridManager))]
     public sealed class GridVisualizer : MonoBehaviour
     {
         [SerializeField]
         private LineRenderer linePrefab;
-        [SerializeField]
-        private Transform gridLineRoot;
 
         [SerializeField]
         private Color lineColor = new Color(0.35f, 0.55f, 0.7f, 0.8f);
@@ -20,12 +17,8 @@ namespace KeepCoreSafe.GridSystem
         [SerializeField]
         private int sortingOrder = -1;
 
-        private GridManager gridManager;
-
         private void Start()
         {
-            gridManager = GetComponent<GridManager>();
-
             GameManager.PhaseChanged += OnPhaseChanged;
 
             BuildRuntimeGrid();
@@ -39,9 +32,14 @@ namespace KeepCoreSafe.GridSystem
                 SetGridVisible(true);
         }
 
+        private void OnDestroy()
+        {
+            GameManager.PhaseChanged -= OnPhaseChanged;
+        }
+
         private void SetGridVisible(bool visible)
         {
-            gridLineRoot.gameObject.SetActive(visible);
+            gameObject.SetActive(visible);
         }
 
         private void BuildRuntimeGrid()
@@ -52,16 +50,16 @@ namespace KeepCoreSafe.GridSystem
                 return;
             }
 
-            float halfWidth = gridManager.Width * 0.5f;
-            float halfHeight = gridManager.Height * 0.5f;
+            float halfWidth = GridManager.Instance.Width * 0.5f;
+            float halfHeight = GridManager.Instance.Height * 0.5f;
 
-            for (int x = 0; x <= gridManager.Width; x++)
+            for (int x = 0; x <= GridManager.Instance.Width; x++)
             {
                 float gridX = x - halfWidth;
                 CreateLine($"Vertical {x}", gridX, -halfHeight, gridX, halfHeight);
             }
 
-            for (int y = 0; y <= gridManager.Height; y++)
+            for (int y = 0; y <= GridManager.Instance.Height; y++)
             {
                 float gridY = y - halfHeight;
                 CreateLine($"Horizontal {y}", -halfWidth, gridY, halfWidth, gridY);
@@ -70,7 +68,7 @@ namespace KeepCoreSafe.GridSystem
 
         private void CreateLine(string lineName, float x1, float y1, float x2, float y2)
         {
-            LineRenderer line = Instantiate(linePrefab, gridLineRoot);
+            LineRenderer line = Instantiate(linePrefab, transform);
             line.name = lineName;
             line.startColor = lineColor;
             line.endColor = lineColor;
@@ -86,8 +84,8 @@ namespace KeepCoreSafe.GridSystem
         private Vector3 GridPointToWorld(float x, float y)
         {
             return transform.position +
-                   new Vector3(x * gridManager.CellSize,
-                               y * gridManager.CellSize,
+                   new Vector3(x * GridManager.Instance.CellSize,
+                               y * GridManager.Instance.CellSize,
                                0f);
         }
     }

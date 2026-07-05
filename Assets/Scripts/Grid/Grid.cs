@@ -110,18 +110,11 @@ namespace KeepCoreSafe.GridSystem
             AdjacencyDirection directions,
             float effectRange)
         {
-            int range = GridEffectArea.GetCellRange(effectRange);
-            for (int x = -range; x <= range; x++)
+            foreach (Vector2Int offset in GridEffectArea.EnumerateOffsets(directions, effectRange))
             {
-                for (int y = -range; y <= range; y++)
+                if (TryGetCell(origin + offset, out GridCell cell) && cell.IsOccupied)
                 {
-                    Vector2Int offset = new Vector2Int(x, y);
-                    if (GridEffectArea.ContainsOffset(offset, directions, effectRange)
-                        && TryGetCell(origin + offset, out GridCell cell)
-                        && cell.IsOccupied)
-                    {
-                        yield return cell.Occupant;
-                    }
+                    yield return cell.Occupant;
                 }
             }
         }

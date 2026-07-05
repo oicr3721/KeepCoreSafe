@@ -218,5 +218,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.ShockwaveRingView
   ringRenderer: {fileID: 2662153681423531008}
-  startColor: {r: 0.7, g: 2.4, b: 1.6, a: 1}
-  endColor: {r: 0.2, g: 0.8, b: 1.2, a: 0}
+  startColor: {r: 8.697935, g: 7.2991295, b: 1.0256997, a: 1}
+  endColor: {r: 2.1885507, g: 1.2911322, b: 0.07226351, a: 0}

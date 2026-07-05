@@ -164,13 +164,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.ElectricLine
   lineRenderer: {fileID: 3340217248136841131}
   pointCount: 9
-  baseWidth: 0.055
+  baseWidth: 0.025
   color: {r: 0.3, g: 0.85, b: 1.8, a: 0.9}
   noiseAmplitude: 0.055
   noiseFrequency: 14
   noiseSpeed: 9
   pulseSpeed: 8
-  pulseAmount: 0.2
+  pulseAmount: 0.3
   uvScrollSpeed: {x: 2.5, y: 0}
   revealDuration: 0.08
   releaseDuration: 0.12

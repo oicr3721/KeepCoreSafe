@@ -15,6 +15,6 @@ MonoBehaviour:
   displayName: Attack
   description: "\uC644\uC131\uB41C \uACF5\uACA9 \uBE14\uB85D\uC744 \uC774\uBC88 \uBC30\uCE58
     \uBAA9\uB85D\uC5D0 \uCD94\uAC00\uD569\uB2C8\uB2E4."
-  cost: 12
+  cost: 20
   grantedBlock: {fileID: 11400000, guid: 33b09b7570f8c8c4ba7c5c2a7ffbc291, type: 2}
   playRareAppearance: 1

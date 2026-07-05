@@ -39,13 +39,6 @@ namespace KeepCoreSafe.Editor
             }
 
             SerializedObject controllerObject = new SerializedObject(controller);
-            SpriteRenderer preview = controllerObject.FindProperty("previewRenderer").objectReferenceValue as SpriteRenderer;
-            if (preview == null)
-            {
-                Debug.LogError("PlacementController has no preview renderer assigned.");
-                return;
-            }
-
             PlacementVisualizer visualizer =
                 Object.FindFirstObjectByType<PlacementVisualizer>(FindObjectsInactive.Include);
             Transform root = visualizer != null ? visualizer.transform : null;
@@ -57,28 +50,7 @@ namespace KeepCoreSafe.Editor
 
             if (visualizer == null) visualizer = root.gameObject.AddComponent<PlacementVisualizer>();
             root.SetParent(null, true);
-
-            SpriteRenderer up = GetOrCreateDirection(root, "Up Effect", preview);
-            SpriteRenderer down = GetOrCreateDirection(root, "Down Effect", preview);
-            SpriteRenderer left = GetOrCreateDirection(root, "Left Effect", preview);
-            SpriteRenderer right = GetOrCreateDirection(root, "Right Effect", preview);
-            SpriteRenderer upLeft = GetOrCreateDirection(root, "Up Left Effect", preview);
-            SpriteRenderer upRight = GetOrCreateDirection(root, "Up Right Effect", preview);
-            SpriteRenderer downLeft = GetOrCreateDirection(root, "Down Left Effect", preview);
-            SpriteRenderer downRight = GetOrCreateDirection(root, "Down Right Effect", preview);
-            SpriteRenderer everything = GetOrCreateDirection(root, "Everything Effect", preview);
-
-            SerializedObject visualizerObjectData = new SerializedObject(visualizer);
-            visualizerObjectData.FindProperty("upRenderer").objectReferenceValue = up;
-            visualizerObjectData.FindProperty("downRenderer").objectReferenceValue = down;
-            visualizerObjectData.FindProperty("leftRenderer").objectReferenceValue = left;
-            visualizerObjectData.FindProperty("rightRenderer").objectReferenceValue = right;
-            visualizerObjectData.FindProperty("upLeftRenderer").objectReferenceValue = upLeft;
-            visualizerObjectData.FindProperty("upRightRenderer").objectReferenceValue = upRight;
-            visualizerObjectData.FindProperty("downLeftRenderer").objectReferenceValue = downLeft;
-            visualizerObjectData.FindProperty("downRightRenderer").objectReferenceValue = downRight;
-            visualizerObjectData.FindProperty("everythingRenderer").objectReferenceValue = everything;
-            visualizerObjectData.ApplyModifiedPropertiesWithoutUndo();
+            BlockEffectVisualizerSetup.ConfigureVisualizer(visualizer);
 
             controllerObject.FindProperty("effectVisualizer").objectReferenceValue = visualizer;
             controllerObject.FindProperty("coreBlockData").objectReferenceValue =
@@ -125,28 +97,6 @@ namespace KeepCoreSafe.Editor
             text.raycastTarget = false;
             text.gameObject.SetActive(false);
             return text;
-        }
-
-        private static SpriteRenderer GetOrCreateDirection(
-            Transform parent,
-            string objectName,
-            SpriteRenderer preview)
-        {
-            Transform child = parent.Find(objectName);
-            if (child == null)
-            {
-                GameObject childObject = new GameObject(objectName);
-                child = childObject.transform;
-                child.SetParent(parent, false);
-            }
-
-            SpriteRenderer renderer = child.GetComponent<SpriteRenderer>();
-            if (renderer == null) renderer = child.gameObject.AddComponent<SpriteRenderer>();
-            renderer.sprite = preview.sprite;
-            renderer.sharedMaterial = preview.sharedMaterial;
-            renderer.sortingOrder = preview.sortingOrder + 1;
-            renderer.enabled = false;
-            return renderer;
         }
 
         private static void SetupSpeedButton()

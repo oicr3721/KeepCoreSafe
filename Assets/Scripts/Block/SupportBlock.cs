@@ -14,6 +14,7 @@ namespace KeepCoreSafe.Blocks
         [SerializeField] private ElectricLine electricLinePrefab;
         [SerializeField, Min(0)] private int initialPoolSize = 4;
         [SerializeField] private Transform electricLineRoot;
+        [SerializeField] private Transform electricLineAttachPoint;
         [SerializeField, Min(0.02f)] private float targetRefreshInterval = 0.15f;
 
         private readonly Dictionary<Block, ElectricLine> activeLines = new();
@@ -90,7 +91,7 @@ namespace KeepCoreSafe.Blocks
                 if (line == null)
                     continue;
 
-                line.Play(transform, block.transform, linePool.Return);
+                line.Play(electricLineAttachPoint, block.transform, linePool.Return);
                 activeLines.Add(block, line);
             }
         }

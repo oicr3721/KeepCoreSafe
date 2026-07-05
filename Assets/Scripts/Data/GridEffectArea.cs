@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace KeepCoreSafe.Data
@@ -39,6 +40,22 @@ namespace KeepCoreSafe.Data
             if (normalized == new Vector2Int(-1, -1)) return Has(directions, AdjacencyDirection.DownLeft);
             if (normalized == new Vector2Int(1, -1)) return Has(directions, AdjacencyDirection.DownRight);
             return false;
+        }
+
+        public static IEnumerable<Vector2Int> EnumerateOffsets(
+            AdjacencyDirection directions,
+            float effectRange)
+        {
+            int range = GetCellRange(effectRange);
+            for (int x = -range; x <= range; x++)
+            {
+                for (int y = -range; y <= range; y++)
+                {
+                    Vector2Int offset = new(x, y);
+                    if (ContainsOffset(offset, directions, effectRange))
+                        yield return offset;
+                }
+            }
         }
 
         private static bool Has(AdjacencyDirection directions, AdjacencyDirection flag)

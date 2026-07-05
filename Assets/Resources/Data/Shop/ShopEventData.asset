@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9b31c2f68768da46a9bd6f82401b2ae, type: 3}
   m_Name: ShopEventData
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.ShopEventData
-  firstWave: 3
-  waveInterval: 3
+  firstWave: 1
+  waveInterval: 5
   additionalWaves: 
   offersPerEvent: 3
   offers:

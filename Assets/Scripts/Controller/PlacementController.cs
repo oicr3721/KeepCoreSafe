@@ -1,3 +1,4 @@
+using System;
 using KeepCoreSafe.Audio;
 using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Controllers;
@@ -11,6 +12,13 @@ using UnityEngine.InputSystem;
 
 public sealed class PlacementController : MonoBehaviour
 {
+    [Serializable]
+    private struct StartingBlock
+    {
+        public Vector2Int offset;
+        public BasicBlockData data;
+    }
+
     [Header("Preview")]
     [SerializeField] private SpriteRenderer previewRenderer;
     [SerializeField] private Color normalColor = new(1f, 1f, 1f, 0.55f);
@@ -29,6 +37,8 @@ public sealed class PlacementController : MonoBehaviour
 
     [Header("Core")]
     [SerializeField] private CoreBlockData coreBlockData;
+    [SerializeField] private bool useScriptedStartingBlocks;
+    [SerializeField] private StartingBlock[] scriptedStartingBlocks = Array.Empty<StartingBlock>();
 
     [Header("Audio")]
     [Tooltip("Played after a player block is successfully placed on the Grid.")]
@@ -40,6 +50,11 @@ public sealed class PlacementController : MonoBehaviour
     private int selectedSupplyIndex = -1;
     private BlockMatchResolver matchResolver;
     private bool placementInputEnabled;
+
+    public bool PlacementInputEnabled => placementInputEnabled;
+    public event Action<Block, Vector2Int> BlockPlaced;
+    public event Action<Block, Vector2Int> BlockDismantled;
+    public event Action<Block, Vector2Int> SkillBlockCreated;
 
     private void Start()
     {
@@ -187,6 +202,7 @@ public sealed class PlacementController : MonoBehaviour
         if (wasRare)
             block.PlayRareAppearance();
 
+        BlockPlaced?.Invoke(block, position);
         ClearSelection();
         ResolveMatch(position);
     }
@@ -221,6 +237,7 @@ public sealed class PlacementController : MonoBehaviour
         resultBlock.PlayPlacementAnimation();
         AudioManager.PlayAt(placementSound, resultBlock.transform.position);
         resultBlock.PlayRareAppearance();
+        SkillBlockCreated?.Invoke(resultBlock, match.Position);
     }
 
     private void TryDismantle(Vector2Int position)
@@ -229,6 +246,7 @@ public sealed class PlacementController : MonoBehaviour
             return;
 
         GameManager.PlacePoint.AddValue(CalculateDismantleRefund(block, dismantleRefundRate));
+        BlockDismantled?.Invoke(block, position);
         block.PlayDismantleAnimation(() =>
         {
             AudioManager.PlayAt(dismantleSound, block.transform.position);
@@ -360,6 +378,13 @@ public sealed class PlacementController : MonoBehaviour
 
     private void PlaceStartingBasicBlocks(Vector2Int corePosition)
     {
+        if (useScriptedStartingBlocks)
+        {
+            foreach (StartingBlock entry in scriptedStartingBlocks)
+                PlaceStartingBlock(corePosition + entry.offset, entry.data);
+            return;
+        }
+
         Vector2Int[] directions =
         {
             Vector2Int.up,
@@ -380,14 +405,23 @@ public sealed class PlacementController : MonoBehaviour
             }
 
             Block block = CreateBlock(data);
-            if (block == null)
-                continue;
-            if (!GridManager.Instance.TryPlaceBlock(block, position))
-            {
+            if (block != null && !GridManager.Instance.TryPlaceBlock(block, position))
                 Destroy(block.gameObject);
-                continue;
-            }
         }
+    }
+
+    private void PlaceStartingBlock(Vector2Int position, BlockData data)
+    {
+        if (data == null
+            || !GridManager.Instance.Grid.IsWithinBounds(position)
+            || !GridManager.Instance.IsCellEmpty(position))
+        {
+            return;
+        }
+
+        Block block = CreateBlock(data);
+        if (block != null && !GridManager.Instance.TryPlaceBlock(block, position))
+            Destroy(block.gameObject);
     }
 
     private static Color WithPreviewAlpha(Color color, float alpha)

@@ -38,6 +38,7 @@ namespace KeepCoreSafe.UI
         private readonly List<Button> buttonPool = new();
         private readonly List<Button> activeButtons = new();
         private readonly List<bool> activeRareFlags = new();
+        private bool startWaveAllowed = true;
 
         private void Start()
         {
@@ -163,25 +164,36 @@ namespace KeepCoreSafe.UI
             if (supplyPresentation == null)
             {
                 placementController?.SetPlacementInputEnabled(true);
-                startWaveButtonUI?.Show();
+                if (startWaveAllowed)
+                    startWaveButtonUI?.Show();
                 return;
             }
 
             supplyPresentation.PlayConfirm(activeButtons, () =>
             {
                 placementController?.SetPlacementInputEnabled(true);
-                startWaveButtonUI?.Show();
+                if (startWaveAllowed)
+                    startWaveButtonUI?.Show();
                 RefreshReroll();
             });
         }
 
         private void HandleStartWave()
         {
-            if (GameManager.Phase != GamePhase.Preparation)
+            if (!startWaveAllowed || GameManager.Phase != GamePhase.Preparation)
                 return;
 
             startWaveButtonUI?.Hide();
             placementController?.Confirm();
+        }
+
+        public void SetStartWaveAllowed(bool allowed)
+        {
+            startWaveAllowed = allowed;
+            if (allowed && supplyPresentation != null && supplyPresentation.IsDocked)
+                startWaveButtonUI?.Show();
+            else if (!allowed)
+                startWaveButtonUI?.Hide(true);
         }
 
         private void HandlePointsChanged(float _, float __)

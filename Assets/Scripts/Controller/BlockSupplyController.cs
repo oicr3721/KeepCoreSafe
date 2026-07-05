@@ -22,6 +22,11 @@ namespace KeepCoreSafe.Controllers
 
         [SerializeField] private BlockSupplyData supplyData;
 
+        [Header("Scripted Supply")]
+        [Tooltip("Used by tutorials/cutscenes that require a fixed block order.")]
+        [SerializeField] private bool useScriptedSupply;
+        [SerializeField] private BlockData[] scriptedBlocks = Array.Empty<BlockData>();
+
         private readonly List<GrantedBlock> grantedBlocks = new();
         private int rerollCount;
         private bool hasUsedBlock;
@@ -30,7 +35,8 @@ namespace KeepCoreSafe.Controllers
         public float CurrentRerollCost => supplyData == null
             ? 0f
             : supplyData.InitialRerollCost + rerollCount * supplyData.RerollCostIncrease;
-        public bool CanReroll => GameManager.Phase == GamePhase.Preparation
+        public bool CanReroll => !useScriptedSupply
+                                 && GameManager.Phase == GamePhase.Preparation
                                  && !hasUsedBlock
                                  && grantedBlocks.Count > 0
                                  && GameManager.PlacePoint.CurrentValue >= CurrentRerollCost;
@@ -96,6 +102,16 @@ namespace KeepCoreSafe.Controllers
             SupplyChanged?.Invoke(true);
         }
 
+        public void ResetScriptedSupply()
+        {
+            if (!useScriptedSupply)
+                return;
+
+            rerollCount = 0;
+            hasUsedBlock = false;
+            DealBlocks();
+        }
+
         public void EndPreparation()
         {
             grantedBlocks.Clear();
@@ -120,6 +136,18 @@ namespace KeepCoreSafe.Controllers
         private void DealBlocks()
         {
             grantedBlocks.Clear();
+            if (useScriptedSupply)
+            {
+                foreach (BlockData block in scriptedBlocks)
+                {
+                    if (block != null)
+                        grantedBlocks.Add(new GrantedBlock(block, false));
+                }
+
+                SupplyChanged?.Invoke(true);
+                return;
+            }
+
             if (supplyData == null)
             {
                 Debug.LogError("BlockSupplyController has no BlockSupplyData.", this);
