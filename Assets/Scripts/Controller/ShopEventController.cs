@@ -12,11 +12,14 @@ namespace KeepCoreSafe.Controllers
         [SerializeField] private BlockSupplyController supplyController;
 
         private readonly List<ShopOfferData> currentOffers = new();
+        private readonly HashSet<int> purchasedOfferIndices = new();
 
         public IReadOnlyList<ShopOfferData> CurrentOffers => currentOffers;
+        public bool IsOpen { get; private set; }
         public event Action ShopOpened;
         public event Action ShopClosed;
         public event Action OffersChanged;
+        public event Action<int> OfferPurchased;
 
         private void OnEnable()
         {
@@ -30,38 +33,64 @@ namespace KeepCoreSafe.Controllers
 
         public bool TryPurchase(int offerIndex)
         {
-            if (offerIndex < 0 || offerIndex >= currentOffers.Count)
+            if (!IsOpen
+                || offerIndex < 0
+                || offerIndex >= currentOffers.Count
+                || purchasedOfferIndices.Contains(offerIndex))
+            {
                 return false;
+            }
 
             bool purchased = currentOffers[offerIndex].TryPurchase(supplyController);
             if (purchased)
-                OffersChanged?.Invoke();
+            {
+                purchasedOfferIndices.Add(offerIndex);
+                OfferPurchased?.Invoke(offerIndex);
+            }
             return purchased;
+        }
+
+        public bool IsPurchased(int offerIndex)
+        {
+            return purchasedOfferIndices.Contains(offerIndex);
+        }
+
+        public bool WillOpenAfterWave(int completedWave)
+        {
+            return isActiveAndEnabled
+                   && completedWave > 0
+                   && shopData != null
+                   && shopData.ShouldOpenAfterWave(completedWave);
         }
 
         public void CloseShop()
         {
+            if (!IsOpen)
+                return;
+
+            IsOpen = false;
             currentOffers.Clear();
+            purchasedOfferIndices.Clear();
             ShopClosed?.Invoke();
         }
 
         private void HandlePhaseChanged(GamePhase phase)
         {
             if (phase != GamePhase.Preparation
-                || GameManager.WaveIndex <= 0
-                || shopData == null
-                || !shopData.ShouldOpenAfterWave(GameManager.WaveIndex))
+                || !WillOpenAfterWave(GameManager.WaveIndex))
             {
                 return;
             }
 
             BuildOfferList();
+            IsOpen = true;
             ShopOpened?.Invoke();
         }
 
         private void BuildOfferList()
         {
             currentOffers.Clear();
+            purchasedOfferIndices.Clear();
             List<ShopOfferData> candidates = new();
             foreach (ShopOfferData offer in shopData.Offers)
             {

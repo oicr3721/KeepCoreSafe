@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using KeepCoreSafe.Audio;
 
 namespace KeepCoreSafe.Tutorial
 {
@@ -13,7 +14,8 @@ namespace KeepCoreSafe.Tutorial
         [SerializeField] private TMP_Text noiseLabel;
         [SerializeField] private CanvasGroup blackout;
         [SerializeField, Min(0.5f)] private float duration = 1.8f;
-        [SerializeField] private string nextScene = "PrologueScene";
+        [SerializeField, Min(0.5f)] private float blackoutDuration = 2f;
+        [SerializeField] private AudioCue glitchSound = new();
 
         public void Play()
         {
@@ -23,6 +25,7 @@ namespace KeepCoreSafe.Tutorial
 
         private IEnumerator PlayRoutine()
         {
+            AudioManager.Play(glitchSound);
             float elapsed = 0f;
             if (blackout != null)
                 blackout.alpha = 0f;
@@ -52,8 +55,10 @@ namespace KeepCoreSafe.Tutorial
                 redFlash.color = Color.clear;
             if (noiseLabel != null)
                 noiseLabel.text = string.Empty;
-            yield return new WaitForSecondsRealtime(0.35f);
-            SceneManager.LoadScene(nextScene);
+
+            AudioManager.Instance.StopMusic();
+            yield return new WaitForSecondsRealtime(blackoutDuration);
+            SceneLoader.Load(SceneType.Prologue);
         }
 
         private static string BuildNoise(int length)

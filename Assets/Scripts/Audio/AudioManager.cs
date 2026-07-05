@@ -32,11 +32,15 @@ namespace KeepCoreSafe.Audio
         {
             if (Instance != null && Instance != this)
             {
+                Instance.ApplySceneConfiguration(defaultMusic, stageMusic);
+                DestroyDuplicateMusicPlayer();
                 Destroy(gameObject);
                 return;
             }
 
             Instance = this;
+            DontDestroyOnLoad(gameObject);
+            PreserveSeparateMusicPlayer();
             ConfigureSources();
         }
 
@@ -59,6 +63,16 @@ namespace KeepCoreSafe.Audio
         public void PlayMusic(MusicTrackData track)
         {
             musicPlayer?.Play(track);
+        }
+
+        public void StopMusic()
+        {
+            musicPlayer?.Stop();
+        }
+
+        public static void RequestMusic(MusicTrackData track, float fadeDuration)
+        {
+            Instance?.musicPlayer?.Play(track, fadeDuration);
         }
 
         private void PlayInternal(AudioCue cue, Vector3 worldPosition, bool hasPosition)
@@ -117,6 +131,36 @@ namespace KeepCoreSafe.Audio
             }
 
             musicPlayer?.Play(selected);
+        }
+
+        private void ApplySceneConfiguration(
+            MusicTrackData sceneDefaultMusic,
+            StageMusic[] sceneStageMusic)
+        {
+            defaultMusic = sceneDefaultMusic;
+            stageMusic = sceneStageMusic != null
+                ? (StageMusic[])sceneStageMusic.Clone()
+                : Array.Empty<StageMusic>();
+        }
+
+        private void PreserveSeparateMusicPlayer()
+        {
+            if (musicPlayer == null)
+                return;
+
+            Transform musicRoot = musicPlayer.transform.root;
+            if (musicRoot != transform.root)
+                DontDestroyOnLoad(musicRoot.gameObject);
+        }
+
+        private void DestroyDuplicateMusicPlayer()
+        {
+            if (musicPlayer == null || musicPlayer == Instance.musicPlayer)
+                return;
+
+            Transform musicRoot = musicPlayer.transform.root;
+            if (musicRoot != transform.root)
+                Destroy(musicRoot.gameObject);
         }
 
         private void ConfigureSources()

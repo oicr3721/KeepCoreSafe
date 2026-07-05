@@ -12,6 +12,8 @@ namespace KeepCoreSafe.Audio
         private AudioSource activeSource;
         private MusicTrackData currentTrack;
 
+        public MusicTrackData CurrentTrack => currentTrack;
+
         private void Awake()
         {
             activeSource = primarySource;
@@ -19,9 +21,14 @@ namespace KeepCoreSafe.Audio
             Configure(secondarySource);
         }
 
-        public void Play(MusicTrackData track)
+        public void Play(MusicTrackData track, float fadeDuration = -1f)
         {
-            if (track == null || track.Clip == null || track == currentTrack)
+            if (track == null || track.Clip == null)
+                return;
+
+            bool sameTrack = track == currentTrack
+                             || (currentTrack != null && track.Clip == currentTrack.Clip);
+            if (sameTrack && activeSource != null && activeSource.isPlaying)
                 return;
 
             AudioSource next = activeSource == primarySource ? secondarySource : primarySource;
@@ -36,7 +43,9 @@ namespace KeepCoreSafe.Audio
             next.volume = 0f;
             next.Play();
 
-            float duration = track.CrossfadeDuration;
+            float duration = fadeDuration >= 0f
+                ? fadeDuration
+                : track.CrossfadeDuration;
             next.DOFade(track.Volume, duration).SetUpdate(true);
             if (activeSource != null)
             {

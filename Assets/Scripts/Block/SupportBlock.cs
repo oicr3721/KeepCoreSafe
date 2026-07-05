@@ -65,7 +65,10 @@ namespace KeepCoreSafe.Blocks
                          SupportData.AffectedDirections,
                          SupportData.EffectRange))
             {
-                if (block != null && block != this && block.HP.CurrentValue > 0f)
+                if (block != null 
+                    && block != this 
+                    && block.HP.CurrentValue > 0f
+                    && block.Data is TimedAreaBlockData)
                     desiredTargets.Add(block);
             }
 

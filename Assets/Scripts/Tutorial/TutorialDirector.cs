@@ -36,7 +36,6 @@ namespace KeepCoreSafe.Tutorial
         private Block wrongGreenBlock;
         private bool wrongGreenBlockDismantled;
         private int redBlocksPlaced;
-        private bool waveCompleted;
         private bool shockwaveCompleted;
         private bool gameOver;
         private Vector2Int greenTarget;
@@ -47,7 +46,6 @@ namespace KeepCoreSafe.Tutorial
             placementController.BlockPlaced += HandleBlockPlaced;
             placementController.BlockDismantled += HandleBlockDismantled;
             placementController.SkillBlockCreated += HandleSkillCreated;
-            waveManager.WaveCompleted += HandleWaveCompleted;
             GameManager.StageCleared += HandleStageCleared;
             GameManager.PhaseChanged += HandlePhaseChanged;
             preparationUI.SetStartWaveAllowed(false);
@@ -163,11 +161,6 @@ namespace KeepCoreSafe.Tutorial
                 attackCreated = true;
         }
 
-        private void HandleWaveCompleted()
-        {
-            waveCompleted = true;
-        }
-
         private void HandleStageCleared(int _)
         {
             shockwaveCompleted = true;
@@ -190,7 +183,6 @@ namespace KeepCoreSafe.Tutorial
                 placementController.BlockDismantled -= HandleBlockDismantled;
                 placementController.SkillBlockCreated -= HandleSkillCreated;
             }
-            if (waveManager != null) waveManager.WaveCompleted -= HandleWaveCompleted;
             GameManager.StageCleared -= HandleStageCleared;
             GameManager.PhaseChanged -= HandlePhaseChanged;
         }

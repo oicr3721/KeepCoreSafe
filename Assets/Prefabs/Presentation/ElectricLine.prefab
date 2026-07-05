@@ -165,7 +165,7 @@ MonoBehaviour:
   lineRenderer: {fileID: 3340217248136841131}
   pointCount: 9
   baseWidth: 0.025
-  color: {r: 0.3, g: 0.85, b: 1.8, a: 0.9}
+  color: {r: 0.2924528, g: 1.2439225, b: 2, a: 0.9}
   noiseAmplitude: 0.055
   noiseFrequency: 14
   noiseSpeed: 9

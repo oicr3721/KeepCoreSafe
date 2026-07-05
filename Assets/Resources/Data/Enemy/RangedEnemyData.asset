@@ -25,7 +25,7 @@ MonoBehaviour:
   attackSound:
     clips:
     - {fileID: 8300000, guid: 39783c5965632d240a38f4bb1c7f69b3, type: 3}
-    volume: 1
+    volume: 0.7
     pitchRange: {x: 0.96, y: 1.04}
     spatialBlend: 0
   attackRange: 2

@@ -18,7 +18,9 @@ namespace KeepCoreSafe.Data
 
         protected override void Apply(BlockSupplyController supplyController)
         {
-            supplyController.AddGrantedBlock(grantedBlock, playRareAppearance);
+            supplyController.QueueGrantedBlockForNextPreparation(
+                grantedBlock,
+                playRareAppearance);
         }
     }
 }

@@ -2,7 +2,7 @@ using DG.Tweening;
 using KeepCoreSafe.Managers;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using KeepCoreSafe.Audio;
 using UnityEngine.UI;
 
 namespace KeepCoreSafe.UI
@@ -23,6 +23,9 @@ namespace KeepCoreSafe.UI
         [SerializeField, Min(0f)] private float itemFadeDuration = 0.24f;
         [SerializeField, Min(0f)] private float itemInterval = 0.08f;
         [SerializeField, Min(0f)] private float itemSlideDistance = 24f;
+
+        [Header("Audio")]
+        [SerializeField] private AudioCue gameOverSound;
 
         private Sequence sequence;
 
@@ -52,6 +55,9 @@ namespace KeepCoreSafe.UI
 
         private void Show()
         {
+            AudioManager.Instance.StopMusic();
+            AudioManager.Play(gameOverSound);
+
             sequence?.Kill(false);
             visualRoot.SetActive(true);
             blackout.alpha = 0f;
