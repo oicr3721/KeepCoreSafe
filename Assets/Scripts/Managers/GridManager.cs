@@ -10,6 +10,27 @@ namespace KeepCoreSafe.Managers
 {
     public sealed class GridManager : MonoBehaviour
     {
+        public sealed class InteractionLock : IDisposable
+        {
+            private GridManager owner;
+            private readonly List<Vector2Int> positions;
+
+            internal InteractionLock(GridManager owner, List<Vector2Int> positions)
+            {
+                this.owner = owner;
+                this.positions = positions;
+            }
+
+            public void Dispose()
+            {
+                if (owner == null)
+                    return;
+
+                owner.ReleaseInteractionLock(positions);
+                owner = null;
+            }
+        }
+
         public static GridManager Instance { get; private set; }
 
         [SerializeField, Min(1)]
@@ -63,6 +84,32 @@ namespace KeepCoreSafe.Managers
                 return false;
 
             return !cell.IsOccupied;
+        }
+
+        public bool IsInteractionLocked(Vector2Int position)
+        {
+            return Grid != null
+                && Grid.TryGetCell(position, out GridCell cell)
+                && cell.IsInteractionLocked;
+        }
+
+        public InteractionLock AcquireInteractionLock(IEnumerable<Vector2Int> requestedPositions)
+        {
+            HashSet<Vector2Int> uniquePositions = new();
+            if (requestedPositions != null)
+            {
+                foreach (Vector2Int position in requestedPositions)
+                {
+                    if (Grid != null
+                        && Grid.TryGetCell(position, out GridCell cell)
+                        && uniquePositions.Add(position))
+                    {
+                        cell.AddInteractionLock();
+                    }
+                }
+            }
+
+            return new InteractionLock(this, new List<Vector2Int>(uniquePositions));
         }
 
         public bool TryPlaceBlock(Block block, Vector2Int position)
@@ -165,6 +212,18 @@ namespace KeepCoreSafe.Managers
             return new Vector2Int(
                 Mathf.RoundToInt(local.x / cellSize),
                 Mathf.RoundToInt(local.y / cellSize));
+        }
+
+        private void ReleaseInteractionLock(IReadOnlyList<Vector2Int> positions)
+        {
+            if (Grid == null || positions == null)
+                return;
+
+            foreach (Vector2Int position in positions)
+            {
+                if (Grid.TryGetCell(position, out GridCell cell))
+                    cell.RemoveInteractionLock();
+            }
         }
     }
 }

@@ -67,8 +67,8 @@ namespace KeepCoreSafe.Editor
                 Object.FindFirstObjectByType<PreparationUI>(FindObjectsInactive.Include);
             WaveDifficultyController difficulty =
                 Object.FindFirstObjectByType<WaveDifficultyController>(FindObjectsInactive.Include);
-            StartWaveButtonUI startWave =
-                Object.FindFirstObjectByType<StartWaveButtonUI>(FindObjectsInactive.Include);
+            UIShowHide startWave =
+                Object.FindFirstObjectByType<UIShowHide>(FindObjectsInactive.Include);
 
             if (audioManager == null || supply == null || preparation == null
                 || difficulty == null || startWave == null)
@@ -101,12 +101,21 @@ namespace KeepCoreSafe.Editor
             }
 
             GameManager gameManager = Object.FindFirstObjectByType<GameManager>(FindObjectsInactive.Include);
-            WaveDifficultyController controller = gameManager.GetComponent<WaveDifficultyController>();
+            WaveDifficultyController controller = gameManager.GetComponentInChildren<WaveDifficultyController>(true);
             if (controller == null)
-                controller = gameManager.gameObject.AddComponent<WaveDifficultyController>();
+            {
+                Transform systems = GameManagerStructureRefactorSetup.GetOrCreateChild(
+                    gameManager.transform,
+                    "Game Systems");
+                Transform waveSystem = GameManagerStructureRefactorSetup.GetOrCreateChild(systems, "Wave System");
+                controller = waveSystem.gameObject.AddComponent<WaveDifficultyController>();
+            }
             SerializedObject serialized = new(controller);
             serialized.FindProperty("difficultyData").objectReferenceValue = data;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+            SerializedObject manager = new(gameManager);
+            manager.FindProperty("difficultyController").objectReferenceValue = controller;
+            manager.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void SetupAudioManager()
@@ -325,8 +334,8 @@ namespace KeepCoreSafe.Editor
             preparationData.FindProperty("supplyPresentation").objectReferenceValue = supply;
             preparationData.FindProperty("confirmButton").objectReferenceValue = confirmButton;
             preparationData.FindProperty("startWaveButton").objectReferenceValue = startWaveButton;
-            preparationData.FindProperty("startWaveButtonUI").objectReferenceValue =
-                startWaveButton.GetComponent<StartWaveButtonUI>();
+            preparationData.FindProperty("startWaveButtonVisibility").objectReferenceValue =
+                startWaveButton.GetComponent<UIShowHide>();
             preparationData.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -342,7 +351,7 @@ namespace KeepCoreSafe.Editor
                     typeof(Image),
                     typeof(Button),
                     typeof(CanvasGroup),
-                    typeof(StartWaveButtonUI));
+                    typeof(UIShowHide));
             root.transform.SetParent(canvasParent, false);
             SetLayerRecursively(root, 5);
 
@@ -373,7 +382,7 @@ namespace KeepCoreSafe.Editor
             if (font != null)
                 label.font = font;
 
-            StartWaveButtonUI ui = root.GetComponent<StartWaveButtonUI>();
+            UIShowHide ui = root.GetComponent<UIShowHide>();
             SerializedObject uiData = new(ui);
             uiData.FindProperty("visualRoot").objectReferenceValue = rect;
             uiData.FindProperty("canvasGroup").objectReferenceValue = root.GetComponent<CanvasGroup>();
@@ -387,9 +396,17 @@ namespace KeepCoreSafe.Editor
         {
             GameManager gameManager = Object.FindFirstObjectByType<GameManager>(FindObjectsInactive.Include);
             WaveStartPresentationController controller =
-                gameManager.GetComponent<WaveStartPresentationController>();
+                gameManager.GetComponentInChildren<WaveStartPresentationController>(true);
             if (controller == null)
-                controller = gameManager.gameObject.AddComponent<WaveStartPresentationController>();
+            {
+                Transform presentation = GameManagerStructureRefactorSetup.GetOrCreateChild(
+                    gameManager.transform,
+                    "Presentation");
+                Transform waveStart = GameManagerStructureRefactorSetup.GetOrCreateChild(
+                    presentation,
+                    "Wave Start Presentation");
+                controller = waveStart.gameObject.AddComponent<WaveStartPresentationController>();
+            }
 
             GameObject pulsePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CorePulsePrefabPath);
             SerializedObject controllerData = new(controller);

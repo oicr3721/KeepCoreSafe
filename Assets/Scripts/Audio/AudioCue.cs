@@ -10,7 +10,7 @@ namespace KeepCoreSafe.Audio
         [SerializeField] private AudioClip[] clips = Array.Empty<AudioClip>();
 
         [Tooltip("Volume multiplier applied to the selected clip.")]
-        [SerializeField, Range(0f, 1f)] private float volume = 1f;
+        [SerializeField, Range(0f, 2f)] private float volume = 1f;
 
         [Tooltip("A random pitch is selected inside this range.")]
         [SerializeField] private Vector2 pitchRange = new(0.96f, 1.04f);

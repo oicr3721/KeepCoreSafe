@@ -8,33 +8,27 @@ namespace KeepCoreSafe.Enemies
 {
     public sealed class MeleeEnemy : Enemy
     {
-        private GridPathfinder pathfinder;
         private IReadOnlyList<Vector2Int> pathCells = Array.Empty<Vector2Int>();
         private Block currentTarget;
         private int pathIndex;
         private float attackCooldownRemaining;
-        private float repathCooldownRemaining;
         private bool hasPlan;
-        private bool isFallbackPlan;
-        private bool planHadBlocker;
-
+        private Block routeGoal;
 
         protected override void Start()
         {
             base.Start();
-            pathfinder = new GridPathfinder(GridManager, Data, GetInstanceID());
+            pathCells = InitialPathCells;
+            hasPlan = pathCells.Count > 0;
+            routeGoal = InitialRouteTarget != null ? InitialRouteTarget : GridManager.Grid.Core;
+            if (routeGoal is SupplyBlock)
+                routeGoal.Died += HandleRouteGoalDied;
         }
 
         protected override void OnCombatUpdate(float deltaTime)
         {
-            base.OnCombatUpdate(deltaTime);
-
-            repathCooldownRemaining -= deltaTime;
             if (ContinueCellMovement(deltaTime))
                 return;
-
-            if (!hasPlan || planHadBlocker && currentTarget == null)
-                RebuildPlan();
 
             if (!hasPlan)
             {
@@ -43,61 +37,84 @@ namespace KeepCoreSafe.Enemies
             }
 
             SkipCurrentPathCell();
-            if (pathIndex < pathCells.Count)
-            {
-                TryBeginCellMovement(pathCells[pathIndex]);
-                return;
-            }
+            if (currentTarget == null)
+                AcquireNextTargetOrMove();
 
             if (currentTarget == null)
-            {
-                StopMoving();
-                if (isFallbackPlan && repathCooldownRemaining <= 0f)
-                    RebuildPlan();
                 return;
-            }
 
             if (!IsAdjacentToTarget())
             {
-                RebuildPlan();
+                StopMoving();
                 return;
             }
 
             StopMoving(false);
             FaceAttackTarget(currentTarget);
             attackCooldownRemaining -= deltaTime;
-            if (attackCooldownRemaining <= 0f)
-            {
-                currentTarget.TakeDamage(Data.AttackDamage);
-                AudioManager.PlayAt(Data.AttackSound, transform.position);
-                attackCooldownRemaining = Data.AttackCooldown;
-            }
+            if (attackCooldownRemaining > 0f)
+                return;
+
+            currentTarget.TakeDamage(Data.AttackDamage);
+            AudioManager.PlayAt(Data.AttackSound, transform.position);
+            attackCooldownRemaining = Data.AttackCooldown;
         }
 
-        protected override void RebuildPlan()
+        private void AcquireNextTargetOrMove()
         {
-            Block core = GridManager?.Grid?.Core;
-            bool foundPath = TryGetCurrentCell(out Vector2Int start)
-                ? pathfinder.TryBuildPath(start, core, out GridPathfinder.PathResult path)
-                : pathfinder.TryBuildPath(transform.position, core, out path);
-
-            if (!foundPath)
+            if (pathIndex < pathCells.Count)
             {
-                hasPlan = false;
-                currentTarget = null;
-                pathCells = Array.Empty<Vector2Int>();
+                Vector2Int nextCell = pathCells[pathIndex];
+                if (GridManager.TryGetBlock(nextCell, out Block blocker))
+                    SetTarget(blocker);
+                else
+                    TryBeginCellMovement(nextCell);
                 return;
             }
 
-            isFallbackPlan = !path.ReachesCore;
-            planHadBlocker = path.BlockingBlock != null;
-            currentTarget = path.BlockingBlock != null
-                ? path.BlockingBlock
-                : path.ReachesCore ? core : null;
-            pathCells = path.Cells;
+            SetTarget(routeGoal != null ? routeGoal : GridManager.Grid.Core);
+        }
+
+        private void HandleRouteGoalDied(Block target)
+        {
+            target.Died -= HandleRouteGoalDied;
+            if (currentTarget == target)
+                SetTarget(null);
+
+            routeGoal = GridManager.Grid.Core;
+            RebuildRouteToCore();
+        }
+
+        private void RebuildRouteToCore()
+        {
+            GridPathfinder pathfinder = new(GridManager, Data, GetInstanceID());
+            bool found = TryGetCurrentCell(out Vector2Int current)
+                ? pathfinder.TryBuildPath(current, routeGoal, out GridPathfinder.PathResult path)
+                : pathfinder.TryBuildPath(transform.position, routeGoal, out path);
+            pathCells = found ? path.Cells : Array.Empty<Vector2Int>();
             pathIndex = 0;
-            hasPlan = true;
-            repathCooldownRemaining = Data.RepathInterval;
+            hasPlan = pathCells.Count > 0;
+        }
+
+        private void SetTarget(Block target)
+        {
+            if (currentTarget == target)
+                return;
+
+            if (currentTarget != null)
+                currentTarget.Died -= HandleTargetDied;
+            currentTarget = target;
+            if (currentTarget != null)
+                currentTarget.Died += HandleTargetDied;
+        }
+
+        private void HandleTargetDied(Block target)
+        {
+            if (currentTarget != target)
+                return;
+
+            currentTarget.Died -= HandleTargetDied;
+            currentTarget = null;
         }
 
         private void SkipCurrentPathCell()
@@ -116,6 +133,15 @@ namespace KeepCoreSafe.Enemies
                 : GridManager.WorldToGrid(transform.position);
             Vector2Int offset = current - currentTarget.GridPosition;
             return Mathf.Abs(offset.x) + Mathf.Abs(offset.y) <= 1;
+        }
+
+        protected override void OnDestroy()
+        {
+            if (currentTarget != null)
+                currentTarget.Died -= HandleTargetDied;
+            if (routeGoal is SupplyBlock)
+                routeGoal.Died -= HandleRouteGoalDied;
+            base.OnDestroy();
         }
     }
 }

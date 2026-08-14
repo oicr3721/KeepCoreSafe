@@ -17,9 +17,9 @@ namespace KeepCoreSafe.Data
             new Keyframe(0.7f, 0.48f),
             new Keyframe(1f, 1f));
 
-        [Header("Shockwave Charge Duration")]
-        [SerializeField, Min(1f)] private float firstWaveCombatDuration = 22f;
-        [SerializeField, Min(1f)] private float lateGameCombatDuration = 48f;
+        [Header("Shockwave Required Energy")]
+        [SerializeField, Min(1)] private int firstWaveRequiredEnergy = 12;
+        [SerializeField, Min(1)] private int lateGameRequiredEnergy = 80;
 
         [Header("Enemy Count Range")]
         [Tooltip("Random Min/Max enemy count on the first wave.")]
@@ -41,7 +41,7 @@ namespace KeepCoreSafe.Data
         [Header("Beyond Late Game")]
         [Tooltip("Keeps endless waves growing after Late Game Wave instead of hard-capping.")]
         [SerializeField, Min(0f)] private float enemyGrowthPerExtraWave = 1.4f;
-        [SerializeField, Min(0f)] private float combatDurationGrowthPerExtraWave = 0.4f;
+        [SerializeField, Min(0)] private int requiredEnergyGrowthPerExtraWave = 2;
         [SerializeField, Range(0.9f, 1f)] private float spawnIntervalMultiplierPerExtraWave = 0.985f;
         [SerializeField, Min(0f)] private float spawnMarginReductionPerExtraWave = 0.01f;
         [SerializeField, Min(0f)] private float rangedRatioGrowthPerExtraWave = 0.002f;
@@ -72,8 +72,8 @@ namespace KeepCoreSafe.Data
             return new WaveDifficultySnapshot(
                 waveIndex,
                 difficulty,
-                Mathf.Lerp(firstWaveCombatDuration, lateGameCombatDuration, difficulty)
-                + extraWaves * combatDurationGrowthPerExtraWave,
+                Mathf.RoundToInt(Mathf.Lerp(firstWaveRequiredEnergy, lateGameRequiredEnergy, difficulty))
+                + extraWaves * requiredEnergyGrowthPerExtraWave,
                 countRange,
                 enemyCount,
                 ratioRange,
@@ -92,7 +92,7 @@ namespace KeepCoreSafe.Data
         public WaveDifficultySnapshot(
             int waveIndex,
             float normalizedDifficulty,
-            float combatDuration,
+            int requiredEnergy,
             Vector2Int enemyCountRange,
             int enemyCount,
             Vector2 rangedRatioRange,
@@ -102,7 +102,7 @@ namespace KeepCoreSafe.Data
         {
             WaveIndex = waveIndex;
             NormalizedDifficulty = normalizedDifficulty;
-            CombatDuration = combatDuration;
+            RequiredEnergy = Mathf.Max(1, requiredEnergy);
             EnemyCountRange = enemyCountRange;
             EnemyCount = enemyCount;
             RangedRatioRange = rangedRatioRange;
@@ -113,7 +113,7 @@ namespace KeepCoreSafe.Data
 
         public int WaveIndex { get; }
         public float NormalizedDifficulty { get; }
-        public float CombatDuration { get; }
+        public int RequiredEnergy { get; }
         public Vector2Int EnemyCountRange { get; }
         public int EnemyCount { get; }
         public Vector2 RangedRatioRange { get; }
@@ -124,5 +124,6 @@ namespace KeepCoreSafe.Data
             Mathf.RoundToInt(EnemyCount * RangedRatio),
             0,
             EnemyCount);
+
     }
 }

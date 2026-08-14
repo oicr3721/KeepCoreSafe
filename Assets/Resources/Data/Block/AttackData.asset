@@ -12,12 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93e4f4b051764f0db78519927bff8fd5, type: 3}
   m_Name: AttackData
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.AttackBlockData
-  displayName: "\uACF5\uACA9 \uBE14\uB85D"
-  description: "\uC9C0\uC815\uB41C \uBC94\uC704 \uC548\uC758 \uC801\uC744 \uACF5\uACA9\uD574
-    \uBC29\uC5B4\uC120\uC744 \uC9C0\uC6D0\uD569\uB2C8\uB2E4."
+  displayName: block.attack.name
+  description: block.attack.desc
   maxHP: 100
-  dismantleValue: 3
   sprite: {fileID: -4944302945798175247, guid: 77e8bd2976f961746b473cf90349e72c, type: 3}
+  healthStageSprites:
+  - {fileID: -3606245378980371840, guid: 328acb42eef0aeb478bb6c52141d3332, type: 3}
+  - {fileID: -9213381635490323573, guid: 328acb42eef0aeb478bb6c52141d3332, type: 3}
+  - {fileID: -9213381635490323573, guid: 328acb42eef0aeb478bb6c52141d3332, type: 3}
+  - {fileID: -4228277191760564921, guid: 328acb42eef0aeb478bb6c52141d3332, type: 3}
+  - {fileID: -4228277191760564921, guid: 328acb42eef0aeb478bb6c52141d3332, type: 3}
+  color: {fileID: 11400000, guid: 7aa1a08fb4776804a96992504216d361, type: 2}
   prefab: {fileID: 1648904487270295617, guid: 2c76254eaf07ef34681b13ab2f637bbd, type: 3}
   additionalProperties: 0
   destroyedSound:
@@ -35,6 +40,7 @@ MonoBehaviour:
   attackSound:
     clips:
     - {fileID: 8300000, guid: 8124286d72064f043a6462ff1718a350, type: 3}
-    volume: 1
+    - {fileID: 8300000, guid: a72fed8977f792f4c88d00199f8bcf5b, type: 3}
+    volume: 0.6
     pitchRange: {x: 0.96, y: 1.04}
     spatialBlend: 0

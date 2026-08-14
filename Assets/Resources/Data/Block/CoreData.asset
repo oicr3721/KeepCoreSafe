@@ -12,13 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3068589c2e484a4ab500ca913305ed4f, type: 3}
   m_Name: CoreData
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.CoreBlockData
-  displayName: "\uCF54\uC5B4"
-  description: "\uADF8\uB140\uAC00 \uC7A0\uB4E4\uC5B4 \uC788\uB294 \uACF3. \uBC18\uB4DC\uC2DC
-    \uC9C0\uCF1C\uC57C \uD558\uB294 \uC911\uC559 \uCF54\uC5B4\uC785\uB2C8\uB2E4.
-    \uD30C\uAD34\uB418\uBA74 \uAC8C\uC784\uC774 \uB05D\uB0A9\uB2C8\uB2E4."
+  displayName: block.core.name
+  description: block.core.desc
   maxHP: 100
-  dismantleValue: 0
   sprite: {fileID: 2626857050666206334, guid: a6b9be541f599064daf92ce1ca91f21f, type: 3}
+  healthStageSprites:
+  - {fileID: 2626857050666206334, guid: a6b9be541f599064daf92ce1ca91f21f, type: 3}
+  - {fileID: 2626857050666206334, guid: a6b9be541f599064daf92ce1ca91f21f, type: 3}
+  - {fileID: 2626857050666206334, guid: a6b9be541f599064daf92ce1ca91f21f, type: 3}
+  - {fileID: 2626857050666206334, guid: a6b9be541f599064daf92ce1ca91f21f, type: 3}
+  - {fileID: 2626857050666206334, guid: a6b9be541f599064daf92ce1ca91f21f, type: 3}
+  color: {fileID: 11400000, guid: 2ba180ba48dd68a438b8866ec1aaf1c3, type: 2}
   prefab: {fileID: 6595445646424716651, guid: f44b028d3bd7a334fb493b74fb5d5d27, type: 3}
   additionalProperties: 0
   destroyedSound:

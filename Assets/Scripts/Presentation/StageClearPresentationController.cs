@@ -12,10 +12,11 @@ namespace KeepCoreSafe.Presentation
 {
     public sealed class StageClearPresentationController : MonoBehaviour
     {
-        [Header("Prefab References")]
-        [SerializeField] private GameObject energyPulsePrefab;
-        [SerializeField] private GameObject shockwavePrefab;
-        [SerializeField] private Transform effectRoot;
+        [Header("Pre-created Presentation Views")]
+        [Tooltip("A disabled scene instance reused for every stage-clear charge.")]
+        [SerializeField] private CoreEnergyPulseView energyPulse;
+        [Tooltip("A disabled scene instance reused for every stage-clear release.")]
+        [SerializeField] private ShockwaveRingView shockwave;
 
         [Header("Anticipation")]
         [SerializeField, Range(0.05f, 1f)] private float slowMotionScale = 0.2f;
@@ -43,11 +44,15 @@ namespace KeepCoreSafe.Presentation
         [Tooltip("Played exactly when the circular shockwave is released.")]
         [SerializeField] private AudioCue shockwaveSound = new();
 
-        private readonly List<GameObject> spawnedEffects = new();
         private Coroutine presentationRoutine;
         private Action completion;
 
         public bool IsPlaying => presentationRoutine != null;
+
+        private void Awake()
+        {
+            CleanupEffects();
+        }
 
         public bool Play(CoreBlock core, IReadOnlyCollection<Enemy> enemies, Action onComplete)
         {
@@ -79,20 +84,25 @@ namespace KeepCoreSafe.Presentation
 
             yield return new WaitForSecondsRealtime(anticipationDuration);
 
-            CoreEnergyPulseView pulse = Spawn<CoreEnergyPulseView>(
-                energyPulsePrefab,
-                core.transform.position);
-            if (pulse != null)
-                pulse.Play(pulseDuration, pulseCount, pulseMinimumScale, pulseMaximumScale);
+            if (energyPulse != null)
+            {
+                energyPulse.transform.position = core.transform.position;
+                energyPulse.gameObject.SetActive(true);
+                energyPulse.Play(pulseDuration, pulseCount, pulseMinimumScale, pulseMaximumScale);
+            }
             yield return new WaitForSecondsRealtime(pulseDuration);
+            if (energyPulse != null)
+                energyPulse.gameObject.SetActive(false);
 
             float radius = CalculateShockwaveRadius(core.transform.position, enemies);
             AudioManager.PlayAt(shockwaveSound, core.transform.position);
-            ShockwaveRingView shockwave = Spawn<ShockwaveRingView>(
-                shockwavePrefab,
-                core.transform.position);
             if (shockwave != null)
+            {
+                shockwave.transform.position = core.transform.position;
+                shockwave.gameObject.SetActive(true);
+                GameManager.Instance?.ResetCoreEnergy();
                 shockwave.Play(shockwaveDuration, radius * 2f);
+            }
 
             foreach (Enemy enemy in enemies)
             {
@@ -147,19 +157,6 @@ namespace KeepCoreSafe.Presentation
             return radius + shockwaveMapPadding;
         }
 
-        private T Spawn<T>(GameObject prefab, Vector3 position) where T : Component
-        {
-            if (prefab == null)
-                return null;
-
-            GameObject instance = Instantiate(prefab, position, Quaternion.identity, effectRoot);
-            spawnedEffects.Add(instance);
-            T view = instance.GetComponent<T>();
-            if (view == null)
-                Debug.LogError($"{prefab.name} is missing {typeof(T).Name}.", prefab);
-            return view;
-        }
-
         private static List<Enemy> CopyAliveEnemies(IReadOnlyCollection<Enemy> enemies)
         {
             List<Enemy> result = new();
@@ -177,13 +174,10 @@ namespace KeepCoreSafe.Presentation
 
         private void CleanupEffects()
         {
-            foreach (GameObject effect in spawnedEffects)
-            {
-                if (effect != null)
-                    Destroy(effect);
-            }
-
-            spawnedEffects.Clear();
+            if (energyPulse != null)
+                energyPulse.gameObject.SetActive(false);
+            if (shockwave != null)
+                shockwave.gameObject.SetActive(false);
         }
 
         private void OnDestroy()

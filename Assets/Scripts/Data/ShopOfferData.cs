@@ -1,5 +1,5 @@
 using KeepCoreSafe.Controllers;
-using KeepCoreSafe.Managers;
+using KeepCoreSafe.Localization;
 using UnityEngine;
 
 namespace KeepCoreSafe.Data
@@ -8,22 +8,21 @@ namespace KeepCoreSafe.Data
     {
         [SerializeField] private string displayName;
         [SerializeField, TextArea(2, 5)] private string description;
-        [SerializeField, Min(0f)] private float cost;
 
-        public string DisplayName => displayName;
-        public string Description => description;
-        public float Cost => cost;
-
-        public bool TryPurchase(BlockSupplyController supplyController)
+        public string DisplayName => LocalizationManager.Get(displayName, displayName);
+        public string Description => LocalizationManager.Get(description, description);
+        public string DisplayNameKey => displayName;
+        public string DescriptionKey => description;
+        public bool CanSelect(BlockSupplyController supplyController)
         {
-            if (supplyController == null
-                || GameManager.PlacePoint.CurrentValue < cost
-                || !CanApply(supplyController))
-            {
-                return false;
-            }
+            return supplyController != null && CanApply(supplyController);
+        }
 
-            GameManager.PlacePoint.SubtractValue(cost);
+        public bool TryApply(BlockSupplyController supplyController)
+        {
+            if (!CanSelect(supplyController))
+                return false;
+
             Apply(supplyController);
             return true;
         }

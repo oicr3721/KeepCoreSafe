@@ -3,6 +3,7 @@ using KeepCoreSafe.Managers;
 using TMPro;
 using UnityEngine;
 using KeepCoreSafe.Audio;
+using KeepCoreSafe.Localization;
 using UnityEngine.UI;
 
 namespace KeepCoreSafe.UI
@@ -110,5 +111,17 @@ namespace KeepCoreSafe.UI
             restartButton?.onClick.RemoveListener(Restart);
             sequence?.Kill(false);
         }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (restartButton == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(GameOverUI)} on {name} needs a Restart Button reference assigned in the Inspector.",
+                    this);
+            }
+        }
+#endif
     }
 }

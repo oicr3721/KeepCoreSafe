@@ -11,6 +11,7 @@ namespace KeepCoreSafe.Blocks
         Healer = 1 << 2,
         Mechanical = 1 << 3,
         Attack = 1 << 4,
-        Support = 1 << 5
+        Support = 1 << 5,
+        Supply = 1 << 6
     }
 }

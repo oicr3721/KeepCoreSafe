@@ -3,8 +3,11 @@ using KeepCoreSafe.Audio;
 using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Controllers;
 using KeepCoreSafe.Data;
+using KeepCoreSafe.Localization;
 using KeepCoreSafe.Managers;
+using KeepCoreSafe.Presentation;
 using KeepCoreSafe.UI;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -27,13 +30,11 @@ public sealed class PlacementController : MonoBehaviour
 
     [Header("Granted Blocks")]
     [SerializeField] private BlockSupplyController supplyController;
+    [SerializeField] private WaveManager waveManager;
     [SerializeField] private BlockMatchData matchData;
 
-    [Header("Dismantle Preview")]
-    [SerializeField] private RectTransform placementControlText;
-    [SerializeField] private TMP_Text dismantleRefundText;
-    [SerializeField, Range(0f, 1f)] private float dismantleRefundRate = 0.5f;
-    [SerializeField] private Vector2 dismantlePreviewOffset = new(22f, 26f);
+    [Header("Merge Presentation")]
+    [SerializeField] private MergePresentationController mergePresentation;
 
     [Header("Core")]
     [SerializeField] private CoreBlockData coreBlockData;
@@ -53,6 +54,7 @@ public sealed class PlacementController : MonoBehaviour
 
     public bool PlacementInputEnabled => placementInputEnabled;
     public event Action<Block, Vector2Int> BlockPlaced;
+    public event Func<Block, Vector2Int, bool> BlockDismantleRequested;
     public event Action<Block, Vector2Int> BlockDismantled;
     public event Action<Block, Vector2Int> SkillBlockCreated;
 
@@ -64,7 +66,6 @@ public sealed class PlacementController : MonoBehaviour
 
         matchResolver = new BlockMatchResolver(GridManager.Instance, matchData);
         PlaceCoreAndStartingBlocks();
-        SetRefundPreviewVisible(false);
         HidePreview();
     }
 
@@ -83,14 +84,12 @@ public sealed class PlacementController : MonoBehaviour
         if (!placementInputEnabled)
         {
             HidePreview();
-            SetRefundPreviewVisible(false);
             return;
         }
 
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
         {
             HidePreview();
-            SetRefundPreviewVisible(false);
             return;
         }
 
@@ -98,11 +97,9 @@ public sealed class PlacementController : MonoBehaviour
         if (!GridManager.Instance.Grid.IsWithinBounds(position))
         {
             HidePreview();
-            SetRefundPreviewVisible(false);
             return;
         }
 
-        UpdateDismantlePreview(position);
         if (Mouse.current.rightButton.wasPressedThisFrame)
         {
             TryDismantle(position);
@@ -149,7 +146,6 @@ public sealed class PlacementController : MonoBehaviour
             return;
 
         ClearSelection();
-        SetRefundPreviewVisible(false);
         GameManager.Instance.TryStartCombat();
     }
 
@@ -159,22 +155,14 @@ public sealed class PlacementController : MonoBehaviour
         if (!placementInputEnabled)
         {
             ClearSelection();
-            SetRefundPreviewVisible(false);
         }
-    }
-
-    public static float CalculateDismantleRefund(Block block, float refundRate = 0.5f)
-    {
-        if (block == null || block.HP.MaxValue <= 0f)
-            return 0f;
-
-        float healthRatio = block.HP.CurrentValue / block.HP.MaxValue;
-        return Mathf.FloorToInt(block.DismantleValue * refundRate * healthRatio);
     }
 
     private void TryPlaceSelectedBlock(Vector2Int position)
     {
-        if (!GridManager.Instance.IsCellEmpty(position))
+        if (GridManager.Instance.IsInteractionLocked(position)
+            || IsNextWaveSpawnCell(position)
+            || !GridManager.Instance.IsCellEmpty(position))
             return;
 
         Block block = CreateBlock(selectedGrant.Data);
@@ -215,6 +203,22 @@ public sealed class PlacementController : MonoBehaviour
             return;
         }
 
+        List<MergePresentationController.SourceVisual> sourceVisuals = new(match.ConsumedBlocks.Count);
+        List<Vector2Int> lockedPositions = new(match.ConsumedBlocks.Count + 1);
+        float mergedHealthRatio = CalculateAverageHealthRatio(match.ConsumedBlocks);
+        foreach (Block consumedBlock in match.ConsumedBlocks)
+        {
+            if (consumedBlock == null)
+                continue;
+
+            sourceVisuals.Add(new MergePresentationController.SourceVisual(consumedBlock.VisualRenderer));
+            lockedPositions.Add(consumedBlock.GridPosition);
+        }
+
+        lockedPositions.Add(match.Position);
+        GridManager.InteractionLock interactionLock =
+            GridManager.Instance.AcquireInteractionLock(lockedPositions);
+
         foreach (Block consumedBlock in match.ConsumedBlocks)
         {
             if (consumedBlock != null
@@ -230,61 +234,116 @@ public sealed class PlacementController : MonoBehaviour
         {
             if (resultBlock != null)
                 Destroy(resultBlock.gameObject);
+            interactionLock.Dispose();
             Debug.LogError("Failed to place the matched skill block.", this);
             return;
         }
 
+        resultBlock.HP.SetValue(resultBlock.HP.MaxValue * mergedHealthRatio);
+        SkillBlockCreated?.Invoke(resultBlock, match.Position);
+        bool presentationStarted = mergePresentation != null
+            && mergePresentation.Play(
+                sourceVisuals,
+                resultBlock.transform.position,
+                resultBlock,
+                interactionLock,
+                () =>
+                {
+                    if (resultBlock != null)
+                        AudioManager.PlayAt(placementSound, resultBlock.transform.position);
+                });
+        if (presentationStarted)
+            return;
+
+        interactionLock.Dispose();
         resultBlock.PlayPlacementAnimation();
         AudioManager.PlayAt(placementSound, resultBlock.transform.position);
         resultBlock.PlayRareAppearance();
-        SkillBlockCreated?.Invoke(resultBlock, match.Position);
+    }
+
+    private static float CalculateAverageHealthRatio(IReadOnlyList<Block> sourceBlocks)
+    {
+        if (sourceBlocks == null || sourceBlocks.Count == 0)
+            return 1f;
+
+        float ratioSum = 0f;
+        int validBlockCount = 0;
+        foreach (Block block in sourceBlocks)
+        {
+            if (block == null || block.HP.MaxValue <= 0f)
+                continue;
+
+            ratioSum += Mathf.Clamp01(block.HP.CurrentValue / block.HP.MaxValue);
+            validBlockCount++;
+        }
+
+        return validBlockCount > 0
+            ? ratioSum / validBlockCount
+            : 1f;
     }
 
     private void TryDismantle(Vector2Int position)
     {
-        if (!GridManager.Instance.TryRemoveBlock(position, out Block block))
+        if (GridManager.Instance.IsInteractionLocked(position)
+            || !GridManager.Instance.TryGetBlock(position, out Block block)
+            || !CanDismantle(block, position)
+            || !GridManager.Instance.TryRemoveBlock(position, out block))
+        {
             return;
+        }
 
-        GameManager.PlacePoint.AddValue(CalculateDismantleRefund(block, dismantleRefundRate));
         BlockDismantled?.Invoke(block, position);
         block.PlayDismantleAnimation(() =>
         {
             AudioManager.PlayAt(dismantleSound, block.transform.position);
             Destroy(block.gameObject);
         });
-        SetRefundPreviewVisible(false);
+    }
+
+    private bool CanDismantle(Block block, Vector2Int position)
+    {
+        if (BlockDismantleRequested == null)
+            return true;
+
+        foreach (Delegate listener in BlockDismantleRequested.GetInvocationList())
+        {
+            if (listener is Func<Block, Vector2Int, bool> validator
+                && !validator(block, position))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void UpdatePlacementPreview(Vector2Int position)
     {
         Vector3 worldPosition = GridManager.Instance.GridToWorld(position);
         previewRenderer.gameObject.SetActive(true);
-        previewRenderer.color = GridManager.Instance.IsCellEmpty(position)
+        bool canPlace = !GridManager.Instance.IsInteractionLocked(position)
+            && !IsNextWaveSpawnCell(position)
+            && GridManager.Instance.IsCellEmpty(position);
+        previewRenderer.color = canPlace
             ? WithPreviewAlpha(selectedGrant.Data.VisualColor, normalColor.a)
             : invalidColor;
         previewRenderer.transform.position = worldPosition;
-        effectVisualizer?.ShowPlacement(
-            selectedGrant.Data,
-            worldPosition,
-            GridManager.Instance.CellSize);
+        if (canPlace)
+        {
+            effectVisualizer?.ShowPlacement(
+                selectedGrant.Data,
+                worldPosition,
+                GridManager.Instance.CellSize);
+        }
+        else
+        {
+            effectVisualizer?.HidePlacement();
+        }
     }
 
-    private void UpdateDismantlePreview(Vector2Int position)
+    private bool IsNextWaveSpawnCell(Vector2Int position)
     {
-        if (dismantleRefundText == null
-            || !GridManager.Instance.TryGetBlock(position, out Block block))
-        {
-            SetRefundPreviewVisible(false);
-            return;
-        }
-
-        bool isCore = (block.BlockProperty & BlockProperty.Core) != 0;
-        dismantleRefundText.text = isCore
-            ? "철거 불가"
-            : $"철거 +{CalculateDismantleRefund(block, dismantleRefundRate):0.#}";
-        SetRefundPreviewVisible(true);
-        if (placementControlText != null)
-            placementControlText.position = Mouse.current.position.ReadValue() + dismantlePreviewOffset;
+        return waveManager != null && waveManager.IsSpawnCellReserved(position);
     }
 
     private Vector3 GetMousePosition()
@@ -306,7 +365,6 @@ public sealed class PlacementController : MonoBehaviour
         {
             placementInputEnabled = false;
             ClearSelection();
-            SetRefundPreviewVisible(false);
             gameObject.SetActive(false);
         }
     }
@@ -321,15 +379,6 @@ public sealed class PlacementController : MonoBehaviour
         if (previewRenderer != null)
             previewRenderer.gameObject.SetActive(false);
         effectVisualizer?.HidePlacement();
-    }
-
-    private void SetRefundPreviewVisible(bool visible)
-    {
-        if (dismantleRefundText != null
-            && dismantleRefundText.gameObject.activeSelf != visible)
-        {
-            dismantleRefundText.gameObject.SetActive(visible);
-        }
     }
 
     private Block CreateBlock(BlockData data)

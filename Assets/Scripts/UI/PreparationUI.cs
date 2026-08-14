@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using KeepCoreSafe.Controllers;
-using KeepCoreSafe.Data;
+using KeepCoreSafe.Localization;
 using KeepCoreSafe.Managers;
 using TMPro;
 using UnityEngine;
@@ -25,17 +25,17 @@ namespace KeepCoreSafe.UI
         [Header("Reroll")]
         [SerializeField] private Button rerollButton;
         [SerializeField] private TMP_Text rerollLabel;
-        [SerializeField] private string rerollFormat = "Reroll {0:0}";
-        [SerializeField] private string rerollLockedText = "Reroll Locked";
+        [SerializeField] private string rerollAvailableKey = "ui.reroll.available";
 
         [Header("Confirm")]
         [SerializeField] private Button confirmButton;
 
         [Header("Start Wave")]
         [SerializeField] private Button startWaveButton;
-        [SerializeField] private StartWaveButtonUI startWaveButtonUI;
+        [FormerlySerializedAs("startWaveButtonUI")]
+        [SerializeField] private UIShowHide startWaveButtonVisibility;
 
-        private readonly List<Button> buttonPool = new();
+        private readonly List<SupplyBlockButtonView> buttonPool = new();
         private readonly List<Button> activeButtons = new();
         private readonly List<bool> activeRareFlags = new();
         private bool startWaveAllowed = true;
@@ -52,11 +52,11 @@ namespace KeepCoreSafe.UI
                 confirmButton.onClick.AddListener(HandleConfirm);
             if (startWaveButton != null)
                 startWaveButton.onClick.AddListener(HandleStartWave);
-            GameManager.PlacePoint.OnValueChanged += HandlePointsChanged;
             GameManager.PhaseChanged += HandlePhaseChanged;
+            LocalizationManager.LanguageChanged += HandleLanguageChanged;
 
             placementController?.SetPlacementInputEnabled(false);
-            startWaveButtonUI?.Hide(true);
+            startWaveButtonVisibility?.Hide(true);
 
             Refresh(true);
         }
@@ -71,8 +71,8 @@ namespace KeepCoreSafe.UI
                 confirmButton.onClick.RemoveListener(HandleConfirm);
             if (startWaveButton != null)
                 startWaveButton.onClick.RemoveListener(HandleStartWave);
-            GameManager.PlacePoint.OnValueChanged -= HandlePointsChanged;
             GameManager.PhaseChanged -= HandlePhaseChanged;
+            LocalizationManager.LanguageChanged -= HandleLanguageChanged;
         }
 
         private void Refresh(bool playAppearance)
@@ -88,29 +88,21 @@ namespace KeepCoreSafe.UI
 
             for (int i = 0; i < buttonPool.Count; i++)
             {
-                Button button = buttonPool[i];
+                SupplyBlockButtonView buttonView = buttonPool[i];
                 bool active = i < granted.Count;
-                button.gameObject.SetActive(active);
+                buttonView.gameObject.SetActive(active);
                 if (!active)
                     continue;
 
-                activeButtons.Add(button);
+                activeButtons.Add(buttonView.Button);
 
                 int supplyIndex = i;
                 BlockSupplyController.GrantedBlock item = granted[i];
                 activeRareFlags.Add(item.IsRare);
-                TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
-                Image image = button.GetComponent<Image>();
-                label.text = item.Data.DisplayName;
-                image.sprite = item.Data.Sprite;
-                image.color = item.Data.VisualColor;
-                button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(() => placementController.SelectGrantedBlock(supplyIndex));
-
-                BlockButtonTooltipTrigger tooltip =
-                    button.GetComponent<BlockButtonTooltipTrigger>();
-                tooltip?.Initialize(item.Data, descriptionTooltip);
-
+                buttonView.Bind(
+                    item.Data,
+                    descriptionTooltip,
+                    () => placementController.SelectGrantedBlock(supplyIndex));
             }
 
             if (supplyPresentation != null)
@@ -118,7 +110,7 @@ namespace KeepCoreSafe.UI
                 if (playAppearance && !supplyPresentation.IsDocked)
                 {
                     placementController?.SetPlacementInputEnabled(false);
-                    startWaveButtonUI?.Hide(true);
+                    startWaveButtonVisibility?.Hide(true);
                     supplyPresentation.PlayDeal(activeButtons, activeRareFlags, RefreshReroll);
                 }
                 else
@@ -132,11 +124,23 @@ namespace KeepCoreSafe.UI
 
         private void EnsureButtonCount(int count)
         {
+            if (blockButtonPrefab == null)
+                return;
+
             while (buttonPool.Count < count)
             {
                 Button button = Instantiate(blockButtonPrefab, inventoryRoot);
                 button.transform.SetSiblingIndex(buttonPool.Count);
-                buttonPool.Add(button);
+                if (!button.TryGetComponent(out SupplyBlockButtonView view))
+                {
+                    Debug.LogError(
+                        $"{nameof(PreparationUI)} requires {nameof(blockButtonPrefab)} to contain a preconfigured {nameof(SupplyBlockButtonView)} component.",
+                        blockButtonPrefab);
+                    Destroy(button.gameObject);
+                    break;
+                }
+
+                buttonPool.Add(view);
             }
         }
 
@@ -165,7 +169,7 @@ namespace KeepCoreSafe.UI
             {
                 placementController?.SetPlacementInputEnabled(true);
                 if (startWaveAllowed)
-                    startWaveButtonUI?.Show();
+                    startWaveButtonVisibility?.Show();
                 return;
             }
 
@@ -173,7 +177,7 @@ namespace KeepCoreSafe.UI
             {
                 placementController?.SetPlacementInputEnabled(true);
                 if (startWaveAllowed)
-                    startWaveButtonUI?.Show();
+                    startWaveButtonVisibility?.Show();
                 RefreshReroll();
             });
         }
@@ -183,7 +187,7 @@ namespace KeepCoreSafe.UI
             if (!startWaveAllowed || GameManager.Phase != GamePhase.Preparation)
                 return;
 
-            startWaveButtonUI?.Hide();
+            startWaveButtonVisibility?.Hide();
             placementController?.Confirm();
         }
 
@@ -191,14 +195,14 @@ namespace KeepCoreSafe.UI
         {
             startWaveAllowed = allowed;
             if (allowed && supplyPresentation != null && supplyPresentation.IsDocked)
-                startWaveButtonUI?.Show();
+                startWaveButtonVisibility?.Show();
             else if (!allowed)
-                startWaveButtonUI?.Hide(true);
+                startWaveButtonVisibility?.Hide(true);
         }
 
-        private void HandlePointsChanged(float _, float __)
+        private void HandleLanguageChanged()
         {
-            RefreshReroll();
+            Refresh(false);
         }
 
         private void RefreshReroll()
@@ -213,11 +217,8 @@ namespace KeepCoreSafe.UI
                                                 || supplyPresentation.CanReroll);
             }
             if (rerollLabel != null)
-            {
-                rerollLabel.text = supplyController.CanReroll
-                    ? string.Format(rerollFormat, supplyController.CurrentRerollCost)
-                    : rerollLockedText;
-            }
+                rerollLabel.text =
+                    $"{LocalizationManager.Get(rerollAvailableKey)} ({supplyController.NextRerollCost})";
         }
 
         private void HandlePhaseChanged(GamePhase phase)
@@ -225,12 +226,12 @@ namespace KeepCoreSafe.UI
             if (phase == GamePhase.Preparation)
             {
                 placementController?.SetPlacementInputEnabled(false);
-                startWaveButtonUI?.Hide(true);
+                startWaveButtonVisibility?.Hide(true);
                 return;
             }
 
             placementController?.SetPlacementInputEnabled(false);
-            startWaveButtonUI?.Hide();
+            startWaveButtonVisibility?.Hide();
             supplyPresentation?.Hide();
         }
     }

@@ -35,6 +35,9 @@ public class SliderUI : MonoBehaviour
     {
         if (source == null) return;
 
+        if (this.source != null)
+            this.source.OnValueChanged -= Refresh;
+
         this.source = source;
         source.OnValueChanged += Refresh;
 

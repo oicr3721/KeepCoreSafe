@@ -18,7 +18,7 @@ namespace KeepCoreSafe.Managers
                 Current = new WaveDifficultySnapshot(
                     waveIndex,
                     0f,
-                    30f,
+                    12,
                     new Vector2Int(5, 8),
                     UnityEngine.Random.Range(5, 9),
                     new Vector2(0.15f, 0.25f),

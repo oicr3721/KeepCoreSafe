@@ -14,6 +14,10 @@ namespace KeepCoreSafe.Combat
         [SerializeField, Min(0f)] private float shakeStrength = 0.08f;
         [SerializeField, Min(0f)] private float scalePunch = 0.12f;
 
+        [Header("Optional Particle Feedback")]
+        [Tooltip("A pre-created particle system played together with the damage flash.")]
+        [SerializeField] private ParticleSystem hitParticles;
+
         private SpriteRenderer targetRenderer;
         private Color baseColor = Color.white;
         private Vector3 baseLocalPosition;
@@ -31,6 +35,12 @@ namespace KeepCoreSafe.Combat
 
         public void Play()
         {
+            if (hitParticles != null)
+            {
+                hitParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                hitParticles.Play(true);
+            }
+
             if (targetRenderer == null)
                 return;
 
@@ -42,6 +52,8 @@ namespace KeepCoreSafe.Combat
 
         public void Cancel()
         {
+            if (hitParticles != null)
+                hitParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             ResetVisual();
         }
 
@@ -74,7 +86,7 @@ namespace KeepCoreSafe.Combat
 
         private void OnDisable()
         {
-            ResetVisual();
+            Cancel();
         }
 
         private void ResetVisual()

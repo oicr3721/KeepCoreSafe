@@ -4,6 +4,7 @@ using KeepCoreSafe.Audio;
 using KeepCoreSafe.Combat;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Managers;
+using KeepCoreSafe.Presentation;
 using KeepCoreSafe.UI;
 using UnityEngine;
 
@@ -41,10 +42,10 @@ namespace KeepCoreSafe.Blocks
 
         public ObservableValue HP = new();
 
-        public int DismantleValue => data != null ? data.DismantleValue : 0;
         public BlockProperty BlockProperty => data != null ? data.Properties : BlockProperty.None;
         public Vector2Int GridPosition { get; private set; }
         public bool HasGridPosition { get; private set; }
+        public SpriteRenderer VisualRenderer => visualRenderer;
 
         //public event Action<int, int> HealthChanged;
         public event Action<Block> Died;
@@ -65,10 +66,13 @@ namespace KeepCoreSafe.Blocks
 
         public void Initialize(BlockData blockData)
         {
+            HP.OnValueChanged -= HandleHealthChanged;
             data = blockData;
             HP.Initialize(data.MaxHP, data.MaxHP);
-            ApplySprite();
+            ApplyBaseVisual();
             CreateHealthBar();
+            HP.OnValueChanged += HandleHealthChanged;
+            UpdateHealthVisual(1f);
         }
 
         protected virtual void Update()
@@ -118,6 +122,8 @@ namespace KeepCoreSafe.Blocks
 
             isDead = true;
             AudioManager.PlayAt(data?.DestroyedSound, transform.position);
+            if (data != null)
+                BlockDestroyEffectManager.Instance?.PlayAt(transform.position, data.DestroyEffectColor);
             Died?.Invoke(this);
             Destroy(gameObject);
         }
@@ -174,6 +180,21 @@ namespace KeepCoreSafe.Blocks
             sequence.OnComplete(() => onComplete?.Invoke());
         }
 
+        public void SetPresentationHealthBarVisible(bool visible)
+        {
+            if (healthBar != null)
+                healthBar.gameObject.SetActive(visible);
+        }
+
+        public void UpdateHealthVisual(float healthRatio)
+        {
+            float clampedRatio = Mathf.Clamp01(healthRatio);
+            if (visualRenderer != null && data != null)
+                visualRenderer.sprite = data.GetHealthSprite(clampedRatio);
+
+            healthBar?.UpdateHealthVisual(clampedRatio);
+        }
+
         internal void SetGridPosition(Vector2Int position)
         {
             GridPosition = position;
@@ -218,7 +239,15 @@ namespace KeepCoreSafe.Blocks
             }
         }
 
-        private void ApplySprite()
+        private void HandleHealthChanged(float currentHealth, float maximumHealth)
+        {
+            float healthRatio = maximumHealth > 0f
+                ? currentHealth / maximumHealth
+                : 0f;
+            UpdateHealthVisual(healthRatio);
+        }
+
+        private void ApplyBaseVisual()
         {
             if (visualRenderer == null)
             {
@@ -226,13 +255,13 @@ namespace KeepCoreSafe.Blocks
                 return;
             }
 
-            visualRenderer.sprite = data.Sprite;
             visualRenderer.color = data.VisualColor;
             damageFeedback?.Initialize(visualRenderer, data.VisualColor);
         }
 
         protected virtual void OnDestroy()
         {
+            HP.OnValueChanged -= HandleHealthChanged;
             transform.DOKill();
             if(healthBar != null)
                 Destroy(healthBar.gameObject);

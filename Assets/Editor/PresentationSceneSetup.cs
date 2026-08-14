@@ -10,7 +10,6 @@ namespace KeepCoreSafe.Editor
     public static class PresentationSceneSetup
     {
         private const string ScenePath = "Assets/Scenes/FoundationTestScene.unity";
-        private const string CoinPrefabPath = "Assets/Prefabs/UI/RewardCoin.prefab";
         private const string BlockButtonPrefabPath = "Assets/Prefabs/UI/Block Button.prefab";
         private const string KoreanFontPath = "Assets/Fonts/LimgulMono16 SDF.asset";
 
@@ -28,9 +27,7 @@ namespace KeepCoreSafe.Editor
 
             Canvas canvas = gameUI.GetComponentInParent<Canvas>();
             TMP_Text fontSource = Object.FindFirstObjectByType<TMP_Text>(FindObjectsInactive.Include);
-            RectTransform coinPrefab = CreateCoinPrefab();
             AddTooltipTriggerToBlockButtonPrefab();
-            SetupEnemyReward(gameUI, canvas, coinPrefab);
             SetupWaveAnnouncement(gameUI.transform, fontSource);
             BlockDescriptionTooltip tooltip = SetupTooltip(gameUI.transform, canvas, fontSource);
             SetupPreparationTooltip(preparationUI, tooltip);
@@ -42,51 +39,6 @@ namespace KeepCoreSafe.Editor
             Debug.Log("PRESENTATION_SCENE_SETUP_COMPLETE");
         }
 
-        private static RectTransform CreateCoinPrefab()
-        {
-            RectTransform existing = AssetDatabase.LoadAssetAtPath<RectTransform>(CoinPrefabPath);
-            if (existing != null)
-                return existing;
-
-            GameObject root = new GameObject(
-                "RewardCoin",
-                typeof(RectTransform),
-                typeof(CanvasRenderer),
-                typeof(Image),
-                typeof(Shadow));
-            RectTransform rect = root.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(28f, 28f);
-
-            Image image = root.GetComponent<Image>();
-            image.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
-            image.color = new Color(1f, 0.76f, 0.08f, 1f);
-            image.raycastTarget = false;
-            image.preserveAspect = true;
-
-            Shadow shadow = root.GetComponent<Shadow>();
-            shadow.effectColor = new Color(0.45f, 0.2f, 0f, 0.65f);
-            shadow.effectDistance = new Vector2(2f, -2f);
-
-            GameObject shineObject = new GameObject(
-                "Shine",
-                typeof(RectTransform),
-                typeof(CanvasRenderer),
-                typeof(Image));
-            shineObject.transform.SetParent(root.transform, false);
-            RectTransform shineRect = shineObject.GetComponent<RectTransform>();
-            shineRect.anchorMin = new Vector2(0.32f, 0.55f);
-            shineRect.anchorMax = new Vector2(0.32f, 0.55f);
-            shineRect.sizeDelta = new Vector2(7f, 7f);
-            Image shine = shineObject.GetComponent<Image>();
-            shine.sprite = image.sprite;
-            shine.color = new Color(1f, 1f, 0.75f, 0.9f);
-            shine.raycastTarget = false;
-
-            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, CoinPrefabPath);
-            Object.DestroyImmediate(root);
-            return prefab.GetComponent<RectTransform>();
-        }
-
         private static void AddTooltipTriggerToBlockButtonPrefab()
         {
             GameObject root = PrefabUtility.LoadPrefabContents(BlockButtonPrefabPath);
@@ -94,27 +46,6 @@ namespace KeepCoreSafe.Editor
                 root.AddComponent<BlockButtonTooltipTrigger>();
             PrefabUtility.SaveAsPrefabAsset(root, BlockButtonPrefabPath);
             PrefabUtility.UnloadPrefabContents(root);
-        }
-
-        private static void SetupEnemyReward(
-            GameDefaultUI gameUI,
-            Canvas canvas,
-            RectTransform coinPrefab)
-        {
-            EnemyRewardUI rewardUI = gameUI.GetComponent<EnemyRewardUI>();
-            if (rewardUI == null)
-                rewardUI = gameUI.gameObject.AddComponent<EnemyRewardUI>();
-
-            SerializedObject gameUIData = new(gameUI);
-            CountTextUI placePointUI =
-                gameUIData.FindProperty("placePointUI").objectReferenceValue as CountTextUI;
-            SerializedObject rewardData = new(rewardUI);
-            rewardData.FindProperty("canvas").objectReferenceValue = canvas;
-            rewardData.FindProperty("coinRoot").objectReferenceValue = gameUI.transform as RectTransform;
-            rewardData.FindProperty("coinPrefab").objectReferenceValue = coinPrefab;
-            rewardData.FindProperty("placePointTarget").objectReferenceValue =
-                placePointUI != null ? placePointUI.transform as RectTransform : null;
-            rewardData.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void SetupWaveAnnouncement(Transform parent, TMP_Text fontSource)

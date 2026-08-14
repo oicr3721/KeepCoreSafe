@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: acc42dc9abb652a4685532a9e516bd92, type: 3}
   m_Name: Red
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.BlockColorData
-  displayName: Red
-  color: {r: 0.95, g: 0.22, b: 0.2, a: 1}
+  displayName: color.red
+  color: {r: 0.7411765, g: 0.05882353, b: 0.07058824, a: 1}

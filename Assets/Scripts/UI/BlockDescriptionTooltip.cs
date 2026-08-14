@@ -1,5 +1,6 @@
 using DG.Tweening;
 using KeepCoreSafe.Data;
+using KeepCoreSafe.Localization;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -17,6 +18,8 @@ namespace KeepCoreSafe.UI
         [SerializeField] private Vector2 pointerOffset = new(18f, -18f);
         [SerializeField, Min(0f)] private float fadeDuration = 0.12f;
 
+        private object currentOwner;
+
         private void Awake()
         {
             if (canvas == null)
@@ -27,7 +30,17 @@ namespace KeepCoreSafe.UI
             gameObject.SetActive(false);
         }
 
-        private object currentOwner;
+        private void OnEnable()
+        {
+            LocalizationManager.LanguageChanged += RefreshCurrent;
+        }
+
+        private void OnDisable()
+        {
+            LocalizationManager.LanguageChanged -= RefreshCurrent;
+        }
+
+        private BlockData currentData;
 
         public void Show(object owner, BlockData data, Vector2 screenPosition)
         {
@@ -35,10 +48,8 @@ namespace KeepCoreSafe.UI
                 return;
 
             currentOwner = owner;
-            titleLabel.text = data.DisplayName;
-            descriptionLabel.text = data.Description;
-            if (detailsLabel != null)
-                detailsLabel.text = BuildDetails(data);
+            currentData = data;
+            RefreshLabels(data);
             gameObject.SetActive(true);
             SetPosition(owner, screenPosition);
             canvasGroup.DOKill(false);
@@ -74,36 +85,73 @@ namespace KeepCoreSafe.UI
                 return;
 
             currentOwner = null;
+            currentData = null;
             canvasGroup.DOKill(false);
             canvasGroup.DOFade(0f, fadeDuration)
                 .SetUpdate(true)
                 .OnComplete(() => gameObject.SetActive(false));
         }
 
+        private void RefreshCurrent()
+        {
+            if (currentOwner != null && currentData != null)
+                RefreshLabels(currentData);
+        }
+
+        private void RefreshLabels(BlockData data)
+        {
+            titleLabel.text = data.DisplayName;
+            descriptionLabel.text = data.Description;
+            if (detailsLabel != null)
+                detailsLabel.text = BuildDetails(data);
+        }
+
         private static string BuildDetails(BlockData data)
         {
             StringBuilder builder = new();
-            builder.Append($"최대 HP {data.MaxHP}");
+            builder.Append(LocalizationManager.Format(
+                "tooltip.maxHp",
+                data.MaxHP));
 
             switch (data)
             {
                 case BasicBlockData basic when basic.Color != null:
-                    builder.Append($"\n기본 블록 · {basic.Color.DisplayName}");
+                    builder.Append('\n');
+                    builder.Append(LocalizationManager.Format(
+                        "tooltip.basicBlock",
+                        new object[] { basic.Color.DisplayName }));
                     break;
                 case AttackBlockData attack:
-                    builder.Append($"\n공격 {attack.AttackValue}  |  주기 {attack.ActionCooldown:0.##}초");
+                    builder.Append('\n');
+                    builder.Append(LocalizationManager.Format(
+                        "tooltip.attackDetails",
+                        attack.AttackValue,
+                        attack.ActionCooldown));
                     break;
                 case HealerBlockData healer:
-                    builder.Append($"\n회복 {healer.HealValue}  |  주기 {healer.ActionCooldown:0.##}초");
+                    builder.Append('\n');
+                    builder.Append(LocalizationManager.Format(
+                        "tooltip.healerDetails",
+                        healer.HealValue,
+                        healer.ActionCooldown));
                     break;
                 case SupportBlockData support:
                     float reduction = (1f - support.CooldownMultiplier) * 100f;
-                    builder.Append($"\n재사용 대기시간 감소 {reduction:0}%");
+                    builder.Append('\n');
+                    builder.Append(LocalizationManager.Format(
+                        "tooltip.supportDetails",
+                        reduction));
                     break;
             }
 
             if (data.EffectRange > 0f && data.AffectedDirections != AdjacencyDirection.None)
-                builder.Append($"\n효과 범위 {data.EffectRange:0.#}칸");
+            {
+                builder.Append('\n');
+                builder.Append(LocalizationManager.Format(
+                    "tooltip.effectRange",
+                    data.EffectRange));
+            }
+
             return builder.ToString();
         }
 

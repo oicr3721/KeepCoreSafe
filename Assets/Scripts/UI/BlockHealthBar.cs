@@ -20,7 +20,7 @@ namespace KeepCoreSafe.UI
         [SerializeField] private Color warningColor = new Color(1f, 0.55f, 0.1f, 1f);
         [SerializeField] private Color criticalColor = new Color(1f, 0.12f, 0.08f, 1f);
         [SerializeField, Range(0f, 1f)] private float warningThreshold = 0.5f;
-        [SerializeField, Range(0f, 1f)] private float criticalThreshold = 0.15f;
+        [SerializeField, Range(0f, 1f)] private float criticalThreshold = 0.2f;
 
         private float combatVisibilityRemaining;
 
@@ -74,14 +74,6 @@ namespace KeepCoreSafe.UI
         {
             if (source == null) return;
 
-            float ratio = source.MaxValue <= 0 
-                ? 0f 
-                : Mathf.Clamp01((float)source.CurrentValue / source.MaxValue);
-
-            fill.color = ratio <= criticalThreshold
-                ? criticalColor
-                : ratio <= warningThreshold ? warningColor : healthyColor;
-
             if (GameManager.Phase == GamePhase.Combat)
             {
                 combatVisibilityRemaining = combatVisibleDuration;
@@ -91,6 +83,17 @@ namespace KeepCoreSafe.UI
             {
                 RefreshVisibility();
             }
+        }
+
+        public void UpdateHealthVisual(float healthRatio)
+        {
+            if (fill == null)
+                return;
+
+            float ratio = Mathf.Clamp01(healthRatio);
+            fill.color = ratio <= criticalThreshold
+                ? criticalColor
+                : ratio <= warningThreshold ? warningColor : healthyColor;
         }
 
         private void SetVisible(bool visible)

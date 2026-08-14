@@ -13,14 +13,21 @@ namespace KeepCoreSafe.Presentation
         private int pulseCount;
         private float minimumScale;
         private float maximumScale;
+        private float colorIntensity = 1f;
         private bool isPlaying;
 
-        public void Play(float playDuration, int pulses, float minScale, float maxScale)
+        public void Play(
+            float playDuration,
+            int pulses,
+            float minScale,
+            float maxScale,
+            float intensity = 1f)
         {
             duration = Mathf.Max(0.01f, playDuration);
             pulseCount = Mathf.Max(1, pulses);
             minimumScale = Mathf.Max(0f, minScale);
             maximumScale = Mathf.Max(minimumScale, maxScale);
+            colorIntensity = Mathf.Max(0f, intensity);
             elapsed = 0f;
             isPlaying = true;
             ApplyFrame(0f);
@@ -51,6 +58,9 @@ namespace KeepCoreSafe.Presentation
 
             transform.localScale = Vector3.one * scale;
             Color color = pulseColor;
+            color.r *= colorIntensity;
+            color.g *= colorIntensity;
+            color.b *= colorIntensity;
             color.a *= envelope * intensity;
             pulseRenderer.color = color;
         }

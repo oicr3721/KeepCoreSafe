@@ -24,8 +24,8 @@ namespace KeepCoreSafe.Editor
             EnsureFolder(PrefabFolder);
             EnsureFolder(MaterialFolder);
 
-            GameObject pulsePrefab = CreatePulsePrefab();
-            GameObject shockwavePrefab = CreateShockwavePrefab();
+            CreatePulsePrefab();
+            CreateShockwavePrefab();
             var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
 
             GameManager gameManager = Object.FindFirstObjectByType<GameManager>(FindObjectsInactive.Include);
@@ -36,7 +36,7 @@ namespace KeepCoreSafe.Editor
                 return;
             }
 
-            SetupPresentationController(gameManager, pulsePrefab, shockwavePrefab);
+            SetupPresentationController(gameManager);
             SetupCountdown(gameUI.transform);
             SetupStageClearAnnouncement(gameUI.transform);
 
@@ -65,8 +65,8 @@ namespace KeepCoreSafe.Editor
             SerializedObject managerData = new(gameManager);
             SerializedObject presentationData = new(presentation);
             if (managerData.FindProperty("stageClearPresentation").objectReferenceValue == null
-                || presentationData.FindProperty("energyPulsePrefab").objectReferenceValue == null
-                || presentationData.FindProperty("shockwavePrefab").objectReferenceValue == null)
+                || presentationData.FindProperty("energyPulse").objectReferenceValue == null
+                || presentationData.FindProperty("shockwave").objectReferenceValue == null)
             {
                 throw new System.InvalidOperationException("Combat finish prefab references are incomplete.");
             }
@@ -148,20 +148,24 @@ namespace KeepCoreSafe.Editor
             return material;
         }
 
-        private static void SetupPresentationController(
-            GameManager gameManager,
-            GameObject pulsePrefab,
-            GameObject shockwavePrefab)
+        private static void SetupPresentationController(GameManager gameManager)
         {
             StageClearPresentationController controller =
-                gameManager.GetComponent<StageClearPresentationController>();
+                gameManager.GetComponentInChildren<StageClearPresentationController>(true);
             if (controller == null)
-                controller = gameManager.gameObject.AddComponent<StageClearPresentationController>();
+            {
+                Transform presentationRoot = GameManagerStructureRefactorSetup.GetOrCreateChild(
+                    gameManager.transform,
+                    "Presentation");
+                Transform stageClearRoot = GameManagerStructureRefactorSetup.GetOrCreateChild(
+                    presentationRoot,
+                    "Stage Clear Presentation");
+                controller = stageClearRoot.gameObject.AddComponent<StageClearPresentationController>();
+            }
 
-            SerializedObject presentation = new(controller);
-            presentation.FindProperty("energyPulsePrefab").objectReferenceValue = pulsePrefab;
-            presentation.FindProperty("shockwavePrefab").objectReferenceValue = shockwavePrefab;
-            presentation.ApplyModifiedPropertiesWithoutUndo();
+            GameManagerStructureRefactorSetup.ConfigureStageClearViews(
+                gameManager.gameObject.scene,
+                controller);
 
             SerializedObject manager = new(gameManager);
             manager.FindProperty("stageClearPresentation").objectReferenceValue = controller;
@@ -190,7 +194,7 @@ namespace KeepCoreSafe.Editor
 
             TMP_Text label = visual.GetComponent<TMP_Text>();
             ApplyFont(label);
-            label.text = "SHOCKWAVE CHARGE\n00:30";
+            label.text = "CORE ENERGY\n0 / 0";
             label.fontSize = 27f;
             label.fontStyle = FontStyles.Bold;
             label.alignment = TextAlignmentOptions.Center;
@@ -200,7 +204,7 @@ namespace KeepCoreSafe.Editor
             ShockwaveCountdownUI ui = controller.GetComponent<ShockwaveCountdownUI>();
             SerializedObject serialized = new(ui);
             serialized.FindProperty("visualRoot").objectReferenceValue = visual;
-            serialized.FindProperty("countdownLabel").objectReferenceValue = label;
+            serialized.FindProperty("energyLabel").objectReferenceValue = label;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

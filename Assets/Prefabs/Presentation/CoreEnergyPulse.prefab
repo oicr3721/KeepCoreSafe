@@ -82,8 +82,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 60
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-  m_Color: {r: 1, g: 0.97489023, b: 0.6933962, a: 1}
+  m_Sprite: {fileID: 5849612727162771064, guid: b700a1394258ffa4e9fd2316f80afb54, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -105,4 +105,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.CoreEnergyPulseView
   pulseRenderer: {fileID: 8523785269940909426}
-  pulseColor: {r: 3.4034414, g: 2.978187, b: 0.33713332, a: 1}
+  pulseColor: {r: 3.4034407, g: 1.8631542, b: 0.35638112, a: 1}

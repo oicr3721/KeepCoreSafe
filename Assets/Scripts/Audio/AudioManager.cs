@@ -26,7 +26,37 @@ namespace KeepCoreSafe.Audio
         [SerializeField] private MusicTrackData defaultMusic;
         [SerializeField] private StageMusic[] stageMusic = Array.Empty<StageMusic>();
 
+        [Header("Volume")]
+        [Tooltip("Initial BGM volume multiplier used before a saved setting exists.")]
+        [SerializeField, Range(0f, 1f)] private float defaultMusicVolume = 1f;
+        [Tooltip("Initial SFX volume multiplier used before a saved setting exists.")]
+        [SerializeField, Range(0f, 1f)] private float defaultSfxVolume = 1f;
+
+        private const string MusicVolumePrefKey = "KeepCoreSafe.Audio.MusicVolume";
+        private const string SfxVolumePrefKey = "KeepCoreSafe.Audio.SfxVolume";
+
+        public const float MinimumVolume = 0f;
+        public const float MaximumVolume = 1f;
+        public const float DefaultVolume = 1f;
+
         private int nextSourceIndex;
+        private float musicVolume = 1f;
+        private float sfxVolume = 1f;
+
+        public static float MusicVolume =>
+            Instance != null
+                ? Instance.musicVolume
+                : ClampVolume(PlayerPrefs.GetFloat(MusicVolumePrefKey, DefaultVolume));
+
+        public static float SfxVolume =>
+            Instance != null
+                ? Instance.sfxVolume
+                : ClampVolume(PlayerPrefs.GetFloat(SfxVolumePrefKey, DefaultVolume));
+
+        public static float ClampVolume(float volume)
+        {
+            return Mathf.Clamp(volume, MinimumVolume, MaximumVolume);
+        }
 
         private void Awake()
         {
@@ -41,7 +71,9 @@ namespace KeepCoreSafe.Audio
             Instance = this;
             DontDestroyOnLoad(gameObject);
             PreserveSeparateMusicPlayer();
+            LoadPersistedVolumes();
             ConfigureSources();
+            musicPlayer?.SetVolumeMultiplier(musicVolume);
         }
 
         private void Start()
@@ -53,6 +85,11 @@ namespace KeepCoreSafe.Audio
         public static void Play(AudioCue cue)
         {
             Instance?.PlayInternal(cue, Vector3.zero, false);
+        }
+
+        public static void Play(AudioClip clip)
+        {
+            Instance?.PlayClipInternal(clip);
         }
 
         public static void PlayAt(AudioCue cue, Vector3 worldPosition)
@@ -75,6 +112,30 @@ namespace KeepCoreSafe.Audio
             Instance?.musicPlayer?.Play(track, fadeDuration);
         }
 
+        public static void SetMusicVolume(float volume)
+        {
+            if (Instance != null)
+            {
+                Instance.SetMusicVolumeInternal(volume, true);
+                return;
+            }
+
+            PlayerPrefs.SetFloat(MusicVolumePrefKey, ClampVolume(volume));
+            PlayerPrefs.Save();
+        }
+
+        public static void SetSfxVolume(float volume)
+        {
+            if (Instance != null)
+            {
+                Instance.SetSfxVolumeInternal(volume, true);
+                return;
+            }
+
+            PlayerPrefs.SetFloat(SfxVolumePrefKey, ClampVolume(volume));
+            PlayerPrefs.Save();
+        }
+
         private void PlayInternal(AudioCue cue, Vector3 worldPosition, bool hasPosition)
         {
             if (cue == null || !cue.TryGetRandomClip(out AudioClip clip))
@@ -87,9 +148,28 @@ namespace KeepCoreSafe.Audio
             source.Stop();
             source.transform.position = hasPosition ? worldPosition : transform.position;
             source.clip = clip;
-            source.volume = cue.Volume;
+            source.volume = cue.Volume * sfxVolume;
             source.pitch = cue.RandomPitch;
             source.spatialBlend = hasPosition ? cue.SpatialBlend : 0f;
+            source.loop = false;
+            source.Play();
+        }
+
+        private void PlayClipInternal(AudioClip clip)
+        {
+            if (clip == null)
+                return;
+
+            AudioSource source = GetAvailableSource();
+            if (source == null)
+                return;
+
+            source.Stop();
+            source.transform.position = transform.position;
+            source.clip = clip;
+            source.volume = sfxVolume;
+            source.pitch = 1f;
+            source.spatialBlend = 0f;
             source.loop = false;
             source.Play();
         }
@@ -173,6 +253,39 @@ namespace KeepCoreSafe.Audio
                 source.playOnAwake = false;
                 source.loop = false;
             }
+        }
+
+        private void LoadPersistedVolumes()
+        {
+            musicVolume = PlayerPrefs.GetFloat(
+                MusicVolumePrefKey,
+                ClampVolume(defaultMusicVolume));
+            sfxVolume = PlayerPrefs.GetFloat(
+                SfxVolumePrefKey,
+                ClampVolume(defaultSfxVolume));
+            musicVolume = ClampVolume(musicVolume);
+            sfxVolume = ClampVolume(sfxVolume);
+        }
+
+        private void SetMusicVolumeInternal(float volume, bool save)
+        {
+            musicVolume = ClampVolume(volume);
+            musicPlayer?.SetVolumeMultiplier(musicVolume);
+            if (!save)
+                return;
+
+            PlayerPrefs.SetFloat(MusicVolumePrefKey, musicVolume);
+            PlayerPrefs.Save();
+        }
+
+        private void SetSfxVolumeInternal(float volume, bool save)
+        {
+            sfxVolume = ClampVolume(volume);
+            if (!save)
+                return;
+
+            PlayerPrefs.SetFloat(SfxVolumePrefKey, sfxVolume);
+            PlayerPrefs.Save();
         }
 
         private void OnDestroy()

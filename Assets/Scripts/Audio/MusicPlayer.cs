@@ -11,6 +11,7 @@ namespace KeepCoreSafe.Audio
 
         private AudioSource activeSource;
         private MusicTrackData currentTrack;
+        private float volumeMultiplier = 1f;
 
         public MusicTrackData CurrentTrack => currentTrack;
 
@@ -46,7 +47,7 @@ namespace KeepCoreSafe.Audio
             float duration = fadeDuration >= 0f
                 ? fadeDuration
                 : track.CrossfadeDuration;
-            next.DOFade(track.Volume, duration).SetUpdate(true);
+            next.DOFade(track.Volume * volumeMultiplier, duration).SetUpdate(true);
             if (activeSource != null)
             {
                 AudioSource previous = activeSource;
@@ -57,6 +58,13 @@ namespace KeepCoreSafe.Audio
 
             activeSource = next;
             currentTrack = track;
+        }
+
+        public void SetVolumeMultiplier(float multiplier)
+        {
+            volumeMultiplier = AudioManager.ClampVolume(multiplier);
+            if (activeSource != null && currentTrack != null)
+                activeSource.volume = currentTrack.Volume * volumeMultiplier;
         }
 
         public void Stop(float fadeDuration = 0.25f)

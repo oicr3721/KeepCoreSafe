@@ -39,6 +39,8 @@ namespace KeepCoreSafe.Controllers
         private bool isCinematicFocus;
         private float shakeRemaining;
         private float shakeSeed;
+        private float activeShakeDuration;
+        private float activeShakeStrength;
         private Vector3 appliedShakeOffset;
 
         private void Awake()
@@ -81,23 +83,30 @@ namespace KeepCoreSafe.Controllers
 
         private void LateUpdate()
         {
-            if (shakeRemaining <= 0f || impactShakeStrength <= 0f)
+            if (shakeRemaining <= 0f || activeShakeStrength <= 0f)
                 return;
 
             shakeRemaining = Mathf.Max(0f, shakeRemaining - Time.deltaTime);
-            float envelope = shakeRemaining / impactShakeDuration;
+            float envelope = shakeRemaining / activeShakeDuration;
             float phase = (Time.time + shakeSeed) * impactShakeFrequency;
             Vector2 direction = new Vector2(
                 Mathf.Sin(phase * 1.17f),
                 Mathf.Cos(phase * 0.93f));
-            appliedShakeOffset = (Vector3)(direction.normalized * (impactShakeStrength * envelope));
+            appliedShakeOffset = (Vector3)(direction.normalized * (activeShakeStrength * envelope));
             transform.position += appliedShakeOffset;
         }
 
         public void PlayImpactShake()
         {
+            PlayImpactShake(impactShakeStrength, impactShakeDuration);
+        }
+
+        public void PlayImpactShake(float strength, float duration)
+        {
             RemoveAppliedShakeOffset();
-            shakeRemaining = impactShakeDuration;
+            activeShakeStrength = Mathf.Max(0f, strength);
+            activeShakeDuration = Mathf.Max(0.01f, duration);
+            shakeRemaining = activeShakeDuration;
             shakeSeed = Random.value * 10f;
         }
 

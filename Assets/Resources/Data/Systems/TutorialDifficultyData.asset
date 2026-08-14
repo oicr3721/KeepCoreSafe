@@ -55,10 +55,10 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  firstWaveCombatDuration: 14
-  lateGameCombatDuration: 14
-  firstWaveEnemyCount: {x: 2, y: 3}
-  lateGameEnemyCount: {x: 2, y: 3}
+  firstWaveRequiredEnergy: 15
+  lateGameRequiredEnergy: 15
+  firstWaveEnemyCount: {x: 2, y: 2}
+  lateGameEnemyCount: {x: 2, y: 2}
   firstWaveRangedRatio: {x: 0, y: 0}
   lateGameRangedRatio: {x: 0, y: 0}
   firstWaveSpawnInterval: 0.9
@@ -66,7 +66,7 @@ MonoBehaviour:
   firstWaveSpawnMargin: 1.8
   lateGameSpawnMargin: 0.45
   enemyGrowthPerExtraWave: 0
-  combatDurationGrowthPerExtraWave: 0.4
+  requiredEnergyGrowthPerExtraWave: 1
   spawnIntervalMultiplierPerExtraWave: 0.985
   spawnMarginReductionPerExtraWave: 0.01
   rangedRatioGrowthPerExtraWave: 0.002

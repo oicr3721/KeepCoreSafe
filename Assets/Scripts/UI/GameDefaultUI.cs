@@ -8,8 +8,6 @@ namespace KeepCoreSafe.UI
     public sealed class GameDefaultUI : MonoBehaviour
     {
         public static Transform BlockHPBarRoot;
-
-        [SerializeField] private CountTextUI placePointUI;
         [SerializeField] private Button timeScaleButton;
         [SerializeField] private TMP_Text timeScaleText;
         [SerializeField] private Transform blockHPBarRoot;
@@ -24,7 +22,6 @@ namespace KeepCoreSafe.UI
 
         void Start()
         {
-            placePointUI.Initialize(GameManager.PlacePoint);
             if (timeScaleButton != null)
                 timeScaleButton.onClick.AddListener(GameManager.Instance.CycleTimeScale);
 

@@ -12,19 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef3af979359043ee8bd3762ebfddc091, type: 3}
   m_Name: MeleeEnemyData
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.MeleeEnemyData
-  displayName: Melee Enemy
+  displayName: enemy.melee.name
   maxHP: 150
   moveSpeed: 2
   attackDamage: 5
   attackCooldown: 1
-  repathInterval: 0.4
-  maxPreferredPathExtraCells: 4
+  pathLengthTolerance: 3
+  energyOnDeath: 2
   sprite: {fileID: 7248435532839286903, guid: e4adadbff4951da40a04c2daa4382a23, type: 3}
   prefab: {fileID: 389284933144154984, guid: b8867c48a34f3fe48a6e8f39add604ed, type: 3}
   targetPriority: 0100000002000000100000000400000020000000
   attackSound:
     clips:
     - {fileID: 8300000, guid: 41f9c50d2d7af9f4196f1462e3587198, type: 3}
-    volume: 0.5
+    - {fileID: 8300000, guid: 0b843104cc99ebc4db0f4eee6e3d0358, type: 3}
+    volume: 1
     pitchRange: {x: 0.96, y: 1.04}
     spatialBlend: 0

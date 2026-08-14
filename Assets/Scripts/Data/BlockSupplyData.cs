@@ -26,18 +26,21 @@ namespace KeepCoreSafe.Data
 
         [Header("Rare Completed Block Pool")]
         [SerializeField, Range(0f, 1f)] private float rareBlockChance = 0.05f;
+        [SerializeField, Min(0f)] private float rareChanceIncreasePerReroll = 0.01f;
         [SerializeField] private List<WeightedBlock> rareBlocks = new();
-
-        [Header("Reroll")]
-        [SerializeField, Min(0f)] private float initialRerollCost = 3f;
-        [SerializeField, Min(0f)] private float rerollCostIncrease = 2f;
 
         public int MinimumBlocks => Mathf.Min(minimumBlocks, maximumBlocks);
         public int MaximumBlocks => Mathf.Max(minimumBlocks, maximumBlocks);
         public float RareBlockChance => rareBlockChance;
+        public float RareChanceIncreasePerReroll => rareChanceIncreasePerReroll;
         public IReadOnlyList<WeightedBlock> BasicBlocks => basicBlocks;
         public IReadOnlyList<WeightedBlock> RareBlocks => rareBlocks;
-        public float InitialRerollCost => initialRerollCost;
-        public float RerollCostIncrease => rerollCostIncrease;
+
+        public float GetRareBlockChance(int rerollCount)
+        {
+            return Mathf.Clamp01(
+                rareBlockChance
+                + Mathf.Max(0, rerollCount) * rareChanceIncreasePerReroll);
+        }
     }
 }

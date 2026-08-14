@@ -31,6 +31,7 @@ namespace KeepCoreSafe.Controllers
             worldPosition.z = 0f;
             Vector2Int cell = GridManager.Instance.WorldToGrid(worldPosition);
             if (!GridManager.Instance.Grid.IsWithinBounds(cell)
+                || GridManager.Instance.IsInteractionLocked(cell)
                 || !GridManager.Instance.TryGetBlock(cell, out Block block))
             {
                 ClearHover();
@@ -51,6 +52,7 @@ namespace KeepCoreSafe.Controllers
             {
                 tooltip?.SetPosition(this, screenPosition);
             }
+
         }
 
         private void ClearHover()

@@ -68,9 +68,9 @@ namespace KeepCoreSafe.Editor
 
             Scene scene = EditorSceneManager.OpenScene(TutorialScenePath, OpenSceneMode.Single);
             GameManager gameManager = Object.FindFirstObjectByType<GameManager>(FindObjectsInactive.Include);
-            BlockSupplyController supply = gameManager.GetComponent<BlockSupplyController>();
-            WaveManager wave = gameManager.GetComponent<WaveManager>();
-            WaveDifficultyController difficulty = gameManager.GetComponent<WaveDifficultyController>();
+            BlockSupplyController supply = gameManager.GetComponentInChildren<BlockSupplyController>(true);
+            WaveManager wave = gameManager.GetComponentInChildren<WaveManager>(true);
+            WaveDifficultyController difficulty = gameManager.GetComponentInChildren<WaveDifficultyController>(true);
             PlacementController placement = Object.FindFirstObjectByType<PlacementController>(FindObjectsInactive.Include);
             PreparationUI preparation = Object.FindFirstObjectByType<PreparationUI>(FindObjectsInactive.Include);
 
@@ -104,7 +104,7 @@ namespace KeepCoreSafe.Editor
             directorData.FindProperty("greenBlock").objectReferenceValue = green;
             directorData.ApplyModifiedPropertiesWithoutUndo();
 
-            ShopEventController shop = gameManager.GetComponent<ShopEventController>();
+            ShopEventController shop = gameManager.GetComponentInChildren<ShopEventController>(true);
             if (shop != null) shop.enabled = false;
             ShopEventUI shopUI = Object.FindFirstObjectByType<ShopEventUI>(FindObjectsInactive.Include);
             if (shopUI != null) shopUI.gameObject.SetActive(false);
@@ -164,8 +164,8 @@ namespace KeepCoreSafe.Editor
             }
 
             SerializedObject difficulty = new(data);
-            difficulty.FindProperty("firstWaveCombatDuration").floatValue = 14f;
-            difficulty.FindProperty("lateGameCombatDuration").floatValue = 14f;
+            difficulty.FindProperty("firstWaveRequiredEnergy").intValue = 14;
+            difficulty.FindProperty("lateGameRequiredEnergy").intValue = 14;
             difficulty.FindProperty("firstWaveEnemyCount").vector2IntValue = new Vector2Int(2, 3);
             difficulty.FindProperty("lateGameEnemyCount").vector2IntValue = new Vector2Int(2, 3);
             difficulty.FindProperty("firstWaveRangedRatio").vector2Value = Vector2.zero;

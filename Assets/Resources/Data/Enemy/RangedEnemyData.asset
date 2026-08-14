@@ -12,24 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1951bb01e1e4418fbc35f29731826c71, type: 3}
   m_Name: RangedEnemyData
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.RangedEnemyData
-  displayName: Ranged Enemy
+  displayName: enemy.ranged.name
   maxHP: 50
   moveSpeed: 1.5
   attackDamage: 3
   attackCooldown: 1.4
-  repathInterval: 0.4
-  maxPreferredPathExtraCells: 4
+  pathLengthTolerance: 3
+  energyOnDeath: 3
   sprite: {fileID: 7272484427156038481, guid: e4adadbff4951da40a04c2daa4382a23, type: 3}
   prefab: {fileID: 5133716904113855213, guid: a03d69610f6d728489aeb0c646b7a092, type: 3}
   targetPriority: 0100000010000000040000002000000002000000
   attackSound:
     clips:
     - {fileID: 8300000, guid: 39783c5965632d240a38f4bb1c7f69b3, type: 3}
-    volume: 0.7
+    volume: 0.4
     pitchRange: {x: 0.96, y: 1.04}
     spatialBlend: 0
-  attackRange: 2
+  attackRange: 3
   attackRangeTolerance: 0.25
   projectileSpeed: 7
-  projectileArcHeight: 0.75
+  projectileArcHeight: 0.25
   projectilePrefab: {fileID: 9159585716688584966, guid: ec3bd02d73507b54687e45fe029039e4, type: 3}

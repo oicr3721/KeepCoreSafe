@@ -12,9 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9fa6a7ca178d7334fb51b7045ae0ab6e, type: 3}
   m_Name: HealerOffer
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.GrantedBlockShopOfferData
-  displayName: Healer
-  description: "\uC644\uC131\uB41C \uD68C\uBCF5 \uBE14\uB85D\uC744 \uC774\uBC88 \uBC30\uCE58
-    \uBAA9\uB85D\uC5D0 \uCD94\uAC00\uD569\uB2C8\uB2E4."
-  cost: 20
+  displayName: shop.offer.healer.name
+  description: shop.offer.healer.desc
   grantedBlock: {fileID: 11400000, guid: 0dca3f35f9bd78947a9418ab84c02c85, type: 2}
   playRareAppearance: 1

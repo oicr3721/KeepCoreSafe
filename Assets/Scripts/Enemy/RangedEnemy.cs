@@ -10,37 +10,29 @@ namespace KeepCoreSafe.Enemies
 {
     public sealed class RangedEnemy : Enemy
     {
-        private GridPathfinder pathfinder;
         private IReadOnlyList<Vector2Int> pathCells = Array.Empty<Vector2Int>();
         private Block currentTarget;
         private int pathIndex;
         private float attackCooldownRemaining;
-        private float repathCooldownRemaining;
         private bool hasPlan;
-        private bool isFallbackPlan;
-        private bool planHadBlocker;
+        private Block routeGoal;
 
         private RangedEnemyData RangedData => Data as RangedEnemyData;
 
         protected override void Start()
         {
             base.Start();
-            pathfinder = new GridPathfinder(GridManager, Data, GetInstanceID());
+            pathCells = InitialPathCells;
+            hasPlan = pathCells.Count > 0;
+            routeGoal = InitialRouteTarget != null ? InitialRouteTarget : GridManager.Grid.Core;
+            if (routeGoal is SupplyBlock)
+                routeGoal.Died += HandleRouteGoalDied;
         }
 
         protected override void OnCombatUpdate(float deltaTime)
         {
-            base.OnCombatUpdate(deltaTime);
-
-            if (RangedData == null)
+            if (RangedData == null || ContinueCellMovement(deltaTime))
                 return;
-
-            repathCooldownRemaining -= deltaTime;
-            if (ContinueCellMovement(deltaTime))
-                return;
-
-            if (!hasPlan || planHadBlocker && currentTarget == null)
-                RebuildPlan();
 
             if (!hasPlan)
             {
@@ -50,78 +42,135 @@ namespace KeepCoreSafe.Enemies
 
             if (!TryGetCurrentCell(out Vector2Int currentCell))
             {
-                if (pathCells.Count > 0)
-                    TryBeginCellMovement(pathCells[0]);
-                return;
-            }
-
-            if (currentTarget == null)
-            {
-                SkipCurrentPathCell(currentCell);
-                if (pathIndex < pathCells.Count)
-                    TryBeginCellMovement(pathCells[pathIndex]);
-                else
-                {
-                    StopMoving();
-                    if (isFallbackPlan && repathCooldownRemaining <= 0f)
-                        RebuildPlan();
-                }
-
-                return;
-            }
-
-            int cellDistance = GetCellDistance(currentCell, currentTarget.GridPosition);
-            float minimumRange = Mathf.Max(1f, RangedData.AttackRange - RangedData.AttackRangeTolerance);
-            float maximumRange = RangedData.AttackRange + RangedData.AttackRangeTolerance;
-
-            if (cellDistance < minimumRange)
-            {
-                TryRetreat(currentCell);
-                return;
-            }
-
-            if (cellDistance <= maximumRange)
-            {
-                StopMoving(false);
-                FaceAttackTarget(currentTarget);
-                Attack(deltaTime);
+                EnterGridFromSpawn();
                 return;
             }
 
             SkipCurrentPathCell(currentCell);
+            if (currentTarget == null)
+                AcquireUpcomingTarget(currentCell);
+
+            if (currentTarget != null)
+            {
+                int targetDistance = GetCellDistance(currentCell, currentTarget.GridPosition);
+                float minimumRange = Mathf.Max(
+                    1f,
+                    RangedData.AttackRange - RangedData.AttackRangeTolerance);
+                float maximumRange = RangedData.AttackRange + RangedData.AttackRangeTolerance;
+
+                if (targetDistance < minimumRange && TryRetreatAlongPath(currentCell))
+                    return;
+
+                if (targetDistance <= maximumRange)
+                {
+                    StopMoving(false);
+                    FaceAttackTarget(currentTarget);
+                    Attack(deltaTime);
+                    return;
+                }
+            }
+
             if (pathIndex < pathCells.Count)
             {
-                TryBeginCellMovement(pathCells[pathIndex]);
+                Vector2Int nextCell = pathCells[pathIndex];
+                if (GridManager.TryGetBlock(nextCell, out Block blocker))
+                    SetTarget(blocker);
+                else
+                    TryBeginCellMovement(nextCell);
                 return;
             }
 
-            RebuildPlan();
+            SetTarget(routeGoal != null ? routeGoal : GridManager.Grid.Core);
         }
 
-        protected override void RebuildPlan()
+        private void HandleRouteGoalDied(Block target)
         {
-            Block core = GridManager?.Grid?.Core;
-            bool foundPath = TryGetCurrentCell(out Vector2Int start)
-                ? pathfinder.TryBuildPath(start, core, out GridPathfinder.PathResult path)
-                : pathfinder.TryBuildPath(transform.position, core, out path);
+            target.Died -= HandleRouteGoalDied;
+            if (currentTarget == target)
+                SetTarget(null);
 
-            if (!foundPath)
+            routeGoal = GridManager.Grid.Core;
+            RebuildRouteToCore();
+        }
+
+        private void RebuildRouteToCore()
+        {
+            GridPathfinder pathfinder = new(GridManager, Data, GetInstanceID());
+            bool found = TryGetCurrentCell(out Vector2Int current)
+                ? pathfinder.TryBuildPath(current, routeGoal, out GridPathfinder.PathResult path)
+                : pathfinder.TryBuildPath(transform.position, routeGoal, out path);
+            pathCells = found ? path.Cells : Array.Empty<Vector2Int>();
+            pathIndex = 0;
+            hasPlan = pathCells.Count > 0;
+        }
+
+        private void EnterGridFromSpawn()
+        {
+            if (pathCells.Count == 0)
             {
-                hasPlan = false;
-                currentTarget = null;
-                pathCells = Array.Empty<Vector2Int>();
+                StopMoving();
                 return;
             }
 
-            isFallbackPlan = !path.ReachesCore;
-            planHadBlocker = path.BlockingBlock != null;
-            currentTarget = path.BlockingBlock != null
-                ? path.BlockingBlock
-                : path.ReachesCore ? core : null;
-            pathCells = path.Cells;
-            pathIndex = 0;
-            hasPlan = true;
-            repathCooldownRemaining = Data.RepathInterval;
+            Vector2Int entryCell = pathCells[0];
+            if (!GridManager.Grid.IsWithinBounds(entryCell))
+            {
+                hasPlan = false;
+                StopMoving();
+                Debug.LogError($"{name} has an out-of-bounds entry cell {entryCell}.", this);
+                return;
+            }
+
+            if (GridManager.TryGetBlock(entryCell, out Block blocker))
+            {
+                SetTarget(blocker);
+                StopMoving();
+                return;
+            }
+
+            TryBeginCellMovement(entryCell);
+        }
+
+        private void AcquireUpcomingTarget(Vector2Int currentCell)
+        {
+            float maximumRange = RangedData.AttackRange + RangedData.AttackRangeTolerance;
+            for (int i = pathIndex; i < pathCells.Count; i++)
+            {
+                Vector2Int routeCell = pathCells[i];
+                if (GetCellDistance(currentCell, routeCell) > maximumRange)
+                    break;
+
+                if (GridManager.TryGetBlock(routeCell, out Block blocker))
+                {
+                    SetTarget(blocker);
+                    return;
+                }
+            }
+
+            Block goal = routeGoal != null ? routeGoal : GridManager.Grid.Core;
+            if (goal != null && GetCellDistance(currentCell, goal.GridPosition) <= maximumRange)
+                SetTarget(goal);
+        }
+
+        private void SetTarget(Block target)
+        {
+            if (currentTarget == target)
+                return;
+
+            if (currentTarget != null)
+                currentTarget.Died -= HandleTargetDied;
+            currentTarget = target;
+            if (currentTarget != null)
+                currentTarget.Died += HandleTargetDied;
+        }
+
+        private void HandleTargetDied(Block target)
+        {
+            if (currentTarget != target)
+                return;
+
+            currentTarget.Died -= HandleTargetDied;
+            currentTarget = null;
         }
 
         private void Attack(float deltaTime)
@@ -150,32 +199,29 @@ namespace KeepCoreSafe.Enemies
             attackCooldownRemaining = Data.AttackCooldown;
         }
 
-        private void TryRetreat(Vector2Int currentCell)
+        private bool TryRetreatAlongPath(Vector2Int currentCell)
         {
-            Vector2Int bestCell = currentCell;
-            int bestDistance = GetCellDistance(currentCell, currentTarget.GridPosition);
-
-            foreach (Vector2Int direction in GridPathfinder.Directions)
+            int currentIndex = -1;
+            for (int i = 0; i < pathCells.Count; i++)
             {
-                Vector2Int candidate = currentCell + direction;
-                if (!GridManager.Grid.IsWithinBounds(candidate)
-                    || !GridManager.IsCellEmpty(candidate))
-                {
-                    continue;
-                }
-
-                int candidateDistance = GetCellDistance(candidate, currentTarget.GridPosition);
-                if (candidateDistance > bestDistance)
-                {
-                    bestCell = candidate;
-                    bestDistance = candidateDistance;
-                }
+                if (pathCells[i] == currentCell)
+                    currentIndex = i;
             }
 
-            if (bestCell != currentCell)
-                TryBeginCellMovement(bestCell);
-            else
+            if (currentIndex <= 0)
+            {
                 StopMoving();
+                return false;
+            }
+
+            Vector2Int retreatCell = pathCells[currentIndex - 1];
+            if (!GridManager.IsCellEmpty(retreatCell))
+            {
+                StopMoving();
+                return false;
+            }
+
+            return TryBeginCellMovement(retreatCell);
         }
 
         private void SkipCurrentPathCell(Vector2Int currentCell)
@@ -187,6 +233,15 @@ namespace KeepCoreSafe.Enemies
         private static int GetCellDistance(Vector2Int a, Vector2Int b)
         {
             return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
+        }
+
+        protected override void OnDestroy()
+        {
+            if (currentTarget != null)
+                currentTarget.Died -= HandleTargetDied;
+            if (routeGoal is SupplyBlock)
+                routeGoal.Died -= HandleRouteGoalDied;
+            base.OnDestroy();
         }
     }
 }

@@ -55,48 +55,7 @@ namespace KeepCoreSafe.Editor
             controllerObject.FindProperty("effectVisualizer").objectReferenceValue = visualizer;
             controllerObject.FindProperty("coreBlockData").objectReferenceValue =
                 AssetDatabase.LoadAssetAtPath<CoreBlockData>("Assets/Resources/Data/Block/CoreData.asset");
-            controllerObject.FindProperty("dismantleRefundText").objectReferenceValue =
-                GetOrCreateRefundText();
             controllerObject.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        private static TMP_Text GetOrCreateRefundText()
-        {
-            GameDefaultUI gameUI = Object.FindFirstObjectByType<GameDefaultUI>(FindObjectsInactive.Include);
-            if (gameUI == null) return null;
-
-            Transform existing = gameUI.transform.Find("Dismantle Refund Text");
-            TextMeshProUGUI text;
-            if (existing != null)
-            {
-                text = existing.GetComponent<TextMeshProUGUI>();
-            }
-            else
-            {
-                TMP_Text fontSource = Object.FindFirstObjectByType<TMP_Text>(FindObjectsInactive.Include);
-                GameObject textObject = new GameObject(
-                    "Dismantle Refund Text",
-                    typeof(RectTransform),
-                    typeof(CanvasRenderer),
-                    typeof(TextMeshProUGUI));
-                textObject.transform.SetParent(gameUI.transform, false);
-                text = textObject.GetComponent<TextMeshProUGUI>();
-                if (fontSource != null) text.font = fontSource.font;
-            }
-
-            RectTransform rect = text.rectTransform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.zero;
-            rect.pivot = new Vector2(0f, 0.5f);
-            rect.sizeDelta = new Vector2(260f, 36f);
-            text.text = "Refund +0";
-            text.fontSize = 20f;
-            text.fontStyle = FontStyles.Bold;
-            text.alignment = TextAlignmentOptions.Left;
-            text.color = new Color(1f, 0.85f, 0.25f, 1f);
-            text.raycastTarget = false;
-            text.gameObject.SetActive(false);
-            return text;
         }
 
         private static void SetupSpeedButton()

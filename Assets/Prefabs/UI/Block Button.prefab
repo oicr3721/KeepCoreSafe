@@ -65,7 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 5849612727162771064, guid: b700a1394258ffa4e9fd2316f80afb54, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -91,6 +91,7 @@ GameObject:
   - component: {fileID: 6352552152343654428}
   - component: {fileID: 1146337374308067819}
   - component: {fileID: 7412699536390826044}
+  - component: {fileID: 4988670712593007928}
   m_Layer: 5
   m_Name: Block Button
   m_TagString: Untagged
@@ -117,7 +118,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 104, y: 104}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5180077204358423625
 CanvasRenderer:
@@ -147,8 +148,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: -5356574185940491189, guid: 5f7eba390e6a4cc498a31ef2325162df, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -265,6 +266,27 @@ MonoBehaviour:
   pressedScale: 0.93
   pressDuration: 0.05
   releaseDuration: 0.07
+  hoverScale: 1.06
+  hoverInDuration: 0.14
+  hoverOutDuration: 0.1
+  hoverInEase: 27
+  hoverOutEase: 6
+--- !u!114 &4988670712593007928
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7797622047845543719}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd15dde51e6fcd444851510ba7d01205, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.UI.SupplyBlockButtonView
+  button: {fileID: 654980511930813321}
+  icon: {fileID: 6157239095896495734}
+  label: {fileID: 882575971581771102}
+  tooltipTrigger: {fileID: 6187939432171656458}
 --- !u!1 &7927177650812823746
 GameObject:
   m_ObjectHideFlags: 0
@@ -332,8 +354,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Button
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 722457874f0024b4197d2d30e22cc9f5, type: 2}
-  m_sharedMaterial: {fileID: 2975103312793931691, guid: 722457874f0024b4197d2d30e22cc9f5, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 7fee0a914ad2396448ddbeac5da12d02, type: 2}
+  m_sharedMaterial: {fileID: -7825559205438887670, guid: 7fee0a914ad2396448ddbeac5da12d02, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

@@ -1,0 +1,948 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4585117990427107414
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5354864555065976048}
+  - component: {fileID: 4215189934244192352}
+  m_Layer: 0
+  m_Name: Block Destroy Effect Pool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5354864555065976048
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4585117990427107414}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8024673080181448299}
+  - {fileID: 2778826837025119961}
+  - {fileID: 4331838495840831492}
+  - {fileID: 6530643105234558484}
+  - {fileID: 3976787051509758152}
+  - {fileID: 8755933677577936529}
+  - {fileID: 835823555043791385}
+  - {fileID: 7012857596813998907}
+  - {fileID: 1246491506677104579}
+  - {fileID: 8405172440407928963}
+  - {fileID: 1293301281221205031}
+  - {fileID: 5485058927378368418}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4215189934244192352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4585117990427107414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27443f187b0e4774faa73ac4c93a1270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.BlockDestroyEffectManager
+  effectPrefab: {fileID: 5179094372075407222, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  effectPool:
+  - {fileID: 1997139157715209244}
+  - {fileID: 5943201835632151726}
+  - {fileID: 5257907437206051443}
+  - {fileID: 3335935391871372387}
+  - {fileID: 4889356810280315583}
+  - {fileID: 966388893644492006}
+  - {fileID: 9183806959675211886}
+  - {fileID: 1565196625692256588}
+  - {fileID: 7324669070014295476}
+  - {fileID: 22294868178199284}
+  - {fileID: 1293301281221205032}
+  - {fileID: 4104123780081685973}
+--- !u!1001 &289825737477893577
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5354864555065976048}
+    m_Modifications:
+    - target: {fileID: 2341653584143375499, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_Name
+      value: Block Destroy Effect 05
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+--- !u!4 &3976787051509758152 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 289825737477893577}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4889356810280315583 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5179094372075407222, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 289825737477893577}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0dc3886cbb1e6429aa841ad83d0f86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.BlockDestroyEffect
+--- !u!1001 &1092122981868150021
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5354864555065976048}
+    m_Modifications:
+    - target: {fileID: 2341653584143375499, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_Name
+      value: Block Destroy Effect 03
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+--- !u!4 &4331838495840831492 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 1092122981868150021}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5257907437206051443 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5179094372075407222, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 1092122981868150021}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0dc3886cbb1e6429aa841ad83d0f86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.BlockDestroyEffect
+--- !u!1001 &1293301281221205030
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5354864555065976048}
+    m_Modifications:
+    - target: {fileID: 2341653584143375499, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_Name
+      value: Block Destroy Effect 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+--- !u!4 &1293301281221205031 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 1293301281221205030}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1293301281221205032 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5179094372075407222, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 1293301281221205030}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0dc3886cbb1e6429aa841ad83d0f86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.BlockDestroyEffect
+--- !u!1001 &1559838048979143640
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5354864555065976048}
+    m_Modifications:
+    - target: {fileID: 2341653584143375499, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_Name
+      value: Block Destroy Effect 02
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+--- !u!4 &2778826837025119961 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 1559838048979143640}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5943201835632151726 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5179094372075407222, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 1559838048979143640}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0dc3886cbb1e6429aa841ad83d0f86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.BlockDestroyEffect
+--- !u!1001 &2484198441861360322
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5354864555065976048}
+    m_Modifications:
+    - target: {fileID: 2341653584143375499, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_Name
+      value: Block Destroy Effect 09
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+--- !u!4 &1246491506677104579 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 2484198441861360322}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7324669070014295476 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5179094372075407222, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 2484198441861360322}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0dc3886cbb1e6429aa841ad83d0f86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.BlockDestroyEffect
+--- !u!1001 &4083842516404930328
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5354864555065976048}
+    m_Modifications:
+    - target: {fileID: 2341653584143375499, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_Name
+      value: Block Destroy Effect 07
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+--- !u!4 &835823555043791385 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 4083842516404930328}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &9183806959675211886 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5179094372075407222, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 4083842516404930328}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0dc3886cbb1e6429aa841ad83d0f86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.BlockDestroyEffect
+--- !u!1001 &5156872213467817346
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5354864555065976048}
+    m_Modifications:
+    - target: {fileID: 2341653584143375499, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_Name
+      value: Block Destroy Effect 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+--- !u!114 &22294868178199284 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5179094372075407222, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 5156872213467817346}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0dc3886cbb1e6429aa841ad83d0f86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.BlockDestroyEffect
+--- !u!4 &8405172440407928963 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 5156872213467817346}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &5383661310197599120
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5354864555065976048}
+    m_Modifications:
+    - target: {fileID: 2341653584143375499, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_Name
+      value: Block Destroy Effect 06
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+--- !u!114 &966388893644492006 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5179094372075407222, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 5383661310197599120}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0dc3886cbb1e6429aa841ad83d0f86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.BlockDestroyEffect
+--- !u!4 &8755933677577936529 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 5383661310197599120}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &5937825607072181818
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5354864555065976048}
+    m_Modifications:
+    - target: {fileID: 2341653584143375499, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_Name
+      value: Block Destroy Effect 08
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+--- !u!114 &1565196625692256588 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5179094372075407222, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 5937825607072181818}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0dc3886cbb1e6429aa841ad83d0f86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.BlockDestroyEffect
+--- !u!4 &7012857596813998907 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 5937825607072181818}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6658736562410670954
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5354864555065976048}
+    m_Modifications:
+    - target: {fileID: 2341653584143375499, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_Name
+      value: Block Destroy Effect 01
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+--- !u!114 &1997139157715209244 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5179094372075407222, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 6658736562410670954}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0dc3886cbb1e6429aa841ad83d0f86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.BlockDestroyEffect
+--- !u!4 &8024673080181448299 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 6658736562410670954}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &7607786434373749525
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5354864555065976048}
+    m_Modifications:
+    - target: {fileID: 2341653584143375499, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_Name
+      value: Block Destroy Effect 04
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+--- !u!114 &3335935391871372387 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5179094372075407222, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 7607786434373749525}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0dc3886cbb1e6429aa841ad83d0f86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.BlockDestroyEffect
+--- !u!4 &6530643105234558484 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 7607786434373749525}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &9163435671263056547
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5354864555065976048}
+    m_Modifications:
+    - target: {fileID: 2341653584143375499, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_Name
+      value: Block Destroy Effect 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+--- !u!114 &4104123780081685973 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5179094372075407222, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 9163435671263056547}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0dc3886cbb1e6429aa841ad83d0f86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.BlockDestroyEffect
+--- !u!4 &5485058927378368418 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
+  m_PrefabInstance: {fileID: 9163435671263056547}
+  m_PrefabAsset: {fileID: 0}

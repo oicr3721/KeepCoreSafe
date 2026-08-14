@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51c907b6bc189b343a77ef08f1f83598, type: 3}
+  m_Name: SupplyBlockData
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.SupplyBlockData
+  displayName: block.supply.name
+  description: block.supply.desc
+  maxHP: 1
+  sprite: {fileID: -3493244654930374391, guid: 295cdf74a8d678444885fcc13745e7cf, type: 3}
+  healthStageSprites: []
+  color: {fileID: 11400000, guid: 2ba180ba48dd68a438b8866ec1aaf1c3, type: 2}
+  prefab: {fileID: 213215460484330384, guid: 8e2cd61fbd7ad0b4ca853161c6031adc, type: 3}
+  additionalProperties: 0
+  destroyedSound:
+    clips:
+    - {fileID: 8300000, guid: c6d5817bfa4b0ad4dbb3214e35e331ad, type: 3}
+    - {fileID: 8300000, guid: 5309eac36a18c854098ba9063e32c64e, type: 3}
+    - {fileID: 8300000, guid: d87057982a7accf4bba7906a2c99f46a, type: 3}
+    volume: 1
+    pitchRange: {x: 0.96, y: 1.04}
+    spatialBlend: 0

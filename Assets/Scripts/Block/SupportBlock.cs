@@ -13,15 +13,14 @@ namespace KeepCoreSafe.Blocks
         [Tooltip("Prefab containing ElectricLine and a configured LineRenderer.")]
         [SerializeField] private ElectricLine electricLinePrefab;
         [SerializeField, Min(0)] private int initialPoolSize = 4;
-        [SerializeField] private Transform electricLineRoot;
         [SerializeField] private Transform electricLineAttachPoint;
-        [SerializeField, Min(0.02f)] private float targetRefreshInterval = 0.15f;
 
         private readonly Dictionary<Block, ElectricLine> activeLines = new();
         private readonly HashSet<Block> desiredTargets = new();
         private readonly List<Block> removedTargets = new();
         private ComponentPool<ElectricLine> linePool;
-        private float refreshRemaining;
+        private bool targetsDirty = true;
+        private bool isGridSubscribed;
 
         private SupportBlockData SupportData => Data as SupportBlockData;
 
@@ -33,7 +32,7 @@ namespace KeepCoreSafe.Blocks
                 linePool = new ComponentPool<ElectricLine>(
                     electricLinePrefab,
                     initialPoolSize,
-                    electricLineRoot != null ? electricLineRoot : transform);
+                    transform);
             }
         }
 
@@ -44,21 +43,33 @@ namespace KeepCoreSafe.Blocks
                 ReleaseAllLines();
         }
 
+        private void OnEnable()
+        {
+            GameManager.PhaseChanged += HandlePhaseChanged;
+            TrySubscribeGridChanged();
+            targetsDirty = true;
+        }
+
+        private void OnDisable()
+        {
+            GameManager.PhaseChanged -= HandlePhaseChanged;
+            UnsubscribeGridChanged();
+            ReleaseAllLines();
+        }
+
         protected override void OnCombatUpdate(float deltaTime)
         {
-            if (SupportData == null || linePool == null || GridManager.Instance == null || !HasGridPosition)
-                return;
-
-            refreshRemaining -= deltaTime;
-            if (refreshRemaining > 0f)
-                return;
-
-            refreshRemaining = targetRefreshInterval;
-            RefreshTargets();
+            TrySubscribeGridChanged();
+            if (targetsDirty)
+                RefreshTargets();
         }
 
         private void RefreshTargets()
         {
+            if (SupportData == null || linePool == null || GridManager.Instance == null || !HasGridPosition)
+                return;
+
+            targetsDirty = false;
             desiredTargets.Clear();
             foreach (Block block in GridManager.Instance.GetBlocksInEffectArea(
                          GridPosition,
@@ -107,8 +118,49 @@ namespace KeepCoreSafe.Blocks
             desiredTargets.Clear();
         }
 
+        private void HandleGridChanged()
+        {
+            targetsDirty = true;
+            if (GameManager.Phase == GamePhase.Combat)
+                RefreshTargets();
+        }
+
+        private void HandlePhaseChanged(GamePhase phase)
+        {
+            if (phase == GamePhase.Combat)
+            {
+                targetsDirty = true;
+                RefreshTargets();
+            }
+            else
+            {
+                ReleaseAllLines();
+            }
+        }
+
+        private void TrySubscribeGridChanged()
+        {
+            if (isGridSubscribed || GridManager.Instance == null)
+                return;
+
+            GridManager.Instance.GridChanged += HandleGridChanged;
+            isGridSubscribed = true;
+        }
+
+        private void UnsubscribeGridChanged()
+        {
+            if (!isGridSubscribed)
+                return;
+
+            if (GridManager.Instance != null)
+                GridManager.Instance.GridChanged -= HandleGridChanged;
+            isGridSubscribed = false;
+        }
+
         protected override void OnDestroy()
         {
+            GameManager.PhaseChanged -= HandlePhaseChanged;
+            UnsubscribeGridChanged();
             ReleaseAllLines();
             base.OnDestroy();
         }

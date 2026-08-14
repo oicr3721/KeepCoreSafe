@@ -22,34 +22,39 @@ namespace KeepCoreSafe.Controllers
 
         [SerializeField] private BlockSupplyData supplyData;
 
+        [Header("Related Systems")]
+        [SerializeField] private ShopEventController shopEventController;
+
         [Header("Scripted Supply")]
         [Tooltip("Used by tutorials/cutscenes that require a fixed block order.")]
         [SerializeField] private bool useScriptedSupply;
         [SerializeField] private BlockData[] scriptedBlocks = Array.Empty<BlockData>();
 
         private readonly List<GrantedBlock> grantedBlocks = new();
-        private readonly List<GrantedBlock> pendingPreparationGrants = new();
-        private ShopEventController shopEventController;
-        private int rerollCount;
+        private readonly List<GrantedBlock> guaranteedPreparationBlocks = new();
         private bool hasUsedBlock;
         private bool waitingForShopClose;
 
         public IReadOnlyList<GrantedBlock> GrantedBlocks => grantedBlocks;
-        public float CurrentRerollCost => supplyData == null
-            ? 0f
-            : supplyData.InitialRerollCost + rerollCount * supplyData.RerollCostIncrease;
+        public int RerollCount { get; private set; }
+        public int NextRerollCost => RerollCount + 1;
+        public float CurrentRareBlockChance => supplyData != null
+            ? supplyData.GetRareBlockChance(RerollCount)
+            : 0f;
         public bool CanReroll => !useScriptedSupply
                                  && GameManager.Phase == GamePhase.Preparation
                                  && !hasUsedBlock
                                  && grantedBlocks.Count > 0
-                                 && GameManager.PlacePoint.CurrentValue >= CurrentRerollCost;
+                                 && HasEnergyCapacityForNextReroll;
+        public bool HasEnergyCapacityForNextReroll =>
+            GameManager.Instance != null
+            && GameManager.Instance.CanApplyRerollCost(NextRerollCost);
 
         public event Action<bool> SupplyChanged;
 
         private void Start()
         {
             GameManager.PhaseChanged += HandlePhaseChanged;
-            shopEventController = GetComponent<ShopEventController>();
             if (shopEventController != null)
                 shopEventController.ShopClosed += HandleShopClosed;
             BeginPreparation();
@@ -90,8 +95,10 @@ namespace KeepCoreSafe.Controllers
             if (!CanReroll)
                 return false;
 
-            GameManager.PlacePoint.SubtractValue(CurrentRerollCost);
-            rerollCount++;
+            if (!GameManager.Instance.TryApplyRerollCost(NextRerollCost))
+                return false;
+
+            RerollCount++;
             DealBlocks();
             return true;
         }
@@ -108,7 +115,7 @@ namespace KeepCoreSafe.Controllers
 
             if (waitingForShopClose || (shopEventController != null && shopEventController.IsOpen))
             {
-                QueueGrantedBlockForNextPreparation(data, isRare);
+                QueueGuaranteedBlockForNextPreparation(data, isRare);
                 return;
             }
 
@@ -116,10 +123,18 @@ namespace KeepCoreSafe.Controllers
             SupplyChanged?.Invoke(true);
         }
 
-        public void QueueGrantedBlockForNextPreparation(BlockData data, bool isRare = true)
+        public bool CanQueueGuaranteedBlockForNextPreparation =>
+            !useScriptedSupply
+            && supplyData != null
+            && guaranteedPreparationBlocks.Count < supplyData.MaximumBlocks;
+
+        public bool QueueGuaranteedBlockForNextPreparation(BlockData data, bool isRare = true)
         {
-            if (data != null)
-                pendingPreparationGrants.Add(new GrantedBlock(data, isRare));
+            if (data == null || !CanQueueGuaranteedBlockForNextPreparation)
+                return false;
+
+            guaranteedPreparationBlocks.Add(new GrantedBlock(data, isRare));
+            return true;
         }
 
         public void ResetScriptedSupply()
@@ -127,7 +142,6 @@ namespace KeepCoreSafe.Controllers
             if (!useScriptedSupply)
                 return;
 
-            rerollCount = 0;
             hasUsedBlock = false;
             DealBlocks();
         }
@@ -142,13 +156,14 @@ namespace KeepCoreSafe.Controllers
         {
             if (phase == GamePhase.Preparation)
             {
+                ResetPreparationState();
                 if (ShouldWaitForShop())
                 {
                     waitingForShopClose = true;
                     return;
                 }
 
-                BeginPreparation();
+                DealBlocks();
             }
             else if (phase == GamePhase.Combat)
                 EndPreparation();
@@ -166,14 +181,19 @@ namespace KeepCoreSafe.Controllers
                 return;
 
             waitingForShopClose = false;
-            BeginPreparation();
+            DealBlocks();
         }
 
         private void BeginPreparation()
         {
-            rerollCount = 0;
-            hasUsedBlock = false;
+            ResetPreparationState();
             DealBlocks();
+        }
+
+        private void ResetPreparationState()
+        {
+            hasUsedBlock = false;
+            RerollCount = 0;
         }
 
         private void DealBlocks()
@@ -194,13 +214,17 @@ namespace KeepCoreSafe.Controllers
             }
             else
             {
-                int count = UnityEngine.Random.Range(
+                int randomCount = UnityEngine.Random.Range(
                     supplyData.MinimumBlocks,
                     supplyData.MaximumBlocks + 1);
-                for (int i = 0; i < count; i++)
+                int count = Mathf.Max(randomCount, guaranteedPreparationBlocks.Count);
+                for (int i = 0; i < guaranteedPreparationBlocks.Count; i++)
+                    grantedBlocks.Add(guaranteedPreparationBlocks[i]);
+
+                for (int i = guaranteedPreparationBlocks.Count; i < count; i++)
                 {
                     bool rare = supplyData.RareBlocks.Count > 0
-                                && UnityEngine.Random.value < supplyData.RareBlockChance;
+                                && UnityEngine.Random.value < CurrentRareBlockChance;
                     BlockData block = ChooseWeighted(rare
                         ? supplyData.RareBlocks
                         : supplyData.BasicBlocks);
@@ -213,11 +237,21 @@ namespace KeepCoreSafe.Controllers
                     if (block != null)
                         grantedBlocks.Add(new GrantedBlock(block, rare));
                 }
+
+                Shuffle(grantedBlocks);
             }
 
-            grantedBlocks.AddRange(pendingPreparationGrants);
-            pendingPreparationGrants.Clear();
+            guaranteedPreparationBlocks.Clear();
             SupplyChanged?.Invoke(true);
+        }
+
+        private static void Shuffle(List<GrantedBlock> blocks)
+        {
+            for (int i = blocks.Count - 1; i > 0; i--)
+            {
+                int swapIndex = UnityEngine.Random.Range(0, i + 1);
+                (blocks[i], blocks[swapIndex]) = (blocks[swapIndex], blocks[i]);
+            }
         }
 
         private static BlockData ChooseWeighted(

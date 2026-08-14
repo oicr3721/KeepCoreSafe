@@ -13,12 +13,13 @@ namespace KeepCoreSafe.Data
 
         protected override bool CanApply(BlockSupplyController supplyController)
         {
-            return grantedBlock != null;
+            return grantedBlock != null
+                   && supplyController.CanQueueGuaranteedBlockForNextPreparation;
         }
 
         protected override void Apply(BlockSupplyController supplyController)
         {
-            supplyController.QueueGrantedBlockForNextPreparation(
+            supplyController.QueueGuaranteedBlockForNextPreparation(
                 grantedBlock,
                 playRareAppearance);
         }

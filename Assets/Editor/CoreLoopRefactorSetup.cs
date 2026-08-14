@@ -80,7 +80,6 @@ namespace KeepCoreSafe.Editor
             serialized.FindProperty("description").stringValue =
                 $"능력은 없지만 같은 {name} 색상 블록 3개를 연결하면 스킬 블록으로 변환됩니다.";
             serialized.FindProperty("maxHP").intValue = 100;
-            serialized.FindProperty("dismantleValue").intValue = 2;
             serialized.FindProperty("sprite").objectReferenceValue = wall.Sprite;
             serialized.FindProperty("prefab").objectReferenceValue = wall.Prefab;
             serialized.FindProperty("additionalProperties").intValue = 0;
@@ -125,10 +124,8 @@ namespace KeepCoreSafe.Editor
             BlockSupplyData data = GetOrCreate<BlockSupplyData>($"{SystemFolder}/BlockSupplyData.asset");
             SerializedObject serialized = new(data);
             serialized.FindProperty("minimumBlocks").intValue = 3;
-            serialized.FindProperty("maximumBlocks").intValue = 5;
+            serialized.FindProperty("maximumBlocks").intValue = 4;
             serialized.FindProperty("rareBlockChance").floatValue = 0.05f;
-            serialized.FindProperty("initialRerollCost").floatValue = 3f;
-            serialized.FindProperty("rerollCostIncrease").floatValue = 2f;
             ConfigureWeightedBlocks(serialized.FindProperty("basicBlocks"), basics);
             ConfigureWeightedBlocks(serialized.FindProperty("rareBlocks"), rareBlocks);
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -153,16 +150,19 @@ namespace KeepCoreSafe.Editor
             SupportBlockData support)
         {
             GrantedBlockShopOfferData attackOffer = ConfigureOffer(
-                "Attack", "완성된 공격 블록을 이번 배치 목록에 추가합니다.", 12f, attack);
+                "Attack", "완성된 공격 블록을 다음 배치 보급에 확정합니다.", attack);
             GrantedBlockShopOfferData healerOffer = ConfigureOffer(
-                "Healer", "완성된 회복 블록을 이번 배치 목록에 추가합니다.", 12f, healer);
+                "Healer", "완성된 회복 블록을 다음 배치 보급에 확정합니다.", healer);
             GrantedBlockShopOfferData supportOffer = ConfigureOffer(
-                "Support", "완성된 지원 블록을 이번 배치 목록에 추가합니다.", 12f, support);
+                "Support", "완성된 지원 블록을 다음 배치 보급에 확정합니다.", support);
 
             ShopEventData data = GetOrCreate<ShopEventData>($"{ShopFolder}/ShopEventData.asset");
             SerializedObject serialized = new(data);
-            serialized.FindProperty("firstWave").intValue = 3;
-            serialized.FindProperty("waveInterval").intValue = 3;
+            serialized.FindProperty("appearanceChance").floatValue = 0.35f;
+            serialized.FindProperty("minimumWaveInterval").intValue = 2;
+            serialized.FindProperty("maximumWaveInterval").intValue = 5;
+            serialized.FindProperty("supplyHunterRatio").floatValue = 0.2f;
+            serialized.FindProperty("minimumSupplyHunters").intValue = 1;
             serialized.FindProperty("offersPerEvent").intValue = 3;
             SerializedProperty offers = serialized.FindProperty("offers");
             offers.arraySize = 3;
@@ -176,7 +176,6 @@ namespace KeepCoreSafe.Editor
         private static GrantedBlockShopOfferData ConfigureOffer(
             string name,
             string description,
-            float cost,
             BlockData grantedBlock)
         {
             GrantedBlockShopOfferData data =
@@ -184,7 +183,6 @@ namespace KeepCoreSafe.Editor
             SerializedObject serialized = new(data);
             serialized.FindProperty("displayName").stringValue = name;
             serialized.FindProperty("description").stringValue = description;
-            serialized.FindProperty("cost").floatValue = cost;
             serialized.FindProperty("grantedBlock").objectReferenceValue = grantedBlock;
             serialized.FindProperty("playRareAppearance").boolValue = true;
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -270,23 +268,44 @@ namespace KeepCoreSafe.Editor
             PreparationUI preparationUI = Object.FindFirstObjectByType<PreparationUI>(FindObjectsInactive.Include);
             GameDefaultUI gameUI = Object.FindFirstObjectByType<GameDefaultUI>(FindObjectsInactive.Include);
 
-            BlockSupplyController supply = gameManager.GetComponent<BlockSupplyController>();
+            BlockSupplyController supply = gameManager.GetComponentInChildren<BlockSupplyController>(true);
             if (supply == null)
-                supply = gameManager.gameObject.AddComponent<BlockSupplyController>();
+            {
+                Transform systems = GameManagerStructureRefactorSetup.GetOrCreateChild(
+                    gameManager.transform,
+                    "Game Systems");
+                Transform supplySystem = GameManagerStructureRefactorSetup.GetOrCreateChild(
+                    systems,
+                    "Supply System");
+                supply = supplySystem.gameObject.AddComponent<BlockSupplyController>();
+            }
             SerializedObject supplyObject = new(supply);
             supplyObject.FindProperty("supplyData").objectReferenceValue = supplyData;
             supplyObject.ApplyModifiedPropertiesWithoutUndo();
 
-            ShopEventController shop = gameManager.GetComponent<ShopEventController>();
+            ShopEventController shop = gameManager.GetComponentInChildren<ShopEventController>(true);
             if (shop == null)
-                shop = gameManager.gameObject.AddComponent<ShopEventController>();
+                shop = supply.gameObject.AddComponent<ShopEventController>();
             SerializedObject shopObject = new(shop);
             shopObject.FindProperty("shopData").objectReferenceValue = shopData;
             shopObject.FindProperty("supplyController").objectReferenceValue = supply;
             shopObject.ApplyModifiedPropertiesWithoutUndo();
 
+            supplyObject = new SerializedObject(supply);
+            supplyObject.FindProperty("shopEventController").objectReferenceValue = shop;
+            supplyObject.ApplyModifiedPropertiesWithoutUndo();
+
+            WaveManager wave = gameManager.GetComponentInChildren<WaveManager>(true);
+            if (wave != null)
+            {
+                SerializedObject waveObject = new(wave);
+                waveObject.FindProperty("supplyEventController").objectReferenceValue = shop;
+                waveObject.ApplyModifiedPropertiesWithoutUndo();
+            }
+
             SerializedObject placementObject = new(placement);
             placementObject.FindProperty("supplyController").objectReferenceValue = supply;
+            placementObject.FindProperty("waveManager").objectReferenceValue = wave;
             placementObject.FindProperty("matchData").objectReferenceValue = matchData;
             placementObject.ApplyModifiedPropertiesWithoutUndo();
 
@@ -325,9 +344,14 @@ namespace KeepCoreSafe.Editor
             visualizer.transform.localScale = Vector3.one;
             visualizer.gameObject.SetActive(true);
 
-            WorldBlockHoverController hover = gameManager.GetComponent<WorldBlockHoverController>();
+            WorldBlockHoverController hover = gameManager.GetComponentInChildren<WorldBlockHoverController>(true);
             if (hover == null)
-                hover = gameManager.gameObject.AddComponent<WorldBlockHoverController>();
+            {
+                Transform hoverRoot = GameManagerStructureRefactorSetup.GetOrCreateChild(
+                    gameManager.transform,
+                    "World Interaction");
+                hover = hoverRoot.gameObject.AddComponent<WorldBlockHoverController>();
+            }
             SerializedObject hoverData = new(hover);
             hoverData.FindProperty("tooltip").objectReferenceValue = tooltip;
             hoverData.FindProperty("effectVisualizer").objectReferenceValue = visualizer;

@@ -1,96 +1,83 @@
-using DG.Tweening;
 using KeepCoreSafe.Managers;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace KeepCoreSafe.UI
 {
     public sealed class ShockwaveCountdownUI : MonoBehaviour
     {
         [SerializeField] private GameObject visualRoot;
-        [SerializeField] private TMP_Text countdownLabel;
-        [SerializeField] private CanvasGroup canvasGroup;
-        [SerializeField] private string objectiveLabel = "SHOCKWAVE CHARGE";
-        [SerializeField] private Color normalColor = new(0.55f, 1f, 0.82f, 1f);
-        [SerializeField] private Color urgentColor = new(1f, 0.55f, 0.2f, 1f);
-        [SerializeField, Min(0f)] private float urgentThreshold = 5f;
+        [FormerlySerializedAs("gauge")]
+        [SerializeField] private DelayedFillGauge normalFillGauge;
+        [SerializeField] private DelayedFillGauge minusFillGauge;
+        [FormerlySerializedAs("energyLabel")]
+        [FormerlySerializedAs("countdownLabel")]
+        [SerializeField] private TMP_Text currentEnergy;
+        [SerializeField] private TMP_Text requiredEnergy;
 
-        [Header("Wave Start Reveal")]
-        [SerializeField, Range(1, 6)] private int flickerCount = 3;
-        [SerializeField, Min(0.05f)] private float revealDuration = 0.3f;
-        [SerializeField, Min(0f)] private float revealPunchScale = 0.08f;
-
-        private int displayedSeconds = -1;
-        private Sequence revealSequence;
+        private ObservableInt source;
 
         private void OnEnable()
         {
             GameManager.PhaseChanged += HandlePhaseChanged;
-            GameManager.WaveStarted += PlayWaveStartReveal;
+            BindEnergy();
             HandlePhaseChanged(GameManager.Phase);
+        }
+
+        private void Start()
+        {
+            // OnEnable can run before GameManager.Awake on the initial scene load.
+            BindEnergy();
         }
 
         private void OnDisable()
         {
             GameManager.PhaseChanged -= HandlePhaseChanged;
-            GameManager.WaveStarted -= PlayWaveStartReveal;
-            revealSequence?.Kill(false);
+
+            if (source != null)
+                source.OnValueChanged -= Refresh;
+            source = null;
         }
 
-        private void Update()
+        private void BindEnergy()
         {
-            if (GameManager.Phase != GamePhase.Combat || GameManager.Instance == null)
+            ObservableInt next = GameManager.Instance?.CoreEnergy;
+            if (source == next)
                 return;
+            if (source != null)
+                source.OnValueChanged -= Refresh;
+            source = next;
+            if (source != null)
+            {
+                source.OnValueChanged += Refresh;
+                Refresh(source.CurrentValue, source.MaxValue, true);
+            }
+        }
 
-            float remaining = GameManager.Instance.RemainingCombatTime;
-            int seconds = Mathf.CeilToInt(remaining);
-            if (seconds == displayedSeconds)
-                return;
+        private void Refresh(int current, int maximum)
+        {
+            Refresh(current, maximum, false);
+        }
 
-            displayedSeconds = seconds;
-            int minutes = seconds / 60;
-            int remainder = seconds % 60;
-            countdownLabel.text = $"{objectiveLabel}\n{minutes:00}:{remainder:00}";
-            countdownLabel.color = remaining <= urgentThreshold ? urgentColor : normalColor;
+        private void Refresh(int current, int maximum, bool immediate)
+        {
+            int safeMaximum = Mathf.Max(1, maximum);
+            normalFillGauge?.SetRange(0f, safeMaximum);
+            minusFillGauge?.SetRange(0f, safeMaximum);
+            normalFillGauge?.SetValue(Mathf.Max(0, current), immediate);
+            minusFillGauge?.SetValue(Mathf.Clamp(-current, 0, safeMaximum), immediate);
+            if (currentEnergy != null)
+                currentEnergy.text = $"{current}";
+            if (requiredEnergy != null)
+                requiredEnergy.text = $"/{maximum}";
         }
 
         private void HandlePhaseChanged(GamePhase phase)
         {
-            revealSequence?.Kill(false);
-            bool show = phase == GamePhase.Combat;
+            BindEnergy();
             if (visualRoot != null)
-                visualRoot.SetActive(show);
-            else if (countdownLabel != null)
-                countdownLabel.gameObject.SetActive(show);
-
-            displayedSeconds = -1;
-            if (canvasGroup != null)
-                canvasGroup.alpha = 1f;
-            if (countdownLabel != null)
-                countdownLabel.rectTransform.localScale = Vector3.one;
-        }
-
-        private void PlayWaveStartReveal(int _)
-        {
-            if (canvasGroup == null || countdownLabel == null)
-                return;
-
-            revealSequence?.Kill(false);
-            canvasGroup.alpha = 0f;
-            countdownLabel.rectTransform.localScale = Vector3.one * 0.94f;
-            float step = revealDuration / Mathf.Max(1, flickerCount * 2);
-            revealSequence = DOTween.Sequence().SetUpdate(true).SetTarget(this);
-            for (int i = 0; i < flickerCount; i++)
-            {
-                revealSequence.Append(canvasGroup.DOFade(0.28f, step));
-                revealSequence.Append(canvasGroup.DOFade(1f, step));
-            }
-
-            revealSequence.Insert(0f, countdownLabel.rectTransform.DOPunchScale(
-                Vector3.one * revealPunchScale,
-                revealDuration,
-                6,
-                0.45f));
+                visualRoot.SetActive(phase != GamePhase.GameOver);
         }
     }
 }

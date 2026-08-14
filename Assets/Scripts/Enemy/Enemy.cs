@@ -5,7 +5,6 @@ using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Combat;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Managers;
-using KeepCoreSafe.UI;
 using UnityEngine;
 
 namespace KeepCoreSafe.Enemies
@@ -26,6 +25,7 @@ namespace KeepCoreSafe.Enemies
         [SerializeField] private SpriteRenderer visualRenderer;
         [SerializeField] private DamageFeedback damageFeedback;
         [SerializeField] private Animator animator;
+        [SerializeField] private Transform hitPoint;
 
         [Header("Visual Movement")]
         [SerializeField, Range(0f, 0.4f)]
@@ -43,12 +43,20 @@ namespace KeepCoreSafe.Enemies
         [SerializeField, Min(0.001f)]
         private float minimumSnapDistance = 0.02f;
 
+        [SerializeField, Min(0.05f)]
+        private float movementStallTimeout = 0.75f;
+
+        [SerializeField, Min(0.0001f)]
+        private float movementProgressEpsilon = 0.005f;
+
         private bool isDead;
         private bool isShockwaveEliminationPlaying;
         private bool isMovingToCell;
         private Vector2Int movementDestination;
         private Vector2 personalCellOffset;
         private Vector2Int prevMove;
+        private float movementStallTimer;
+        private float lastDestinationDistance;
 
         protected Rigidbody2D Body { get; private set; }
         protected Collider2D CollisionCollider { get; private set; }
@@ -59,10 +67,12 @@ namespace KeepCoreSafe.Enemies
         public int CurrentHP { get; private set; }
         public bool IsDead => isDead;
         public Vector2 PersonalCellOffset => personalCellOffset;
+        public Transform HitPoint => hitPoint;
+        protected IReadOnlyList<Vector2Int> InitialPathCells { get; private set; } =
+            Array.Empty<Vector2Int>();
+        protected Block InitialRouteTarget { get; private set; }
 
         public event Action<Enemy> Died;
-
-        private bool pathDirty;
 
         protected virtual void Awake()
         {
@@ -78,15 +88,17 @@ namespace KeepCoreSafe.Enemies
             GridManager = GridManager.Instance;
             if (data == null) Debug.LogError($"{name} has no EnemyData.", this);
             if (GridManager != null)
-            {
                 GeneratePersonalCellOffset();
-                GridManager.GridChanged += OnGridChanged;
-            }
         }
 
-        public void Initialize(EnemyData enemyData)
+        public void Initialize(
+            EnemyData enemyData,
+            IReadOnlyList<Vector2Int> initialPathCells = null,
+            Block initialRouteTarget = null)
         {
             data = enemyData;
+            InitialPathCells = initialPathCells ?? Array.Empty<Vector2Int>();
+            InitialRouteTarget = initialRouteTarget;
             CurrentHP = data.MaxHP;
             ApplySprite();
         }
@@ -114,19 +126,7 @@ namespace KeepCoreSafe.Enemies
             }
         }
 
-        private void OnGridChanged()
-        {
-            pathDirty = true;
-        }
-
-        protected virtual void OnCombatUpdate(float deltaTime)
-        {
-            if (pathDirty && !isMovingToCell)
-            {
-                pathDirty = false;
-                RebuildPlan();
-            }
-        }
+        protected virtual void OnCombatUpdate(float deltaTime) { }
 
         protected bool ContinueCellMovement(float deltaTime)
         {
@@ -135,15 +135,34 @@ namespace KeepCoreSafe.Enemies
 
             Vector2 destination = GetCellWorldPosition(movementDestination);
             Vector2 offset = destination - Body.position;
-            float snapDistance = Mathf.Max(minimumSnapDistance, Data.MoveSpeed * Time.fixedDeltaTime);
-            if (offset.sqrMagnitude <= snapDistance * snapDistance)
+            float destinationDistance = offset.magnitude;
+            float snapDistance = Mathf.Max(minimumSnapDistance, Data.MoveSpeed * deltaTime);
+            if (destinationDistance <= snapDistance)
             {
                 Body.position = destination;
                 Body.linearVelocity = Vector2.zero;
                 isMovingToCell = false;
+                movementStallTimer = 0f;
             }
             else
             {
+                if (destinationDistance >= lastDestinationDistance - movementProgressEpsilon)
+                {
+                    movementStallTimer += deltaTime;
+                    if (movementStallTimer >= movementStallTimeout)
+                    {
+                        Body.linearVelocity = Vector2.zero;
+                        isMovingToCell = false;
+                        movementStallTimer = 0f;
+                        return false;
+                    }
+                }
+                else
+                {
+                    movementStallTimer = 0f;
+                }
+
+                lastDestinationDistance = destinationDistance;
                 Vector2 desiredVelocity = offset.normalized * Data.MoveSpeed;
                 Vector2 separationVelocity = CalculateSeparationVelocity();
                 Body.linearVelocity = Vector2.ClampMagnitude(
@@ -161,9 +180,7 @@ namespace KeepCoreSafe.Enemies
 
             if (!GridManager.Grid.IsWithinBounds(destination)
                 || !GridManager.IsCellEmpty(destination))
-            {
                 return false;
-            }
 
             if (TryGetCurrentCell(out Vector2Int current)
                 && current == destination
@@ -175,6 +192,8 @@ namespace KeepCoreSafe.Enemies
             movementDestination = destination;
             UpdateMovementPresentation(CalculateAnimationMove(destination));
             isMovingToCell = true;
+            movementStallTimer = 0f;
+            lastDestinationDistance = Vector2.Distance(Body.position, GetCellWorldPosition(destination));
             return true;
         }
 
@@ -191,6 +210,7 @@ namespace KeepCoreSafe.Enemies
         protected void StopMoving(bool resetPresentation = true)
         {
             Body.linearVelocity = Vector2.zero;
+            movementStallTimer = 0f;
             if (resetPresentation)
                 UpdateMovementPresentation(Vector2Int.zero);
         }
@@ -216,8 +236,8 @@ namespace KeepCoreSafe.Enemies
             isDead = true;
             Body.linearVelocity = Vector2.zero;
             UpdateMovementPresentation(Vector2Int.zero);
-            if (!EnemyRewardUI.TryPlayReward(transform.position, 1f))
-                GameManager.PlacePoint.AddValue(1f);
+            if (!isShockwaveEliminationPlaying)
+                GameManager.Instance?.AwardEnemyEnergy(transform.position, data.EnergyOnDeath);
             Died?.Invoke(this);
             Destroy(gameObject);
         }
@@ -387,11 +407,7 @@ namespace KeepCoreSafe.Enemies
         {
             ActiveEnemies.Remove(this);
             ActiveEnemyColliders.Remove(CollisionCollider);
-            if (GridManager != null)
-                GridManager.GridChanged -= OnGridChanged;
         }
-
-        protected virtual void RebuildPlan() { }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetEnemyColliders()
@@ -409,6 +425,9 @@ namespace KeepCoreSafe.Enemies
             // 현재 위치 (초록)
             Gizmos.color = Color.green;
             Gizmos.DrawSphere(transform.position, 0.12f);
+
+            if (!isMovingToCell)
+                return;
 
             // 목적지 (빨강)
             Gizmos.color = Color.red;

@@ -21,7 +21,8 @@ MonoBehaviour:
     weight: 1
   - block: {fileID: 11400000, guid: e33b7c340d8e1034eaf04a12aec08be7, type: 2}
     weight: 1
-  rareBlockChance: 0.05
+  rareBlockChance: 0.02
+  rareChanceIncreasePerReroll: 0.01
   rareBlocks:
   - block: {fileID: 11400000, guid: 33b09b7570f8c8c4ba7c5c2a7ffbc291, type: 2}
     weight: 1
@@ -29,5 +30,3 @@ MonoBehaviour:
     weight: 1
   - block: {fileID: 11400000, guid: ef7a65fc11644c341812b9f3ffc421cf, type: 2}
     weight: 1
-  initialRerollCost: 3
-  rerollCostIncrease: 2

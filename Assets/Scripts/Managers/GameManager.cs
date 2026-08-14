@@ -9,12 +9,13 @@ using UnityEngine.InputSystem;
 
 namespace KeepCoreSafe.Managers
 {
-    [RequireComponent(typeof(WaveManager))]
-    [RequireComponent(typeof(WaveDifficultyController))]
     public sealed class GameManager : MonoBehaviour
     {
-        [Header("Start Setting")]
-        [SerializeField] private float startPlacePoint;
+        [Header("Game Systems")]
+        [SerializeField] private WaveManager waveManager;
+        [SerializeField] private WaveDifficultyController difficultyController;
+        [SerializeField] private CoreEnergyController coreEnergyController;
+        [SerializeField] private ShopEventController shopEventController;
 
         [Header("Combat Setting")]
         [SerializeField] private StageClearPresentationController stageClearPresentation;
@@ -27,23 +28,19 @@ namespace KeepCoreSafe.Managers
 
         public static GameManager Instance { get; private set; }
 
-        private WaveManager waveManager;
-        private WaveDifficultyController difficultyController;
-        private float combatElapsedTime;
-        private float maxCombatDuration = 30f;
         private int timeScaleIndex;
         private Coroutine coreDeathRoutine;
         private bool isCoreDestructionPlaying;
         private bool isStageClearPlaying;
+        private bool isPostWaveTransitionPlaying;
+        private WaveDifficultySnapshot preparedDifficulty;
+        private int preparedWaveIndex = -1;
 
         private static readonly float[] TimeScaleOptions = { 1f, 2f, 4f };
 
         public static GamePhase Phase { get; private set; } = GamePhase.Preparation;
         public static int WaveIndex { get; private set; }
-        public static ObservableValue PlacePoint = new();
-        public float CombatElapsedTime => combatElapsedTime;
-        public float MaxCombatDuration => maxCombatDuration;
-        public float RemainingCombatTime => Mathf.Max(0f, maxCombatDuration - combatElapsedTime);
+        public ObservableInt CoreEnergy => coreEnergyController?.Energy;
         public float CurrentTimeScale => TimeScaleOptions[timeScaleIndex];
 
         public static event Action<GamePhase> PhaseChanged;
@@ -62,11 +59,14 @@ namespace KeepCoreSafe.Managers
             Instance = this;
             Phase = GamePhase.Preparation;
             WaveIndex = 0;
-            waveManager = GetComponent<WaveManager>();
-            difficultyController = GetComponent<WaveDifficultyController>();
-            if (stageClearPresentation == null)
-                stageClearPresentation = GetComponent<StageClearPresentationController>();
+            if (waveManager == null || difficultyController == null || coreEnergyController == null)
+            {
+                Debug.LogError("GameManager system references are incomplete.", this);
+                enabled = false;
+                return;
+            }
             SetTimeScale(1f);
+            RollNextWaveDifficulty(WaveIndex + 1);
         }
 
         private void Start()
@@ -74,26 +74,12 @@ namespace KeepCoreSafe.Managers
             waveManager.WaveCompleted += HandleWaveCompleted;
             GridManager.Instance.CoreDestroyed += HandleCoreDestroyed;
 
-            PlacePoint.Initialize(0f, float.MaxValue);
-            PlacePoint.SetValue(startPlacePoint);
-        }
-
-        private void Update()
-        {
-            if (Phase != GamePhase.Combat || isCoreDestructionPlaying || isStageClearPlaying)
-                return;
-
-            combatElapsedTime += Time.deltaTime;
-            if (combatElapsedTime >= maxCombatDuration)
-            {
-                combatElapsedTime = maxCombatDuration;
-                BeginStageClearPresentation();
-            }
+            PrepareWaveSpawnData();
         }
 
         public bool TryStartCombat()
         {
-            if (isStageClearPlaying || isCoreDestructionPlaying)
+            if (isStageClearPlaying || isCoreDestructionPlaying || isPostWaveTransitionPlaying)
                 return false;
 
             if (GridManager.Instance.Grid.Core == null)
@@ -103,24 +89,24 @@ namespace KeepCoreSafe.Managers
             }
 
             WaveIndex++;
-            WaveDifficultySnapshot difficulty = difficultyController != null
-                ? difficultyController.RollForWave(WaveIndex)
-                : default;
-            if (difficulty.CombatDuration > 0f)
-                maxCombatDuration = difficulty.CombatDuration;
+            if (preparedWaveIndex != WaveIndex)
+                RollNextWaveDifficulty(WaveIndex);
+            if (!waveManager.HasPreparedWave(WaveIndex))
+                PrepareWaveSpawnData();
+
+            WaveDifficultySnapshot difficulty = preparedDifficulty;
+            coreEnergyController?.BeginWave(difficulty.RequiredEnergy);
             SetPhase(GamePhase.Combat);
             WaveStarted?.Invoke(WaveIndex);
             waveManager.StartWave(WaveIndex, difficulty);
+            preparedWaveIndex = -1;
             return true;
         }
 
         private void HandleWaveCompleted()
         {
             if (Phase == GamePhase.Combat && !isCoreDestructionPlaying && !isStageClearPlaying)
-            {
-                StageCleared?.Invoke(WaveIndex, ClearType.KillAllEnemies);
-                SetPhase(GamePhase.Preparation);
-            }
+                BeginPostWaveTransition(ClearType.KillAllEnemies);
         }
 
         private void HandleCoreDestroyed()
@@ -177,8 +163,9 @@ namespace KeepCoreSafe.Managers
 
         private void SetPhase(GamePhase phase)
         {
-            combatElapsedTime = 0f;
             Phase = phase;
+            if (phase == GamePhase.Preparation)
+                RollNextWaveDifficulty(WaveIndex + 1);
             if (phase == GamePhase.GameOver)
             {
                 timeScaleIndex = 0;
@@ -186,7 +173,36 @@ namespace KeepCoreSafe.Managers
             }
 
             PhaseChanged?.Invoke(phase);
+            // Supply events are resolved/created by preparation listeners first so the
+            // prepared spawn list can include its additional hunters and fixed routes.
+            if (phase == GamePhase.Preparation)
+                PrepareWaveSpawnData();
             Debug.Log($"Game Phase: {phase}");
+        }
+
+        public void RefreshPreparedWave()
+        {
+            if (Phase != GamePhase.Preparation || preparedWaveIndex < 1)
+                return;
+
+            waveManager.PrepareWave(preparedWaveIndex, preparedDifficulty);
+        }
+
+        private void RollNextWaveDifficulty(int waveIndex)
+        {
+            preparedDifficulty = difficultyController != null
+                ? difficultyController.RollForWave(waveIndex)
+                : default;
+            preparedWaveIndex = waveIndex;
+            coreEnergyController?.BeginPreparation(preparedDifficulty.RequiredEnergy);
+        }
+
+        private void PrepareWaveSpawnData()
+        {
+            if (preparedWaveIndex < 1)
+                return;
+
+            waveManager.PrepareWave(preparedWaveIndex, preparedDifficulty);
         }
 
         private void SetTimeScale(float scale)
@@ -206,6 +222,32 @@ namespace KeepCoreSafe.Managers
             SetTimeScale(1f);
         }
 
+        public void AwardEnemyEnergy(Vector3 origin, int amount)
+        {
+            coreEnergyController?.AwardEnemyEnergy(origin, amount);
+        }
+
+        public bool CanApplyRerollCost(int cost)
+        {
+            return coreEnergyController != null && coreEnergyController.CanApplyRerollCost(cost);
+        }
+
+        public bool TryApplyRerollCost(int cost)
+        {
+            return coreEnergyController != null && coreEnergyController.TryApplyRerollCost(cost);
+        }
+
+        public void ResetCoreEnergy()
+        {
+            coreEnergyController?.ResetEnergy();
+        }
+
+        public void TriggerEnergyShockwave()
+        {
+            if (Phase == GamePhase.Combat && !isCoreDestructionPlaying && !isStageClearPlaying)
+                BeginStageClearPresentation();
+        }
+
         private void BeginStageClearPresentation()
         {
             if (isStageClearPlaying)
@@ -218,7 +260,7 @@ namespace KeepCoreSafe.Managers
                     "Stage clear presentation is not configured. Falling back to Preparation.",
                     this);
                 waveManager.StopWave();
-                SetPhase(GamePhase.Preparation);
+                BeginPostWaveTransition(ClearType.ShockWave);
                 return;
             }
 
@@ -228,7 +270,7 @@ namespace KeepCoreSafe.Managers
             {
                 isStageClearPlaying = false;
                 waveManager.StopWave();
-                SetPhase(GamePhase.Preparation);
+                BeginPostWaveTransition(ClearType.ShockWave);
             }
         }
 
@@ -237,7 +279,31 @@ namespace KeepCoreSafe.Managers
             RestoreNormalTimeScale();
             waveManager.StopWave();
             isStageClearPlaying = false;
-            StageCleared?.Invoke(WaveIndex, ClearType.ShockWave);
+            BeginPostWaveTransition(ClearType.ShockWave);
+        }
+
+        private void BeginPostWaveTransition(ClearType clearType)
+        {
+            if (isPostWaveTransitionPlaying || Phase != GamePhase.Combat)
+                return;
+
+            isPostWaveTransitionPlaying = true;
+            StageCleared?.Invoke(WaveIndex, clearType);
+            if (shopEventController != null
+                && shopEventController.TryStartPostWaveSupplySequence(WaveIndex, EnterPreparation))
+            {
+                return;
+            }
+
+            EnterPreparation();
+        }
+
+        private void EnterPreparation()
+        {
+            if (!isPostWaveTransitionPlaying)
+                return;
+
+            isPostWaveTransitionPlaying = false;
             SetPhase(GamePhase.Preparation);
         }
 

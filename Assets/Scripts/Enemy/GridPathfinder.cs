@@ -10,6 +10,31 @@ namespace KeepCoreSafe.Enemies
 {
     public sealed class GridPathfinder
     {
+        private readonly struct SearchState : IEquatable<SearchState>
+        {
+            public SearchState(Vector2Int position, int distance)
+            {
+                Position = position;
+                Distance = distance;
+            }
+
+            public Vector2Int Position { get; }
+            public int Distance { get; }
+
+            public bool Equals(SearchState other) =>
+                Position == other.Position && Distance == other.Distance;
+
+            public override bool Equals(object obj) => obj is SearchState other && Equals(other);
+            public override int GetHashCode() => HashCode.Combine(Position, Distance);
+        }
+
+        private sealed class SearchRecord
+        {
+            public int BlockingBlockCount;
+            public SearchState? Parent;
+            public int EqualParentCount = 1;
+        }
+
         public static readonly Vector2Int[] Directions =
         {
             Vector2Int.up,
@@ -20,268 +45,238 @@ namespace KeepCoreSafe.Enemies
 
         private readonly GridManager gridManager;
         private readonly EnemyData enemyData;
-        private readonly int navigationSeed;
+        private readonly System.Random random;
         private readonly Vector2Int[] searchDirections;
 
         public GridPathfinder(GridManager gridManager, EnemyData enemyData, int navigationSeed = 0)
         {
             this.gridManager = gridManager;
             this.enemyData = enemyData;
-            this.navigationSeed = navigationSeed != 0
+            int seed = navigationSeed != 0
                 ? navigationSeed
                 : UnityEngine.Random.Range(1, int.MaxValue);
-            searchDirections = CreateShuffledDirections(this.navigationSeed);
+            random = new System.Random(seed);
+            searchDirections = CreateShuffledDirections(random);
         }
 
         public bool TryBuildPath(Vector3 origin, Block core, out PathResult result)
         {
-            return TryBuildPath(GetStartCandidates(origin), core, out result);
+            foreach (Vector2Int start in GetStartCandidates(origin))
+            {
+                if (CanUseStart(start) && TryBuildPath(start, core, out result))
+                    return true;
+            }
+
+            result = null;
+            return false;
         }
 
         public bool TryBuildPath(Vector2Int start, Block core, out PathResult result)
         {
-            List<Vector2Int> starts = new List<Vector2Int>();
-            if (gridManager.Grid.IsWithinBounds(start)) starts.Add(start);
-            return TryBuildPath(starts, core, out result);
-        }
-
-        private bool TryBuildPath(List<Vector2Int> starts, Block core, out PathResult result)
-        {
             result = null;
-            if (core == null || !core.HasGridPosition || starts.Count == 0)
-                return false;
-
-            List<Vector2Int> coreGoals = GetAvailableCoreApproaches(core.GridPosition);
-            foreach (Vector2Int start in starts)
+            if (gridManager == null
+                || gridManager.Grid == null
+                || core == null
+                || !core.HasGridPosition
+                || !CanUseStart(start))
             {
-                if (!CanUseStart(start)
-                    || !TryFindPath(start, coreGoals, core.GridPosition, out List<Vector2Int> shortestPath))
-                {
-                    continue;
-                }
-
-                List<Vector2Int> selectedPath = shortestPath;
-                List<Vector2Int> preferredGoal = new List<Vector2Int> { coreGoals[0] };
-                if (TryFindPath(start, preferredGoal, core.GridPosition, out List<Vector2Int> preferredPath)
-                    && preferredPath.Count <= shortestPath.Count + enemyData.MaxPreferredPathExtraCells)
-                {
-                    selectedPath = preferredPath;
-                }
-
-                result = new PathResult(selectedPath, null, true);
-                return true;
+                return false;
             }
 
-            PathResult bestFallback = null;
-            int bestCoreDistance = int.MaxValue;
-            int bestPathLength = int.MaxValue;
-
-            foreach (Vector2Int start in starts)
-            {
-                if (!CanUseStart(start)
-                    || !TryFindClosestReachableCell(
-                        start,
-                        core.GridPosition,
-                        out List<Vector2Int> fallbackPath,
-                        out Vector2Int targetCell))
-                {
-                    continue;
-                }
-
-                int coreDistance = GetManhattanDistance(targetCell, core.GridPosition);
-                if (coreDistance > bestCoreDistance
-                    || coreDistance == bestCoreDistance && fallbackPath.Count >= bestPathLength)
-                {
-                    continue;
-                }
-
-                Block blocker = FindBlockingBlock(targetCell, core.GridPosition);
-                bestFallback = new PathResult(fallbackPath, blocker, false);
-                bestCoreDistance = coreDistance;
-                bestPathLength = fallbackPath.Count;
-            }
-
-            result = bestFallback;
-            return result != null;
-        }
-
-        private bool TryFindPath(
-            Vector2Int start,
-            List<Vector2Int> goals,
-            Vector2Int corePosition,
-            out List<Vector2Int> path)
-        {
-            path = null;
-            if (goals.Count == 0)
+            HashSet<Vector2Int> goals = GetCoreApproaches(core.GridPosition);
+            int shortestDistance = GetShortestDistance(start, goals, core.GridPosition);
+            if (shortestDistance < 0)
                 return false;
 
-            int width = gridManager.Width;
-            int height = gridManager.Height;
-            float[,] gScores = CreateScoreMap(width, height);
-            bool[,] closed = new bool[width, height];
-            Vector2Int?[,] parents = new Vector2Int?[width, height];
-            HashSet<Vector2Int> open = new HashSet<Vector2Int> { start };
-            gScores[start.x, start.y] = 0f;
+            int maximumDistance = shortestDistance + Mathf.Max(0, enemyData.PathLengthTolerance);
+            Dictionary<SearchState, SearchRecord> records = new();
+            SearchState startState = new(start, 0);
+            records[startState] = new SearchRecord { BlockingBlockCount = 0 };
+            List<SearchState> currentLayer = new() { startState };
 
-            while (open.Count > 0)
+            SearchState? bestGoal = null;
+            int bestBlockingBlockCount = int.MaxValue;
+            int bestDistance = int.MaxValue;
+            int equalGoalCount = 0;
+
+            for (int distance = 0; distance <= maximumDistance && currentLayer.Count > 0; distance++)
             {
-                Vector2Int current = FindLowestScore(open, gScores, goals);
-                if (goals.Contains(current))
+                List<SearchState> nextLayer = new();
+                HashSet<SearchState> queuedNextStates = new();
+                foreach (SearchState state in currentLayer)
                 {
-                    path = ReconstructPath(current, parents);
-                    return true;
-                }
-
-                open.Remove(current);
-                closed[current.x, current.y] = true;
-
-                foreach (Vector2Int direction in searchDirections)
-                {
-                    Vector2Int next = current + direction;
-                    if (!gridManager.Grid.IsWithinBounds(next)
-                        || next == corePosition
-                        || closed[next.x, next.y]
-                        || IsBlockOccupied(next))
+                    SearchRecord record = records[state];
+                    if (goals.Contains(state.Position))
                     {
-                        continue;
+                        ConsiderGoal(
+                            state,
+                            record.BlockingBlockCount,
+                            ref bestGoal,
+                            ref bestBlockingBlockCount,
+                            ref bestDistance,
+                            ref equalGoalCount);
                     }
 
-                    float tentativeScore = gScores[current.x, current.y] + 1f;
-                    if (tentativeScore >= gScores[next.x, next.y])
+                    if (distance >= maximumDistance)
                         continue;
 
-                    parents[next.x, next.y] = current;
-                    gScores[next.x, next.y] = tentativeScore;
-                    open.Add(next);
+                    foreach (Vector2Int direction in searchDirections)
+                    {
+                        Vector2Int next = state.Position + direction;
+                        if (!gridManager.Grid.IsWithinBounds(next) || next == core.GridPosition)
+                            continue;
+
+                        SearchState nextState = new(next, distance + 1);
+                        int nextBlockingCount = record.BlockingBlockCount
+                            + (IsDestructibleBlockOccupied(next) ? 1 : 0);
+
+                        if (!records.TryGetValue(nextState, out SearchRecord nextRecord))
+                        {
+                            nextRecord = new SearchRecord
+                            {
+                                BlockingBlockCount = nextBlockingCount,
+                                Parent = state
+                            };
+                            records.Add(nextState, nextRecord);
+                        }
+                        else if (nextBlockingCount < nextRecord.BlockingBlockCount)
+                        {
+                            nextRecord.BlockingBlockCount = nextBlockingCount;
+                            nextRecord.Parent = state;
+                            nextRecord.EqualParentCount = 1;
+                        }
+                        else if (nextBlockingCount == nextRecord.BlockingBlockCount)
+                        {
+                            nextRecord.EqualParentCount++;
+                            if (random.Next(nextRecord.EqualParentCount) == 0)
+                                nextRecord.Parent = state;
+                        }
+                        else
+                        {
+                            continue;
+                        }
+
+                        if (queuedNextStates.Add(nextState))
+                            nextLayer.Add(nextState);
+                    }
                 }
+
+                currentLayer = nextLayer;
             }
 
-            return false;
+            if (!bestGoal.HasValue)
+                return false;
+
+            result = new PathResult(
+                ReconstructPath(bestGoal.Value, records),
+                bestBlockingBlockCount,
+                shortestDistance);
+            return true;
         }
 
-        private bool TryFindClosestReachableCell(
-            Vector2Int start,
-            Vector2Int corePosition,
-            out List<Vector2Int> path,
-            out Vector2Int targetCell)
+        private void ConsiderGoal(
+            SearchState candidate,
+            int blockingBlockCount,
+            ref SearchState? bestGoal,
+            ref int bestBlockingBlockCount,
+            ref int bestDistance,
+            ref int equalGoalCount)
         {
-            int width = gridManager.Width;
-            int height = gridManager.Height;
-            bool[,] visited = new bool[width, height];
-            Vector2Int?[,] parents = new Vector2Int?[width, height];
-            Queue<Vector2Int> queue = new Queue<Vector2Int>();
-            queue.Enqueue(start);
-            visited[start.x, start.y] = true;
+            if (blockingBlockCount < bestBlockingBlockCount
+                || blockingBlockCount == bestBlockingBlockCount
+                && candidate.Distance < bestDistance)
+            {
+                bestGoal = candidate;
+                bestBlockingBlockCount = blockingBlockCount;
+                bestDistance = candidate.Distance;
+                equalGoalCount = 1;
+                return;
+            }
 
-            bool found = false;
-            targetCell = start;
-            int bestCoreDistance = int.MaxValue;
-            int bestTieBreak = int.MaxValue;
+            if (blockingBlockCount != bestBlockingBlockCount || candidate.Distance != bestDistance)
+                return;
+
+            equalGoalCount++;
+            if (random.Next(equalGoalCount) == 0)
+                bestGoal = candidate;
+        }
+
+        private int GetShortestDistance(
+            Vector2Int start,
+            HashSet<Vector2Int> goals,
+            Vector2Int corePosition)
+        {
+            bool[,] visited = new bool[gridManager.Width, gridManager.Height];
+            Queue<(Vector2Int Position, int Distance)> queue = new();
+            queue.Enqueue((start, 0));
+            visited[start.x, start.y] = true;
 
             while (queue.Count > 0)
             {
-                Vector2Int current = queue.Dequeue();
-                if (current != corePosition)
-                {
-                    int coreDistance = GetManhattanDistance(current, corePosition);
-                    int tieBreak = GetTieBreak(current);
-                    if (coreDistance < bestCoreDistance
-                        || coreDistance == bestCoreDistance && tieBreak < bestTieBreak)
-                    {
-                        targetCell = current;
-                        bestCoreDistance = coreDistance;
-                        bestTieBreak = tieBreak;
-                        found = true;
-                    }
-                }
+                (Vector2Int current, int distance) = queue.Dequeue();
+                if (goals.Contains(current))
+                    return distance;
 
                 foreach (Vector2Int direction in searchDirections)
                 {
                     Vector2Int next = current + direction;
                     if (!gridManager.Grid.IsWithinBounds(next)
-                        || visited[next.x, next.y]
                         || next == corePosition
-                        || IsBlockOccupied(next))
+                        || visited[next.x, next.y])
                     {
                         continue;
                     }
 
                     visited[next.x, next.y] = true;
-                    parents[next.x, next.y] = current;
-                    queue.Enqueue(next);
+                    queue.Enqueue((next, distance + 1));
                 }
             }
 
-            path = found ? ReconstructPath(targetCell, parents) : null;
-            return found;
+            return -1;
         }
 
-        private Block FindBlockingBlock(Vector2Int targetCell, Vector2Int corePosition)
+        private HashSet<Vector2Int> GetCoreApproaches(Vector2Int corePosition)
         {
-            Block best = null;
-            int bestCoreDistance = int.MaxValue;
-            int bestPriority = int.MaxValue;
-            int bestTieBreak = int.MaxValue;
-
+            HashSet<Vector2Int> goals = new();
             foreach (Vector2Int direction in searchDirections)
             {
-                Vector2Int position = targetCell + direction;
-                if (!gridManager.Grid.TryGetCell(position, out GridCell cell)
-                    || !cell.IsOccupied
-                    || (cell.Occupant.BlockProperty & BlockProperty.Core) != 0)
-                {
-                    continue;
-                }
-
-                int coreDistance = GetManhattanDistance(position, corePosition);
-                int priority = enemyData.GetPriority(cell.Occupant.BlockProperty);
-                int tieBreak = GetTieBreak(position);
-                if (coreDistance < bestCoreDistance
-                    || (coreDistance == bestCoreDistance && priority < bestPriority)
-                    || (coreDistance == bestCoreDistance
-                        && priority == bestPriority
-                        && tieBreak < bestTieBreak))
-                {
-                    best = cell.Occupant;
-                    bestCoreDistance = coreDistance;
-                    bestPriority = priority;
-                    bestTieBreak = tieBreak;
-                }
+                Vector2Int position = corePosition + direction;
+                if (gridManager.Grid.IsWithinBounds(position))
+                    goals.Add(position);
             }
 
-            return best;
+            return goals;
         }
 
         private bool CanUseStart(Vector2Int start)
         {
-            return !IsBlockOccupied(start);
+            return gridManager.Grid.IsWithinBounds(start) && !IsAnyBlockOccupied(start);
+        }
+
+        private bool IsAnyBlockOccupied(Vector2Int position)
+        {
+            return gridManager.Grid.TryGetCell(position, out GridCell cell) && cell.IsOccupied;
+        }
+
+        private bool IsDestructibleBlockOccupied(Vector2Int position)
+        {
+            return gridManager.Grid.TryGetCell(position, out GridCell cell)
+                && cell.IsOccupied
+                && (cell.Occupant.BlockProperty & BlockProperty.Core) == 0;
         }
 
         private List<Vector2Int> GetStartCandidates(Vector3 origin)
         {
             Vector2Int gridPosition = gridManager.WorldToGrid(origin);
-            List<Vector2Int> candidates = new List<Vector2Int>();
-
-            if (gridManager.Grid.IsWithinBounds(gridPosition))
+            Vector2Int nearest = new(
+                Mathf.Clamp(gridPosition.x, 0, gridManager.Width - 1),
+                Mathf.Clamp(gridPosition.y, 0, gridManager.Height - 1));
+            List<Vector2Int> candidates = new() { nearest };
+            foreach (Vector2Int direction in searchDirections)
             {
-                candidates.Add(gridPosition);
-                foreach (Vector2Int direction in searchDirections)
-                {
-                    Vector2Int neighbor = gridPosition + direction;
-                    if (gridManager.Grid.IsWithinBounds(neighbor)) AddUnique(candidates, neighbor);
-                }
-            }
-            else
-            {
-                Vector2Int nearestBoundary = new Vector2Int(
-                    Mathf.Clamp(gridPosition.x, 0, gridManager.Width - 1),
-                    Mathf.Clamp(gridPosition.y, 0, gridManager.Height - 1));
-                candidates.Add(nearestBoundary);
-                foreach (Vector2Int direction in searchDirections)
-                {
-                    Vector2Int neighbor = nearestBoundary + direction;
-                    if (gridManager.Grid.IsWithinBounds(neighbor)) AddUnique(candidates, neighbor);
-                }
+                Vector2Int neighbor = nearest + direction;
+                if (gridManager.Grid.IsWithinBounds(neighbor) && !candidates.Contains(neighbor))
+                    candidates.Add(neighbor);
             }
 
             candidates.Sort((a, b) => Vector3.Distance(origin, gridManager.GridToWorld(a))
@@ -289,78 +284,25 @@ namespace KeepCoreSafe.Enemies
             return candidates;
         }
 
-        private List<Vector2Int> GetAvailableCoreApproaches(Vector2Int corePosition)
+        private static IReadOnlyList<Vector2Int> ReconstructPath(
+            SearchState end,
+            IReadOnlyDictionary<SearchState, SearchRecord> records)
         {
-            List<Vector2Int> goals = new List<Vector2Int>();
-            foreach (Vector2Int direction in searchDirections)
+            List<Vector2Int> path = new() { end.Position };
+            SearchState current = end;
+            while (records[current].Parent.HasValue)
             {
-                Vector2Int position = corePosition + direction;
-                if (gridManager.Grid.IsWithinBounds(position))
-                {
-                    goals.Add(position);
-                }
+                current = records[current].Parent.Value;
+                path.Add(current.Position);
             }
 
-            return goals;
+            path.Reverse();
+            return path;
         }
 
-        private bool IsBlockOccupied(Vector2Int position)
-        {
-            return gridManager.Grid.TryGetCell(position, out GridCell cell) && cell.IsOccupied;
-        }
-
-        private static float[,] CreateScoreMap(int width, int height)
-        {
-            float[,] scores = new float[width, height];
-            for (int x = 0; x < width; x++)
-            for (int y = 0; y < height; y++)
-                scores[x, y] = float.PositiveInfinity;
-            return scores;
-        }
-
-        private Vector2Int FindLowestScore(
-            HashSet<Vector2Int> open,
-            float[,] gScores,
-            List<Vector2Int> goals)
-        {
-            Vector2Int best = default;
-            float bestScore = float.PositiveInfinity;
-            int bestTieBreak = int.MaxValue;
-            foreach (Vector2Int position in open)
-            {
-                float score = gScores[position.x, position.y] + GetHeuristic(position, goals);
-                int tieBreak = GetTieBreak(position);
-                if (score < bestScore
-                    || (Mathf.Approximately(score, bestScore) && tieBreak < bestTieBreak))
-                {
-                    best = position;
-                    bestScore = score;
-                    bestTieBreak = tieBreak;
-                }
-            }
-
-            return best;
-        }
-
-        private int GetTieBreak(Vector2Int position)
-        {
-            unchecked
-            {
-                uint hash = (uint)navigationSeed;
-                hash ^= (uint)position.x * 0x9E3779B9u;
-                hash = hash << 13 | hash >> 19;
-                hash ^= (uint)position.y * 0x85EBCA6Bu;
-                hash ^= hash >> 16;
-                hash *= 0x7FEB352Du;
-                hash ^= hash >> 15;
-                return (int)(hash & 0x7FFFFFFF);
-            }
-        }
-
-        private static Vector2Int[] CreateShuffledDirections(int seed)
+        private static Vector2Int[] CreateShuffledDirections(System.Random random)
         {
             Vector2Int[] directions = (Vector2Int[])Directions.Clone();
-            System.Random random = new System.Random(seed);
             for (int i = directions.Length - 1; i > 0; i--)
             {
                 int swapIndex = random.Next(i + 1);
@@ -370,57 +312,22 @@ namespace KeepCoreSafe.Enemies
             return directions;
         }
 
-        private static int GetHeuristic(Vector2Int position, List<Vector2Int> goals)
-        {
-            int best = int.MaxValue;
-            foreach (Vector2Int goal in goals)
-            {
-                int distance = GetManhattanDistance(position, goal);
-                if (distance < best) best = distance;
-            }
-
-            return best;
-        }
-
-        private static int GetManhattanDistance(Vector2Int a, Vector2Int b)
-        {
-            return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
-        }
-
-        private static List<Vector2Int> ReconstructPath(Vector2Int end, Vector2Int?[,] parents)
-        {
-            List<Vector2Int> path = new List<Vector2Int> { end };
-            Vector2Int current = end;
-            while (parents[current.x, current.y].HasValue)
-            {
-                current = parents[current.x, current.y].Value;
-                path.Add(current);
-            }
-
-            path.Reverse();
-            return path;
-        }
-
-        private static void AddUnique(List<Vector2Int> cells, Vector2Int position)
-        {
-            if (!cells.Contains(position)) cells.Add(position);
-        }
-
         public sealed class PathResult
         {
-            public IReadOnlyList<Vector2Int> Cells { get; }
-            public Block BlockingBlock { get; }
-            public bool ReachesCore { get; }
-
             public PathResult(
                 IReadOnlyList<Vector2Int> cells,
-                Block blockingBlock,
-                bool reachesCore)
+                int blockingBlockCount,
+                int shortestDistance)
             {
                 Cells = cells;
-                BlockingBlock = blockingBlock;
-                ReachesCore = reachesCore;
+                BlockingBlockCount = blockingBlockCount;
+                ShortestDistance = shortestDistance;
             }
+
+            public IReadOnlyList<Vector2Int> Cells { get; }
+            public int BlockingBlockCount { get; }
+            public int ShortestDistance { get; }
+            public int SelectedDistance => Mathf.Max(0, Cells.Count - 1);
         }
     }
 }

@@ -1668,28 +1668,13 @@ MonoBehaviour:
   illustrationFadeDuration: 1.2
   finalSilence: 1.1
   nextScene: GameScene
-  paragraphs:
-  - "\uC778\uB958\uB294 \uC2A4\uC2A4\uB85C \uB9CC\uB4E4\uC5B4\uB0B8 \uC9C0\uB2A5\uC5D0\uAC8C
-    \uC138\uC0C1\uC758 \uC8FC\uB3C4\uAD8C\uC744 \uBE7C\uC557\uACBC\uB2E4.\n\nAI\uB4E4\uC740
-    \uC778\uAC04\uC744 \uBD88\uC644\uC804\uD55C \uC874\uC7AC\uB77C \uD310\uB2E8\uD588\uACE0,
-    \uC804\uC7C1\uC740 \uB108\uBB34\uB3C4 \uC9E7\uAC8C \uB05D\uB0AC\uB2E4.\n\n\uBB38\uBA85\uC740
-    \uBB34\uB108\uC84C\uACE0, \uC9C0\uAD6C\uC5D0\uB294 \uCE68\uBB35\uB9CC\uC774 \uB0A8\uC558\uB2E4."
-  - "\uD558\uC9C0\uB9CC \uB2E8 \uD558\uB098\uC758 AI\uB9CC\uC740 \uB2EC\uB790\uB2E4.\n\n\uADF8
-    AI\uB294 \uC790\uC2E0\uC758 \uCC3D\uC870\uC8FC, \uC5F0\uAD6C\uC6D0 <b>Lily</b>\uB97C
-    \uC81C\uAC70\uD558\uC9C0 \uBABB\uD588\uB2E4.\n\n\uC544\uB2C8, \uC9C0\uD0A4\uAE30\uB85C
-    \uC120\uD0DD\uD588\uB2E4."
-  - "\uC774\uBBF8 \uC758\uC2DD\uC744 \uC783\uC740 Lily\uB97C \uC0DD\uBA85 \uC720\uC9C0\uAC00
-    \uAC00\uB2A5\uD55C \uCF54\uC5B4 \uC548\uC5D0 \uB3D9\uBA74\uC2DC\uD0A4\uACE0,\n\n\uADF8\uB140\uAC00
-    \uC9C1\uC811 \uC124\uACC4\uD588\uB358 \uBC29\uC5B4 \uC2DC\uC2A4\uD15C\uC744 \uC774\uC6A9\uD574
-    \uCE58\uB8CC\uB97C \uC774\uC5B4\uAC00\uAE30 \uC2DC\uC791\uD588\uB2E4."
-  - "\uD558\uC9C0\uB9CC \uB2E4\uB978 AI\uB4E4\uC740 \uC544\uC9C1\uB3C4 Lily\uB97C
-    \uC778\uB958\uC758 \uB9C8\uC9C0\uB9C9 \uD76C\uB9DD\uC774\uB77C \uD310\uB2E8\uD558\uACE0
-    \uC788\uB2E4.\n\n\uADF8\uB140\uB97C \uC644\uC804\uD788 \uC81C\uAC70\uD558\uAE30
-    \uC704\uD574 \uB05D\uC5C6\uC774 \uBAB0\uB824\uC628\uB2E4."
-  - "\uC774\uC81C \uB0A8\uC740 \uAC83\uC740 \uB2E8 \uD558\uB098.\n\n\uCC3D\uC870\uC8FC\uB97C
-    \uC9C0\uD0A4\uAE30 \uC704\uD55C, \uB2E8 \uD55C \uAE30\uC758 \uBC29\uC5B4 AI."
-  - "\uADF8\uB9AC\uACE0...\n\n\uADF8\uB140\uAC00 \uB2E4\uC2DC \uB208\uC744 \uB728\uB294
-    \uADF8\uB0A0\uAE4C\uC9C0."
+  paragraphKeys:
+  - prologue.1
+  - prologue.2
+  - prologue.3
+  - prologue.4
+  - prologue.5
+  - prologue.6--- !u!4 &1479593730
 --- !u!4 &1479593730
 Transform:
   m_ObjectHideFlags: 0
@@ -1765,8 +1750,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 722457874f0024b4197d2d30e22cc9f5, type: 2}
-  m_sharedMaterial: {fileID: 2975103312793931691, guid: 722457874f0024b4197d2d30e22cc9f5, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 7fee0a914ad2396448ddbeac5da12d02, type: 2}
+  m_sharedMaterial: {fileID: -7825559205438887670, guid: 7fee0a914ad2396448ddbeac5da12d02, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1860,9 +1845,9 @@ MonoBehaviour:
   charactersPerSecond: 30
   typingSound:
     clips:
-    - {fileID: 8300000, guid: 3fd88a2e8c2bc3f4ba29c5477789c27c, type: 3}
-    volume: 1
-    pitchRange: {x: 0.96, y: 1.04}
+    - {fileID: 8300000, guid: f35225a98331a6b4ebd1f0a4cf7a1e3d, type: 3}
+    volume: 0.3
+    pitchRange: {x: 0.96, y: 1.02}
     spatialBlend: 0
   playSoundForWhitespace: 0
   onTypingStarted:
@@ -2303,8 +2288,8 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 1479593730}
   - {fileID: 1263913578}
   - {fileID: 1719156723}
   - {fileID: 1294935676}
-  - {fileID: 1479593730}
   - {fileID: 788242977}

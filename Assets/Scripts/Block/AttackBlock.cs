@@ -20,6 +20,7 @@ namespace KeepCoreSafe.Blocks
         [SerializeField] private Color laserEndColor = new Color(1f, 0.18f, 0.08f, 1f);
         [SerializeField, Min(0f)] private float initialWidthMultiplier = 1.4f;
         [SerializeField, Min(0f)] private float finalWidthMultiplier = 0.25f;
+        [SerializeField] private Transform laserAttachPoint;
 
         private Enemy currentTarget;
         private float cooldownRemaining;
@@ -61,7 +62,7 @@ namespace KeepCoreSafe.Blocks
             if (currentTarget == null)
                 return;
 
-            laserEndPosition = currentTarget.transform.position;
+            laserEndPosition = currentTarget.HitPoint.position;
             currentTarget.TakeDamage(AttackData.AttackValue);
             AudioManager.PlayAt(AttackData.AttackSound, transform.position);
             PlayLaser();
@@ -100,8 +101,8 @@ namespace KeepCoreSafe.Blocks
 
             laserRemaining = laserDuration;
             laser.enabled = true;
-            laser.SetPosition(0, transform.position);
-            laser.SetPosition(1, transform.position);
+            laser.SetPosition(0, laserAttachPoint.position);
+            laser.SetPosition(1, laserAttachPoint.position);
         }
 
         private void UpdateLaser(float deltaTime)
@@ -111,11 +112,11 @@ namespace KeepCoreSafe.Blocks
 
             laserRemaining = Mathf.Max(0f, laserRemaining - deltaTime);
             float progress = 1f - laserRemaining / laserDuration;
-            Vector3 end = currentTarget != null ? currentTarget.transform.position : laserEndPosition;
+            Vector3 end = currentTarget != null ? currentTarget.HitPoint.position : laserEndPosition;
             laserEndPosition = end;
-            laser.SetPosition(0, transform.position);
+            laser.SetPosition(0, laserAttachPoint.position);
             laser.SetPosition(1, Vector3.Lerp(
-                transform.position,
+                laserAttachPoint.position,
                 end,
                 Mathf.Clamp01(progress * laserDrawSpeed)));
 

@@ -1,3 +1,4 @@
+using KeepCoreSafe.Localization;
 using UnityEngine;
 
 namespace KeepCoreSafe.Data
@@ -8,7 +9,8 @@ namespace KeepCoreSafe.Data
         [SerializeField] private string displayName;
         [SerializeField] private Color color = Color.white;
 
-        public string DisplayName => displayName;
+        public string DisplayName => LocalizationManager.Get(displayName, displayName);
+        public string DisplayNameKey => displayName;
         public Color Color => color;
     }
 }

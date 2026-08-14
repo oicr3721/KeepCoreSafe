@@ -12,17 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83bc0539ae42d8b40b776591eab9bb88, type: 3}
   m_Name: GreenBasic
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.BasicBlockData
-  displayName: "\uCD08\uB85D \uBCBD"
-  description: "\uCD08\uB85D \uBCBD 3\uAC1C\uB97C \uC5F0\uACB0\uD558\uBA74 \uD68C\uBCF5
-    \uBE14\uB85D\uC73C\uB85C \uBCC0\uD658\uB429\uB2C8\uB2E4."
+  displayName: block.basic.green.name
+  description: block.basic.green.desc
   maxHP: 100
-  dismantleValue: 2
-  sprite: {fileID: -5356574185940491189, guid: 5f7eba390e6a4cc498a31ef2325162df, type: 3}
+  sprite: {fileID: -3493244654930374391, guid: 295cdf74a8d678444885fcc13745e7cf, type: 3}
+  healthStageSprites:
+  - {fileID: -3493244654930374391, guid: 295cdf74a8d678444885fcc13745e7cf, type: 3}
+  - {fileID: 4667592225873913266, guid: 295cdf74a8d678444885fcc13745e7cf, type: 3}
+  - {fileID: -1807311817288096644, guid: 295cdf74a8d678444885fcc13745e7cf, type: 3}
+  - {fileID: 2471221339964816156, guid: 295cdf74a8d678444885fcc13745e7cf, type: 3}
+  - {fileID: -7714070083723921842, guid: 295cdf74a8d678444885fcc13745e7cf, type: 3}
+  color: {fileID: 11400000, guid: 5aa14784ad252ac4cb6724f0517177e9, type: 2}
   prefab: {fileID: 2008381815392251027, guid: fda390f54e8b79d4fb687eebe3d069b0, type: 3}
   additionalProperties: 0
   destroyedSound:
-    clips: []
-    volume: 1
+    clips:
+    - {fileID: 8300000, guid: c6d5817bfa4b0ad4dbb3214e35e331ad, type: 3}
+    - {fileID: 8300000, guid: 5309eac36a18c854098ba9063e32c64e, type: 3}
+    - {fileID: 8300000, guid: d87057982a7accf4bba7906a2c99f46a, type: 3}
+    volume: 0.6
     pitchRange: {x: 0.96, y: 1.04}
     spatialBlend: 0
-  color: {fileID: 11400000, guid: 5aa14784ad252ac4cb6724f0517177e9, type: 2}

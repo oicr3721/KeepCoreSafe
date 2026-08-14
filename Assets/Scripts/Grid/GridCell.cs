@@ -8,6 +8,9 @@ namespace KeepCoreSafe.GridSystem
         public Vector2Int Position { get; }
         public Block Occupant { get; private set; }
         public bool IsOccupied => Occupant != null;
+        public bool IsInteractionLocked => interactionLockCount > 0;
+
+        private int interactionLockCount;
 
         public GridCell(Vector2Int position)
         {
@@ -35,6 +38,16 @@ namespace KeepCoreSafe.GridSystem
 
             Occupant = null;
             return true;
+        }
+
+        internal void AddInteractionLock()
+        {
+            interactionLockCount++;
+        }
+
+        internal void RemoveInteractionLock()
+        {
+            interactionLockCount = Mathf.Max(0, interactionLockCount - 1);
         }
     }
 }

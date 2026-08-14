@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using KeepCoreSafe.Audio;
+using KeepCoreSafe.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -67,6 +68,11 @@ namespace KeepCoreSafe.UI
             TypingStarted?.Invoke();
             onTypingStarted?.Invoke();
             typingRoutine = StartCoroutine(TypeRoutine());
+        }
+
+        public void PlayLocalized(string key)
+        {
+            Play(LocalizationManager.Get(key));
         }
 
         public void CompleteImmediately()

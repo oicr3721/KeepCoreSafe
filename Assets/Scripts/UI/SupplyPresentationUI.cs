@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using KeepCoreSafe.Audio;
+using KeepCoreSafe.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,10 +21,12 @@ namespace KeepCoreSafe.UI
         [SerializeField] private RectTransform dockTarget;
 
         [Header("Controls")]
+        [SerializeField] private RectTransform controlsRoot;
+        [SerializeField] private CanvasGroup controlsGroup;
         [SerializeField] private Button confirmButton;
-        [SerializeField] private TMP_Text confirmLabel;
         [SerializeField] private Button rerollButton;
-        [SerializeField] private string confirmText = "CONFIRM";
+        [SerializeField, Min(0f)] private float controlsFadeInDuration = 0.18f;
+        [SerializeField, Min(0f)] private float controlsFadeOutDuration = 0.14f;
 
         [Header("Audio")]
         [Tooltip("Played whenever a supplied block finishes landing.")]
@@ -53,6 +56,10 @@ namespace KeepCoreSafe.UI
         private readonly List<Button> currentButtons = new();
         private Sequence sequence;
         private Vector2 expandedContentPosition;
+        private Vector2 expandedContentSizeDelta;
+        private Vector2 expandedContentAnchorMin;
+        private Vector2 expandedContentAnchorMax;
+        private Vector2 expandedContentPivot;
         private bool isAnimating;
         private bool isDocked;
         private bool isDealReady;
@@ -66,7 +73,13 @@ namespace KeepCoreSafe.UI
             if (presentationRoot == null)
                 presentationRoot = transform as RectTransform;
             if (contentRoot != null)
+            {
                 expandedContentPosition = contentRoot.anchoredPosition;
+                expandedContentSizeDelta = contentRoot.sizeDelta;
+                expandedContentAnchorMin = contentRoot.anchorMin;
+                expandedContentAnchorMax = contentRoot.anchorMax;
+                expandedContentPivot = contentRoot.pivot;
+            }
         }
 
         public void PlayDeal(
@@ -135,6 +148,9 @@ namespace KeepCoreSafe.UI
                 sequence.AppendInterval(itemInterval);
             }
 
+            if (controlsGroup != null)
+                sequence.Append(controlsGroup.DOFade(1f, controlsFadeInDuration));
+
             sequence.OnComplete(() =>
             {
                 isAnimating = false;
@@ -191,34 +207,29 @@ namespace KeepCoreSafe.UI
             AudioManager.Play(confirmSound);
 
             GetDockRect(out Vector2 dockPosition, out Vector2 dockSize);
-            sequence = DOTween.Sequence().SetUpdate(true).SetTarget(this)
-                .AppendInterval(confirmFeedbackDelay)
+            GetMatchingLayoutInCurrentAnchorSpace(
+                contentRoot,
+                dockTarget,
+                out Vector2 contentPosition,
+                out Vector2 contentSizeDelta);
+            sequence = DOTween.Sequence().SetUpdate(true).SetTarget(this);
+            if (controlsGroup != null)
+                sequence.Append(controlsGroup.DOFade(0f, controlsFadeOutDuration));
+            sequence.AppendInterval(confirmFeedbackDelay)
                 .Append(backgroundPanel.DOAnchorPos(dockPosition, dockDuration).SetEase(Ease.InOutCubic))
                 .Join(backgroundPanel.DOSizeDelta(dockSize, dockDuration).SetEase(Ease.InOutCubic))
                 .Join(backgroundImage.DOColor(dockedBackgroundColor, dockDuration))
-                .Join(contentRoot.DOAnchorPos(dockPosition, dockDuration).SetEase(Ease.InOutCubic));
-
-            if (rerollButton != null)
-            {
-                sequence.Join(rerollButton.transform.DOScale(0f, dockDuration * 0.55f)
-                    .SetEase(Ease.InBack));
-            }
-            if (confirmButton != null)
-            {
-                sequence.Join(confirmButton.transform.DOScale(0f, dockDuration * 0.55f)
-                    .SetEase(Ease.InBack));
-            }
+                .Join(contentRoot.DOAnchorPos(contentPosition, dockDuration).SetEase(Ease.InOutCubic))
+                .Join(contentRoot.DOSizeDelta(contentSizeDelta, dockDuration).SetEase(Ease.InOutCubic));
 
             sequence.OnComplete(() =>
             {
+                CopyLayout(contentRoot, dockTarget);
                 isAnimating = false;
                 isDocked = true;
                 if (backgroundImage != null)
                     backgroundImage.raycastTarget = false;
-                if (rerollButton != null)
-                    rerollButton.gameObject.SetActive(false);
-                if (confirmButton != null)
-                    confirmButton.gameObject.SetActive(false);
+                HideControls();
                 SetBlockButtonsInteractable(true);
                 onComplete?.Invoke();
             });
@@ -255,6 +266,7 @@ namespace KeepCoreSafe.UI
                 presentationGroup.interactable = false;
                 presentationGroup.blocksRaycasts = false;
             }
+            HideControls();
         }
 
         private void Show()
@@ -276,27 +288,48 @@ namespace KeepCoreSafe.UI
             backgroundPanel.sizeDelta = rootRect.size;
             backgroundImage.color = expandedBackgroundColor;
             backgroundImage.raycastTarget = true;
+            contentRoot.anchorMin = expandedContentAnchorMin;
+            contentRoot.anchorMax = expandedContentAnchorMax;
+            contentRoot.pivot = expandedContentPivot;
             contentRoot.anchoredPosition = expandedContentPosition;
-            if (rerollButton != null)
+            contentRoot.sizeDelta = expandedContentSizeDelta;
+            if (controlsRoot != null)
+                controlsRoot.gameObject.SetActive(true);
+            if (controlsGroup != null)
             {
-                rerollButton.gameObject.SetActive(true);
-                rerollButton.transform.localScale = Vector3.one;
+                controlsGroup.DOKill(false);
+                controlsGroup.alpha = 0f;
+                controlsGroup.interactable = false;
+                controlsGroup.blocksRaycasts = false;
             }
             if (confirmButton != null)
-            {
                 confirmButton.gameObject.SetActive(true);
-                confirmButton.transform.localScale = Vector3.one;
-            }
-            if (confirmLabel != null)
-                confirmLabel.text = confirmText;
         }
 
         private void SetControlsInteractable(bool interactable)
         {
+            if (controlsGroup != null)
+            {
+                controlsGroup.interactable = interactable;
+                controlsGroup.blocksRaycasts = interactable;
+            }
             if (confirmButton != null)
                 confirmButton.interactable = interactable;
             if (rerollButton != null)
                 rerollButton.interactable = interactable;
+        }
+
+        private void HideControls()
+        {
+            if (controlsGroup != null)
+            {
+                controlsGroup.DOKill(false);
+                controlsGroup.alpha = 0f;
+                controlsGroup.interactable = false;
+                controlsGroup.blocksRaycasts = false;
+            }
+            if (controlsRoot != null)
+                controlsRoot.gameObject.SetActive(false);
         }
 
         private void SetBlockButtonsInteractable(bool interactable)
@@ -333,6 +366,42 @@ namespace KeepCoreSafe.UI
             Vector3 max = presentationRoot.InverseTransformPoint(corners[2]);
             position = (min + max) * 0.5f;
             size = new Vector2(Mathf.Abs(max.x - min.x), Mathf.Abs(max.y - min.y));
+        }
+
+        private static void GetMatchingLayoutInCurrentAnchorSpace(
+            RectTransform rect,
+            RectTransform target,
+            out Vector2 anchoredPosition,
+            out Vector2 sizeDelta)
+        {
+            RectTransform parent = rect.parent as RectTransform;
+            Vector3[] corners = new Vector3[4];
+            target.GetWorldCorners(corners);
+            Vector2 minimum = parent.InverseTransformPoint(corners[0]);
+            Vector2 maximum = parent.InverseTransformPoint(corners[2]);
+            Vector2 scaledSize = maximum - minimum;
+            Vector2 scale = new(
+                Mathf.Max(0.0001f, Mathf.Abs(rect.localScale.x)),
+                Mathf.Max(0.0001f, Mathf.Abs(rect.localScale.y)));
+            Vector2 localSize = new(scaledSize.x / scale.x, scaledSize.y / scale.y);
+            Vector2 pivotPosition = minimum + Vector2.Scale(scaledSize, rect.pivot);
+            Vector2 anchorReference = parent.rect.min + Vector2.Scale(
+                parent.rect.size,
+                rect.anchorMin + Vector2.Scale(rect.anchorMax - rect.anchorMin, rect.pivot));
+
+            anchoredPosition = pivotPosition - anchorReference;
+            sizeDelta = localSize - Vector2.Scale(
+                parent.rect.size,
+                rect.anchorMax - rect.anchorMin);
+        }
+
+        private static void CopyLayout(RectTransform destination, RectTransform source)
+        {
+            destination.anchorMin = source.anchorMin;
+            destination.anchorMax = source.anchorMax;
+            destination.pivot = source.pivot;
+            destination.anchoredPosition = source.anchoredPosition;
+            destination.sizeDelta = source.sizeDelta;
         }
 
         private void KillSequence()

@@ -1,7 +1,9 @@
 using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Audio;
 using KeepCoreSafe.Enemies;
+using KeepCoreSafe.Localization;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace KeepCoreSafe.Data
 {
@@ -22,11 +24,12 @@ namespace KeepCoreSafe.Data
         [SerializeField, Min(0.1f)]
         private float attackCooldown = 1f;
 
-        [SerializeField, Min(0.05f)]
-        private float repathInterval = 0.4f;
-
+        [FormerlySerializedAs("maxPreferredPathExtraCells")]
         [SerializeField, Min(0)]
-        private int maxPreferredPathExtraCells = 4;
+        [Tooltip("Paths up to this many cells longer than the shortest route remain candidates.")]
+        private int pathLengthTolerance = 2;
+
+        [SerializeField, Min(0)] private int energyOnDeath = 1;
 
         [SerializeField]
         private Sprite sprite;
@@ -41,13 +44,14 @@ namespace KeepCoreSafe.Data
         [Tooltip("Played when this enemy successfully performs an attack.")]
         [SerializeField] private AudioCue attackSound = new();
 
-        public string DisplayName => displayName;
+        public string DisplayName => LocalizationManager.Get(displayName, displayName);
+        public string DisplayNameKey => displayName;
         public int MaxHP => maxHP;
         public float MoveSpeed => moveSpeed;
         public int AttackDamage => attackDamage;
         public float AttackCooldown => attackCooldown;
-        public float RepathInterval => repathInterval;
-        public int MaxPreferredPathExtraCells => maxPreferredPathExtraCells;
+        public int PathLengthTolerance => pathLengthTolerance;
+        public int EnergyOnDeath => energyOnDeath;
         public Sprite Sprite => sprite;
         public Enemy Prefab => prefab;
         public AudioCue AttackSound => attackSound;
