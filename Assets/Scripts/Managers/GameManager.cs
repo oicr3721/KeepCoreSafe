@@ -177,7 +177,7 @@ namespace KeepCoreSafe.Managers
             // prepared spawn list can include its additional hunters and fixed routes.
             if (phase == GamePhase.Preparation)
                 PrepareWaveSpawnData();
-            Debug.Log($"Game Phase: {phase}");
+            //Debug.Log($"Game Phase: {phase}");
         }
 
         public void RefreshPreparedWave()
@@ -235,6 +235,18 @@ namespace KeepCoreSafe.Managers
         public bool TryApplyRerollCost(int cost)
         {
             return coreEnergyController != null && coreEnergyController.TryApplyRerollCost(cost);
+        }
+
+        public bool CanAddPreparationEnergy(int amount)
+        {
+            return coreEnergyController != null
+                   && coreEnergyController.CanAddPreparationEnergy(amount);
+        }
+
+        public bool TryAddPreparationEnergy(int amount)
+        {
+            return coreEnergyController != null
+                   && coreEnergyController.TryAddPreparationEnergy(amount);
         }
 
         public void ResetCoreEnergy()

@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11b17ce65038c1349b1103e51db85520, type: 3}
+  m_Name: CoreEnergyOffer
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.CoreEnergyShopOfferData
+  displayImage: {fileID: 5849612727162771064, guid: b700a1394258ffa4e9fd2316f80afb54, type: 3}
+  displayName: shop.offer.energy.name
+  description: shop.offer.energy.desc
+  energyAmount: 10

@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 018156c0d18255a4c8775e251678a8d1, type: 3}
+  m_Name: BlueRecoveryOffer
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.ColorRecoveryShopOfferData
+  displayImage: {fileID: 4183758239832987388, guid: 42a7c04790a898c47a9e63e8836c9a27, type: 3}
+  displayName: shop.offer.recovery.blue.name
+  description: shop.offer.recovery.blue.desc
+  targetColor: {fileID: 11400000, guid: 9039f645166e4a543a88a8bfcb82142c, type: 2}

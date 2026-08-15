@@ -13,15 +13,10 @@ namespace KeepCoreSafe.Enemies
     {
         private static readonly int MoveXParameter = Animator.StringToHash("MoveX");
         private static readonly int MoveYParameter = Animator.StringToHash("MoveY");
-        private static readonly List<Enemy> ActiveEnemies = new();
-        private static readonly List<Collider2D> ActiveEnemyColliders = new();
-
         [SerializeField]
         private EnemyData data;
 
         [Header("Prefab References")]
-        [SerializeField] private Rigidbody2D body;
-        [SerializeField] private Collider2D collisionCollider;
         [SerializeField] private SpriteRenderer visualRenderer;
         [SerializeField] private DamageFeedback damageFeedback;
         [SerializeField] private Animator animator;
@@ -34,20 +29,8 @@ namespace KeepCoreSafe.Enemies
         [SerializeField, Range(0f, 0.4f)]
         private float maximumPersonalOffsetRatio = 0.25f;
 
-        [SerializeField, Range(0.1f, 1f)]
-        private float separationRadiusInCells = 0.55f;
-
-        [SerializeField, Range(0f, 0.5f)]
-        private float separationStrength = 0.2f;
-
         [SerializeField, Min(0.001f)]
         private float minimumSnapDistance = 0.02f;
-
-        [SerializeField, Min(0.05f)]
-        private float movementStallTimeout = 0.75f;
-
-        [SerializeField, Min(0.0001f)]
-        private float movementProgressEpsilon = 0.005f;
 
         private bool isDead;
         private bool isShockwaveEliminationPlaying;
@@ -55,11 +38,6 @@ namespace KeepCoreSafe.Enemies
         private Vector2Int movementDestination;
         private Vector2 personalCellOffset;
         private Vector2Int prevMove;
-        private float movementStallTimer;
-        private float lastDestinationDistance;
-
-        protected Rigidbody2D Body { get; private set; }
-        protected Collider2D CollisionCollider { get; private set; }
         protected GridManager GridManager { get; private set; }
 
         public EnemyData Data => data;
@@ -79,8 +57,6 @@ namespace KeepCoreSafe.Enemies
             if (animator == null && visualRenderer != null)
                 animator = visualRenderer.GetComponent<Animator>();
 
-            EnsurePhysicsComponents();
-            ActiveEnemies.Add(this);
         }
 
         protected virtual void Start()
@@ -121,12 +97,13 @@ namespace KeepCoreSafe.Enemies
             CurrentHP = Mathf.Max(0, CurrentHP - amount);
             damageFeedback?.Play();
             if (CurrentHP == 0)
-            {
                 Die();
-            }
+            else
+                OnDamaged(amount);
         }
 
         protected virtual void OnCombatUpdate(float deltaTime) { }
+        protected virtual void OnDamaged(int amount) { }
 
         protected bool ContinueCellMovement(float deltaTime)
         {
@@ -134,40 +111,20 @@ namespace KeepCoreSafe.Enemies
                 return false;
 
             Vector2 destination = GetCellWorldPosition(movementDestination);
-            Vector2 offset = destination - Body.position;
-            float destinationDistance = offset.magnitude;
+            Vector2 currentPosition = transform.position;
+            float destinationDistance = Vector2.Distance(currentPosition, destination);
             float snapDistance = Mathf.Max(minimumSnapDistance, Data.MoveSpeed * deltaTime);
             if (destinationDistance <= snapDistance)
             {
-                Body.position = destination;
-                Body.linearVelocity = Vector2.zero;
+                transform.position = destination;
                 isMovingToCell = false;
-                movementStallTimer = 0f;
             }
             else
             {
-                if (destinationDistance >= lastDestinationDistance - movementProgressEpsilon)
-                {
-                    movementStallTimer += deltaTime;
-                    if (movementStallTimer >= movementStallTimeout)
-                    {
-                        Body.linearVelocity = Vector2.zero;
-                        isMovingToCell = false;
-                        movementStallTimer = 0f;
-                        return false;
-                    }
-                }
-                else
-                {
-                    movementStallTimer = 0f;
-                }
-
-                lastDestinationDistance = destinationDistance;
-                Vector2 desiredVelocity = offset.normalized * Data.MoveSpeed;
-                Vector2 separationVelocity = CalculateSeparationVelocity();
-                Body.linearVelocity = Vector2.ClampMagnitude(
-                    desiredVelocity + separationVelocity,
-                    Data.MoveSpeed);
+                transform.position = Vector2.MoveTowards(
+                    currentPosition,
+                    destination,
+                    Data.MoveSpeed * deltaTime);
             }
 
             return true;
@@ -184,7 +141,7 @@ namespace KeepCoreSafe.Enemies
 
             if (TryGetCurrentCell(out Vector2Int current)
                 && current == destination
-                && Vector2.Distance(Body.position, GetCellWorldPosition(destination)) < 0.05f)
+                && Vector2.Distance(transform.position, GetCellWorldPosition(destination)) < 0.05f)
             {
                 return false;
             }
@@ -192,8 +149,6 @@ namespace KeepCoreSafe.Enemies
             movementDestination = destination;
             UpdateMovementPresentation(CalculateAnimationMove(destination));
             isMovingToCell = true;
-            movementStallTimer = 0f;
-            lastDestinationDistance = Vector2.Distance(Body.position, GetCellWorldPosition(destination));
             return true;
         }
 
@@ -203,14 +158,12 @@ namespace KeepCoreSafe.Enemies
             if (GridManager == null)
                 return false;
 
-            position = GridManager.WorldToGrid(Body.position - personalCellOffset);
+            position = GridManager.WorldToGrid(transform.position - (Vector3)personalCellOffset);
             return GridManager.Grid.IsWithinBounds(position);
         }
 
         protected void StopMoving(bool resetPresentation = true)
         {
-            Body.linearVelocity = Vector2.zero;
-            movementStallTimer = 0f;
             if (resetPresentation)
                 UpdateMovementPresentation(Vector2Int.zero);
         }
@@ -226,7 +179,7 @@ namespace KeepCoreSafe.Enemies
             UpdateMovementPresentation(ToCardinalAnimationMove(direction));
         }
 
-        private void Die()
+        protected void Die(bool awardEnergy = true)
         {
             if (isDead)
             {
@@ -234,9 +187,8 @@ namespace KeepCoreSafe.Enemies
             }
 
             isDead = true;
-            Body.linearVelocity = Vector2.zero;
             UpdateMovementPresentation(Vector2Int.zero);
-            if (!isShockwaveEliminationPlaying)
+            if (awardEnergy && !isShockwaveEliminationPlaying)
                 GameManager.Instance?.AwardEnemyEnergy(transform.position, data.EnergyOnDeath);
             Died?.Invoke(this);
             Destroy(gameObject);
@@ -249,8 +201,6 @@ namespace KeepCoreSafe.Enemies
 
             isShockwaveEliminationPlaying = true;
             StopMoving();
-            if (CollisionCollider != null)
-                CollisionCollider.enabled = false;
             damageFeedback?.Cancel();
             if (visualRenderer != null)
                 visualRenderer.color = Color.black;
@@ -267,30 +217,6 @@ namespace KeepCoreSafe.Enemies
             Die();
         }
 
-        private void EnsurePhysicsComponents()
-        {
-            if (collisionCollider == null)
-                collisionCollider = GetComponent<Collider2D>();
-            if (body == null)
-                body = GetComponent<Rigidbody2D>();
-
-            Body = body;
-            CollisionCollider = collisionCollider;
-            if (Body == null || CollisionCollider == null)
-            {
-                Debug.LogError($"{name} prefab is missing Rigidbody2D or Collider2D.", this);
-                enabled = false;
-                return;
-            }
-
-            IgnoreOtherEnemies();
-            Body.bodyType = RigidbodyType2D.Dynamic;
-            Body.gravityScale = 0f;
-            Body.freezeRotation = true;
-            Body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-            Body.interpolation = RigidbodyInterpolation2D.Interpolate;
-        }
-
         private void ApplySprite()
         {
             if (visualRenderer == null)
@@ -301,23 +227,6 @@ namespace KeepCoreSafe.Enemies
 
             visualRenderer.sprite = data.Sprite;
             damageFeedback?.Initialize(visualRenderer, Color.white);
-        }
-
-        private void IgnoreOtherEnemies()
-        {
-            for (int i = ActiveEnemyColliders.Count - 1; i >= 0; i--)
-            {
-                Collider2D otherCollider = ActiveEnemyColliders[i];
-                if (otherCollider == null)
-                {
-                    ActiveEnemyColliders.RemoveAt(i);
-                    continue;
-                }
-
-                Physics2D.IgnoreCollision(CollisionCollider, otherCollider, true);
-            }
-
-            ActiveEnemyColliders.Add(CollisionCollider);
         }
 
         private void GeneratePersonalCellOffset()
@@ -333,30 +242,6 @@ namespace KeepCoreSafe.Enemies
                 Mathf.Max(minimumRadius, maximumRadius));
         }
 
-        private Vector2 CalculateSeparationVelocity()
-        {
-            float radius = GridManager.CellSize * separationRadiusInCells;
-            float radiusSquared = radius * radius;
-            Vector2 separation = Vector2.zero;
-
-            foreach (Enemy other in ActiveEnemies)
-            {
-                if (other == null || other == this || other.isDead || other.Body == null)
-                    continue;
-
-                Vector2 away = Body.position - other.Body.position;
-                float distanceSquared = away.sqrMagnitude;
-                if (distanceSquared <= 0.0001f || distanceSquared >= radiusSquared)
-                    continue;
-
-                float distance = Mathf.Sqrt(distanceSquared);
-                separation += away / distance * (1f - distance / radius);
-            }
-
-            return Vector2.ClampMagnitude(separation, 1f)
-                   * (Data.MoveSpeed * separationStrength);
-        }
-
         private Vector2 GetCellWorldPosition(Vector2Int cell)
         {
             return (Vector2)GridManager.GridToWorld(cell) + personalCellOffset;
@@ -368,7 +253,7 @@ namespace KeepCoreSafe.Enemies
             if (TryGetCurrentCell(out Vector2Int currentCell))
                 direction = destination - currentCell;
             else
-                direction = GetCellWorldPosition(destination) - Body.position;
+                direction = GetCellWorldPosition(destination) - (Vector2)transform.position;
 
             return ToCardinalAnimationMove(direction);
         }
@@ -405,15 +290,6 @@ namespace KeepCoreSafe.Enemies
 
         protected virtual void OnDestroy()
         {
-            ActiveEnemies.Remove(this);
-            ActiveEnemyColliders.Remove(CollisionCollider);
-        }
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetEnemyColliders()
-        {
-            ActiveEnemies.Clear();
-            ActiveEnemyColliders.Clear();
         }
 
 #if UNITY_EDITOR

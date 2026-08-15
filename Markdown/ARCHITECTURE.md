@@ -84,6 +84,16 @@ Match identity uses the `BlockColorData` asset reference. It does not use a hard
 
 New upgrade behavior should be a new `ShopOfferData` subtype.
 
+## Wave data
+
+- `EnemyData` continues to own one Enemy type's stats, behavior prefab, targeting, and audio.
+- `WaveData` owns only a designer-facing name, optional intent/strategy notes, and a weighted
+  list of arbitrary existing `EnemyData` assets. It has no Min/Max Wave condition.
+- `WaveDifficultyData` owns the unchanged progression curve, enemy-count range, required
+  Energy, spawn pressure, Normal/Special `WaveData` pools, and `SpecialWaveInterval`.
+- `WaveDifficultySnapshot` freezes the rolled scale values together with the selected
+  `WaveData` and Special flag for the upcoming wave.
+
 ---
 
 # Runtime Responsibilities
@@ -173,14 +183,41 @@ New upgrade behavior should be a new `ShopOfferData` subtype.
   resolves exact ties with the enemy navigation seed.
 - `WaveManager.CreateSpawnPlan` calculates every route against one wave-start Grid state and
   passes the immutable cell list through `Enemy.Initialize` when each delayed spawn occurs.
+- `WaveManager` receives generic `EnemyData` entries from the selected `WaveData`; adding a new
+  Enemy type to a composition does not require another archetype branch in the spawn pipeline.
 - Melee and Ranged enemies never subscribe to `GridChanged`. They subscribe only to their
   current route block's `Died` event, then continue along the stored route.
 - Enemies spawn outside the Grid. `RangedEnemy` explicitly enters through the first stored,
   in-bounds route cell before applying its normal range/retreat decisions.
+- Enemy movement is deterministic Transform movement toward `GridToWorld(cell) + PersonalCellOffset`.
+  `TryGetBlock` and `IsCellEmpty` are the only Block-obstruction checks; neither Enemy nor Block
+  Prefabs contain `Rigidbody2D`/`Collider2D`, and no Physics2D contact participates in gameplay.
+- Enemy-to-Enemy collision and separation are intentionally absent. The per-Enemy visual cell
+  offset keeps units readable without changing their logical Grid cell or route.
+- `SuicideEnemy` consumes the same immutable route and owns only its blocker handling,
+  route-blocker/low-HP triggers, synchronized warning state, and 3x3 Block-only explosion.
+  It begins self-destruction at the same adjacent-Block condition where a Melee Enemy would
+  begin attacking, rather than waiting for the route's final Cell.
+- `Enemy.OnDamaged` is a no-op extension hook used by Suicide Enemy after nonlethal damage;
+  `Enemy.Die(bool)` keeps the common death event while allowing self-detonation to suppress
+  only the Energy award.
+
+## Explosion particle pooling
+
+- `ExplosionParticleEffectManager` is a scene-authored presentation service backed by the
+  existing `ComponentPool<ParticleSystem>`.
+- One effect is rented for every Block actually hit by a Suicide Enemy explosion and returned
+  when its Particle System is no longer alive. Concurrent explosions expand the pool normally.
+- Gameplay selects Block targets and applies damage; the manager owns only particle lifetime.
 
 ## Next-wave spawn indicators
 
 - `GameManager` rolls and retains the next `WaveDifficultySnapshot` when Preparation begins.
+- `WaveDifficultyController` retains only the previously selected `WaveData` at runtime and
+  excludes it from the next selection when the active pool has another valid asset. Runtime
+  selection history never mutates the ScriptableObject.
+- Every positive `SpecialWaveInterval` multiple selects only from the Special pool; other waves
+  select only from the Normal pool. An interval of zero disables Special waves for Tutorial.
 - `WaveManager.PrepareWave` fixes enemy types and world spawn positions once. Placement and
   camera changes do not regenerate them.
 - `WaveManager.StartWave` builds routes against the final Grid while preserving those prepared
@@ -266,6 +303,9 @@ New upgrade behavior should be a new `ShopOfferData` subtype.
   The original expanded layout is cached and restored before the next Supply presentation.
 - `RareBlockAppearance` plays the rare-result highlight.
 - `ShopEventUI` pools generic offer buttons.
+- `HoverCanvasGroupFade` is attached directly to `ShopEventUI`'s existing `Visual` object. Its
+  existing Image remains the raycast target, while DOTween transitions only CanvasGroup alpha
+  between 1 and the serialized near-transparent hover value without changing interaction flags.
 - `BlockDescriptionTooltip` remains a single reusable tooltip.
 - `WorldBlockHoverController` translates mouse position to an occupied Grid cell and requests
   the shared tooltip for placed Blocks.

@@ -53,6 +53,8 @@ public sealed class PlacementController : MonoBehaviour
     private bool placementInputEnabled;
 
     public bool PlacementInputEnabled => placementInputEnabled;
+    public int SelectedSupplyIndex => selectedSupplyIndex;
+    public event Action<int> SelectionChanged;
     public event Action<Block, Vector2Int> BlockPlaced;
     public event Func<Block, Vector2Int, bool> BlockDismantleRequested;
     public event Action<Block, Vector2Int> BlockDismantled;
@@ -131,13 +133,17 @@ public sealed class PlacementController : MonoBehaviour
         selectedGrant = grant;
         previewRenderer.sprite = grant.Data.Sprite;
         previewRenderer.color = grant.Data.VisualColor;
+        SelectionChanged?.Invoke(selectedSupplyIndex);
     }
 
     public void ClearSelection()
     {
+        bool hadSelection = selectedSupplyIndex >= 0;
         selectedSupplyIndex = -1;
         selectedGrant = default;
         HidePreview();
+        if (hadSelection)
+            SelectionChanged?.Invoke(-1);
     }
 
     public void Confirm()

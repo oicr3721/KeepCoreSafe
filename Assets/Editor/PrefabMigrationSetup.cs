@@ -186,13 +186,11 @@ namespace KeepCoreSafe.Editor
         {
             GameObject root = new GameObject(name);
             T block = root.AddComponent<T>();
-            BoxCollider2D collider = root.AddComponent<BoxCollider2D>();
             DamageFeedback feedback = root.AddComponent<DamageFeedback>();
             SpriteRenderer visual = CreateSpritePart("Visual", root.transform, null, 1);
 
             SerializedObject serialized = new SerializedObject(block);
             serialized.FindProperty("visualRenderer").objectReferenceValue = visual;
-            serialized.FindProperty("blockCollider").objectReferenceValue = collider;
             serialized.FindProperty("damageFeedback").objectReferenceValue = feedback;
             serialized.FindProperty("healthBarPrefab").objectReferenceValue = healthBarPrefab;
 
@@ -218,15 +216,11 @@ namespace KeepCoreSafe.Editor
             GameObject root = new GameObject(name);
             root.transform.localScale = Vector3.one * 0.45f;
             T enemy = root.AddComponent<T>();
-            Rigidbody2D body = root.AddComponent<Rigidbody2D>();
-            CircleCollider2D collider = root.AddComponent<CircleCollider2D>();
             DamageFeedback feedback = root.AddComponent<DamageFeedback>();
             SpriteRenderer visual = CreateSpritePart("Visual", root.transform, null, 2);
             Animator animator = visual.gameObject.AddComponent<Animator>();
 
             SerializedObject serialized = new SerializedObject(enemy);
-            serialized.FindProperty("body").objectReferenceValue = body;
-            serialized.FindProperty("collisionCollider").objectReferenceValue = collider;
             serialized.FindProperty("visualRenderer").objectReferenceValue = visual;
             serialized.FindProperty("damageFeedback").objectReferenceValue = feedback;
             serialized.FindProperty("animator").objectReferenceValue = animator;
@@ -311,14 +305,9 @@ namespace KeepCoreSafe.Editor
             {
                 SetReference(
                     waveManager,
-                    "meleeEnemyData",
+                    "fallbackEnemyData",
                     AssetDatabase.LoadAssetAtPath<MeleeEnemyData>(
                         "Assets/Resources/Data/Enemy/MeleeEnemyData.asset"));
-                SetReference(
-                    waveManager,
-                    "rangedEnemyData",
-                    AssetDatabase.LoadAssetAtPath<RangedEnemyData>(
-                        "Assets/Resources/Data/Enemy/RangedEnemyData.asset"));
             }
 
             PlacementController placement = Object.FindFirstObjectByType<PlacementController>(FindObjectsInactive.Include);

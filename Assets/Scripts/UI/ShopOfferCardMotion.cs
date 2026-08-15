@@ -227,7 +227,7 @@ namespace KeepCoreSafe.UI
         {
             PrepareForBlockingAnimation();
             return DOTween.Sequence().SetUpdate(true).SetTarget(this)
-                .Join(flipRoot.DORotate(new Vector3(0f, 0f, 360f), duration, RotateMode.FastBeyond360)
+                .Join(flipRoot.DOLocalRotate(new Vector3(0f, 360f, 0f), duration, RotateMode.FastBeyond360)
                     .SetEase(Ease.InOutCubic))
                 .Join(tiltRoot.DOScale(1.16f, duration * 0.45f).SetEase(Ease.OutBack))
                 .Append(tiltRoot.DOScale(1f, duration * 0.35f).SetEase(Ease.OutCubic));

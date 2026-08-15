@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 378fa0e537e38a6488cdec029ce9a6c3, type: 3}
+  m_Name: SuicideEnemyData
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.SuicideEnemyData
+  displayName: enemy.suicide.name
+  maxHP: 40
+  moveSpeed: 3.2
+  attackDamage: 35
+  attackCooldown: 1.2
+  pathLengthTolerance: 3
+  energyOnDeath: 4
+  sprite: {fileID: 7248435532839286903, guid: e4adadbff4951da40a04c2daa4382a23, type: 3}
+  prefab: {fileID: 8918647325601005442, guid: 1b14a431c478659489c1b650c40833bb, type: 3}
+  targetPriority: 0100000002000000100000000400000020000000
+  attackSound:
+    clips:
+    - {fileID: 8300000, guid: 6e2e2cf9a21681349af6ebd1c4798f31, type: 3}
+    volume: 1
+    pitchRange: {x: 0.96, y: 1.04}
+    spatialBlend: 0
+  forcedTriggerHealthRatio: 0.4
+  initialPulseInterval: 0.2
+  finalPulseInterval: 0.05
+  initialScalePulse: 0.05
+  finalScalePulse: 0.25
+  finalScaleUpPortion: 0.12
+  finalScaleBoost: 0.38
+  warningSound:
+    clips:
+    - {fileID: 8300000, guid: d0d2da7e104dbf0468dcf0cd72941e22, type: 3}
+    volume: 0.6
+    pitchRange: {x: 1, y: 1}
+    spatialBlend: 0

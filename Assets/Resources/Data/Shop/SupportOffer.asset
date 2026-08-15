@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9fa6a7ca178d7334fb51b7045ae0ab6e, type: 3}
   m_Name: SupportOffer
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.GrantedBlockShopOfferData
+  displayImage: {fileID: 5920174126947004361, guid: 34afa9aa13d67214c855e503272ac9fb, type: 3}
   displayName: shop.offer.support.name
   description: shop.offer.support.desc
   grantedBlock: {fileID: 11400000, guid: ef7a65fc11644c341812b9f3ffc421cf, type: 2}

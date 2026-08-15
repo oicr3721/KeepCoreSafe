@@ -69,17 +69,10 @@ namespace KeepCoreSafe.Editor
 
             try
             {
-                PropertyInfo bodyProperty = typeof(Enemy).GetProperty(
-                    "Body",
-                    BindingFlags.Instance | BindingFlags.NonPublic);
-                if (bodyProperty?.GetValue(ranged) == null)
-                {
-                    typeof(Enemy).GetMethod(
-                            "Awake",
-                            BindingFlags.Instance | BindingFlags.NonPublic)
-                        ?.Invoke(ranged, null);
-                }
-
+                Vector3 startingPosition = ranged.transform.position;
+                float startingDistance = Vector3.Distance(
+                    startingPosition,
+                    manager.GridToWorld(entryCell));
                 ranged.Initialize(data, new[] { entryCell });
                 typeof(RangedEnemy).GetMethod(
                         "Start",
@@ -102,6 +95,21 @@ namespace KeepCoreSafe.Editor
                 {
                     throw new InvalidOperationException(
                         "Ranged enemy did not enter through its first in-bounds path cell.");
+                }
+
+                typeof(RangedEnemy).GetMethod(
+                        "OnCombatUpdate",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?.Invoke(ranged, new object[] { 0.02f });
+                float movedDistance = Vector3.Distance(
+                    ranged.transform.position,
+                    manager.GridToWorld(entryCell));
+                if (movedDistance >= startingDistance
+                    || ranged.GetComponent<Rigidbody2D>() != null
+                    || ranged.GetComponent<Collider2D>() != null)
+                {
+                    throw new InvalidOperationException(
+                        "Ranged enemy did not move toward the Grid through Transform movement.");
                 }
             }
             finally
@@ -227,9 +235,14 @@ namespace KeepCoreSafe.Editor
             if (meleePrefab == null
                 || meleePrefab.GetComponent<MeleeEnemy>() == null
                 || rangedPrefab == null
-                || rangedPrefab.GetComponent<RangedEnemy>() == null)
+                || rangedPrefab.GetComponent<RangedEnemy>() == null
+                || meleePrefab.GetComponent<Rigidbody2D>() != null
+                || meleePrefab.GetComponent<Collider2D>() != null
+                || rangedPrefab.GetComponent<Rigidbody2D>() != null
+                || rangedPrefab.GetComponent<Collider2D>() != null)
             {
-                throw new InvalidOperationException("General enemy Prefab references are incomplete.");
+                throw new InvalidOperationException(
+                    "Enemy Prefabs are incomplete or still contain 2D physics components.");
             }
         }
 

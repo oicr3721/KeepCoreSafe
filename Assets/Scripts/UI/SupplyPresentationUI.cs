@@ -227,8 +227,6 @@ namespace KeepCoreSafe.UI
                 CopyLayout(contentRoot, dockTarget);
                 isAnimating = false;
                 isDocked = true;
-                if (backgroundImage != null)
-                    backgroundImage.raycastTarget = false;
                 HideControls();
                 SetBlockButtonsInteractable(true);
                 onComplete?.Invoke();

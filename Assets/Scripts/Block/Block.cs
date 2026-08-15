@@ -17,7 +17,6 @@ namespace KeepCoreSafe.Blocks
 
         [Header("Prefab References")]
         [SerializeField] private SpriteRenderer visualRenderer;
-        [SerializeField] private BoxCollider2D blockCollider;
         [SerializeField] private DamageFeedback damageFeedback;
         [SerializeField] private BlockHealthBar healthBarPrefab;
 
@@ -52,8 +51,6 @@ namespace KeepCoreSafe.Blocks
 
         protected virtual void Awake()
         {
-            if (blockCollider == null)
-                blockCollider = GetComponent<BoxCollider2D>();
         }
 
         protected virtual void Start()
@@ -163,8 +160,6 @@ namespace KeepCoreSafe.Blocks
 
             isBeingDismantled = true;
             transform.DOKill();
-            if (blockCollider != null)
-                blockCollider.enabled = false;
 
             Sequence sequence = DOTween.Sequence().SetTarget(transform);
             sequence.Append(transform.DOShakeRotation(

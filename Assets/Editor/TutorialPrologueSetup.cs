@@ -168,8 +168,6 @@ namespace KeepCoreSafe.Editor
             difficulty.FindProperty("lateGameRequiredEnergy").intValue = 14;
             difficulty.FindProperty("firstWaveEnemyCount").vector2IntValue = new Vector2Int(2, 3);
             difficulty.FindProperty("lateGameEnemyCount").vector2IntValue = new Vector2Int(2, 3);
-            difficulty.FindProperty("firstWaveRangedRatio").vector2Value = Vector2.zero;
-            difficulty.FindProperty("lateGameRangedRatio").vector2Value = Vector2.zero;
             difficulty.FindProperty("firstWaveSpawnInterval").floatValue = 0.9f;
             difficulty.FindProperty("lateGameSpawnInterval").floatValue = 0.9f;
             difficulty.FindProperty("enemyGrowthPerExtraWave").floatValue = 0f;

@@ -18,7 +18,9 @@ namespace KeepCoreSafe.UI
         [SerializeField] private Image cardBackImage;
         [SerializeField] private Image cardFrontBackground;
         [SerializeField] private Image selectedMask;
-        [SerializeField] private TMP_Text label;
+        [SerializeField] private TMP_Text displayTitle;
+        [SerializeField] private TMP_Text displayDesc;
+        [SerializeField] private Image displayImage;
         [SerializeField] private Button button;
         [SerializeField] private CanvasGroup selectedMaskGroup;
         [SerializeField] private ShopOfferCardMotion motion;
@@ -35,7 +37,6 @@ namespace KeepCoreSafe.UI
         private bool isSelected;
 
         public Button Button => button;
-        public TMP_Text Label => label;
         public bool IsSelected => isSelected;
 
         private void Awake()
@@ -47,10 +48,14 @@ namespace KeepCoreSafe.UI
             ShowBackImmediate();
         }
 
-        public void SetText(string text)
+        public void SetInfo(Sprite image, string title, string desc)
         {
-            if (label != null)
-                label.text = text;
+            if (displayImage != null)
+                displayImage.sprite = image;
+            if (displayTitle != null)
+                displayTitle.text = title;
+            if (displayDesc != null)
+                displayDesc.text = desc;
         }
 
         public void SetAffordable(bool affordable)
@@ -273,7 +278,8 @@ namespace KeepCoreSafe.UI
         {
             if (cardBack == null || cardFront == null || cardBackImage == null
                 || cardFrontBackground == null || selectedMask == null
-                || label == null || selectedMaskGroup == null || motion == null)
+                || displayTitle == null || displayImage == null || displayDesc == null 
+                || selectedMaskGroup == null || motion == null)
             {
                 Debug.LogWarning(
                     $"{nameof(ShopOfferCardView)} on {name} has missing prefab references.",

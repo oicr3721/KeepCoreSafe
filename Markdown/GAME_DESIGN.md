@@ -123,6 +123,24 @@ Normal enemy routes favor their spawn direction: paths no more than two cells lo
 shortest approach are considered, then the route requiring the fewest destroyed blocks wins.
 Distance breaks remaining ties, followed by random selection for completely equal routes.
 
+Suicide Enemies reuse the same fixed route selection. They are faster and less durable than
+Melee Enemies. When the next route Cell is occupied, they stop at the same adjacent position where
+a Melee Enemy would begin attacking that Block and instead enter an accelerating red warning
+rhythm before damaging every Block in the surrounding 3x3 area. A nonlethal hit that leaves one
+at or below 30% HP starts the same sequence immediately at its current cell, allowing early
+detonation away from the Core. Self-detonation grants no Energy; a normal lethal attack does.
+
+Wave scale and wave composition are separate balance axes. `WaveDifficultyData` preserves the
+progression curve that rolls total Enemy count, required Energy, and spawn pressure. It then
+selects a `WaveData` from its Normal pool, or from its Special pool every configured interval.
+`WaveData` supplies weighted references to existing EnemyData assets, and the rolled total count
+is apportioned to those weights before spawn order is shuffled. When multiple WaveData assets are
+available in the relevant pool, the previous wave's asset is excluded to reduce repeated patterns.
+
+The default main-game pools contain Basic, Ranged Pressure, Mixed Assault, Explosive Assault,
+and Ranged Barrage compositions. Every fifth main-game wave is Special. Tutorial uses a single
+Melee-only composition with Special waves disabled so its existing pacing remains unchanged.
+
 ---
 
 # Rerolls and Dismantling

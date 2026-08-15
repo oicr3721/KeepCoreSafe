@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9fa6a7ca178d7334fb51b7045ae0ab6e, type: 3}
   m_Name: HealerOffer
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.GrantedBlockShopOfferData
+  displayImage: {fileID: -570372457, guid: df6503cde30637243b4061dbe3cc655d, type: 3}
   displayName: shop.offer.healer.name
   description: shop.offer.healer.desc
   grantedBlock: {fileID: 11400000, guid: 0dca3f35f9bd78947a9418ab84c02c85, type: 2}

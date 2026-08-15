@@ -15,7 +15,6 @@ namespace KeepCoreSafe.Editor
     public static class ParticleAndSupplySequenceSetup
     {
         private const string DustPrefabPath = "Assets/Prefabs/Particle/Dust Particle System.prefab";
-        private const string HealPrefabPath = "Assets/Prefabs/Particle/Heal Particle System.prefab";
         private const string PulsePrefabPath = "Assets/Prefabs/Presentation/CoreEnergyPulse.prefab";
         private const string ShockwavePrefabPath = "Assets/Prefabs/Presentation/CoreShockwave.prefab";
         private const string BurstPrefabPath = "Assets/Prefabs/Particle/MergeBurstParticles.prefab";
@@ -63,9 +62,8 @@ namespace KeepCoreSafe.Editor
         private static void ConfigureBlockPrefabs()
         {
             GameObject dustPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(DustPrefabPath);
-            GameObject healPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(HealPrefabPath);
-            if (dustPrefab == null || healPrefab == null)
-                throw new InvalidOperationException("Required Dust/Heal particle prefabs are missing.");
+            if (dustPrefab == null)
+                throw new InvalidOperationException("Required Dust particle prefab is missing.");
 
             foreach (string prefabPath in BlockPrefabPaths)
             {
@@ -80,15 +78,6 @@ namespace KeepCoreSafe.Editor
                     SerializedObject feedbackSerialized = new(feedback);
                     feedbackSerialized.FindProperty("hitParticles").objectReferenceValue = dust;
                     feedbackSerialized.ApplyModifiedPropertiesWithoutUndo();
-
-                    HealerBlock healer = root.GetComponent<HealerBlock>();
-                    if (healer != null)
-                    {
-                        ParticleSystem heal = GetOrCreateParticleChild(root.transform, healPrefab, "Heal Particles");
-                        SerializedObject healerSerialized = new(healer);
-                        healerSerialized.FindProperty("healParticles").objectReferenceValue = heal;
-                        healerSerialized.ApplyModifiedPropertiesWithoutUndo();
-                    }
 
                     PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
                 }
@@ -169,15 +158,6 @@ namespace KeepCoreSafe.Editor
             if (dust == null || dust.main.playOnAwake)
                 throw new InvalidOperationException($"{prefabPath} has incomplete Dust hit feedback.");
 
-            HealerBlock healer = prefab.GetComponent<HealerBlock>();
-            if (healer == null)
-                return;
-
-            SerializedObject healerSerialized = new(healer);
-            ParticleSystem heal = healerSerialized.FindProperty("healParticles").objectReferenceValue
-                as ParticleSystem;
-            if (heal == null || heal.main.playOnAwake)
-                throw new InvalidOperationException($"{prefabPath} has incomplete Heal feedback.");
         }
 
         private static void ValidateScene(string scenePath)

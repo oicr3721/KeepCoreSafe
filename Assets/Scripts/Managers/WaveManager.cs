@@ -9,7 +9,6 @@ using KeepCoreSafe.Presentation;
 using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Controllers;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace KeepCoreSafe.Managers
 {
@@ -18,18 +17,18 @@ namespace KeepCoreSafe.Managers
         private readonly struct SpawnRequest
         {
             public SpawnRequest(
-                bool isRanged,
+                EnemyData data,
                 Vector3 position,
                 IReadOnlyList<Vector2Int> pathCells,
                 Block routeTarget)
             {
-                IsRanged = isRanged;
+                Data = data;
                 Position = position;
                 PathCells = pathCells ?? Array.Empty<Vector2Int>();
                 RouteTarget = routeTarget;
             }
 
-            public bool IsRanged { get; }
+            public EnemyData Data { get; }
             public Vector3 Position { get; }
             public IReadOnlyList<Vector2Int> PathCells { get; }
             public Block RouteTarget { get; }
@@ -37,24 +36,21 @@ namespace KeepCoreSafe.Managers
 
         private readonly struct PreparedSpawn
         {
-            public PreparedSpawn(bool isRanged, Vector3 position, bool targetsSupply)
+            public PreparedSpawn(EnemyData data, Vector3 position, bool targetsSupply)
             {
-                IsRanged = isRanged;
+                Data = data;
                 Position = position;
                 TargetsSupply = targetsSupply;
             }
 
-            public bool IsRanged { get; }
+            public EnemyData Data { get; }
             public Vector3 Position { get; }
             public bool TargetsSupply { get; }
         }
 
-        [SerializeField]
-        [FormerlySerializedAs("enemyData")]
-        private MeleeEnemyData meleeEnemyData;
-
-        [SerializeField]
-        private RangedEnemyData rangedEnemyData;
+        [Header("Fallback")]
+        [Tooltip("Used only when the selected WaveData has no valid weighted composition.")]
+        [SerializeField] private EnemyData fallbackEnemyData;
 
         [Header("Audio")]
         [Tooltip("Played once when a combat wave begins.")]
@@ -76,6 +72,8 @@ namespace KeepCoreSafe.Managers
         private bool isSpawning;
         private int currentEnemyCount;
         private int currentRangedEnemyCount;
+        private int currentSuicideEnemyCount;
+        private WaveData currentWaveData;
         private float currentSpawnInterval;
         private float currentSpawnMargin;
         private readonly List<PreparedSpawn> preparedSpawns = new();
@@ -87,6 +85,8 @@ namespace KeepCoreSafe.Managers
         public IReadOnlyCollection<Enemy> ActiveEnemies => activeEnemies;
         public int CurrentWaveEnemyCount => currentEnemyCount;
         public int CurrentWaveRangedEnemyCount => currentRangedEnemyCount;
+        public int CurrentWaveSuicideEnemyCount => currentSuicideEnemyCount;
+        public WaveData CurrentWaveData => currentWaveData;
         public bool HasPreparedWave(int waveIndex) => preparedWaveIndex == waveIndex;
 
         public event Action WaveCompleted;
@@ -94,10 +94,8 @@ namespace KeepCoreSafe.Managers
         private void Awake()
         {
             worldCamera = Camera.main;
-            if (meleeEnemyData == null)
-                meleeEnemyData = Resources.Load<MeleeEnemyData>("Data/Enemy/MeleeEnemyData");
-            if (rangedEnemyData == null)
-                rangedEnemyData = Resources.Load<RangedEnemyData>("Data/Enemy/RangedEnemyData");
+            if (fallbackEnemyData == null)
+                fallbackEnemyData = Resources.Load<EnemyData>("Data/Enemy/MeleeEnemyData");
 
             if (spawnIndicatorPrefab != null)
             {
@@ -117,7 +115,7 @@ namespace KeepCoreSafe.Managers
             preparedSpawns.Clear();
 
             int regularEnemyCount = currentEnemyCount;
-            List<bool> spawnTypes = CreateSpawnTypes();
+            List<EnemyData> spawnTypes = CreateSpawnTypes();
             for (int i = 0; i < regularEnemyCount; i++)
             {
                 Vector3 position = GetAvailableSpawnPosition();
@@ -127,15 +125,11 @@ namespace KeepCoreSafe.Managers
             int supplyHunterCount = supplyEventController != null
                 ? supplyEventController.GetSupplyHunterCount(regularEnemyCount)
                 : 0;
-            float rangedRatio = regularEnemyCount > 0
-                ? currentRangedEnemyCount / (float)regularEnemyCount
-                : 0f;
             for (int i = 0; i < supplyHunterCount; i++)
             {
-                bool isRanged = rangedEnemyData != null && UnityEngine.Random.value < rangedRatio;
-                preparedSpawns.Add(new PreparedSpawn(isRanged, GetAvailableSpawnPosition(), true));
-                if (isRanged)
-                    currentRangedEnemyCount++;
+                EnemyData data = currentWaveData?.ChooseWeightedEnemy() ?? fallbackEnemyData;
+                preparedSpawns.Add(new PreparedSpawn(data, GetAvailableSpawnPosition(), true));
+                CountEnemyType(data);
             }
 
             currentEnemyCount = preparedSpawns.Count;
@@ -157,7 +151,10 @@ namespace KeepCoreSafe.Managers
             spawnRoutine = StartCoroutine(SpawnWave(spawnPlan, spawnIndicatorHideDuration));
             Debug.Log(
                 $"Wave {waveIndex}: {currentEnemyCount} enemies " +
-                $"({currentRangedEnemyCount} ranged), interval {currentSpawnInterval:0.00}s, " +
+                $"({currentRangedEnemyCount} ranged, {currentSuicideEnemyCount} suicide), " +
+                $"composition {currentWaveData?.WaveName ?? "Fallback"}, " +
+                $"special {difficulty.IsSpecialWave}, " +
+                $"interval {currentSpawnInterval:0.00}s, " +
                 $"shockwave target {difficulty.RequiredEnergy} energy.");
         }
 
@@ -209,8 +206,7 @@ namespace KeepCoreSafe.Managers
             for (int i = 0; i < preparedSpawns.Count; i++)
             {
                 PreparedSpawn prepared = preparedSpawns[i];
-                bool isRanged = prepared.IsRanged;
-                EnemyData data = isRanged ? rangedEnemyData : meleeEnemyData;
+                EnemyData data = prepared.Data;
                 Vector3 spawnPosition = prepared.Position;
                 Block routeTarget = prepared.TargetsSupply && supplyTarget != null ? supplyTarget : core;
                 IReadOnlyList<Vector2Int> pathCells = Array.Empty<Vector2Int>();
@@ -229,7 +225,7 @@ namespace KeepCoreSafe.Managers
                     }
                 }
 
-                plan.Add(new SpawnRequest(isRanged, spawnPosition, pathCells, routeTarget));
+                plan.Add(new SpawnRequest(data, spawnPosition, pathCells, routeTarget));
             }
 
             return plan;
@@ -245,25 +241,34 @@ namespace KeepCoreSafe.Managers
                     12,
                     new Vector2Int(5, 8),
                     UnityEngine.Random.Range(5, 9),
-                    new Vector2(0.15f, 0.25f),
-                    UnityEngine.Random.Range(0.15f, 0.25f),
                     0.5f,
                     1.2f);
             }
 
             currentEnemyCount = Mathf.Max(1, difficulty.EnemyCount);
-            currentRangedEnemyCount = rangedEnemyData == null
-                ? 0
-                : Mathf.Min(difficulty.RangedEnemyCount, currentEnemyCount);
+            currentRangedEnemyCount = 0;
+            currentSuicideEnemyCount = 0;
+            currentWaveData = difficulty.WaveData;
             currentSpawnInterval = Mathf.Max(0.02f, difficulty.SpawnInterval);
             currentSpawnMargin = Mathf.Max(0f, difficulty.SpawnMargin);
         }
 
-        private List<bool> CreateSpawnTypes()
+        private List<EnemyData> CreateSpawnTypes()
         {
-            List<bool> types = new List<bool>(currentEnemyCount);
-            for (int i = 0; i < currentEnemyCount; i++)
-                types.Add(i < currentRangedEnemyCount);
+            List<EnemyData> types = new(currentEnemyCount);
+            if (currentWaveData == null
+                || !currentWaveData.BuildComposition(currentEnemyCount, types))
+            {
+                Debug.LogError(
+                    $"Wave {preparedWaveIndex} has no valid WaveData composition. Using fallback EnemyData.",
+                    currentWaveData);
+                types.Clear();
+                for (int i = 0; i < currentEnemyCount; i++)
+                    types.Add(fallbackEnemyData);
+            }
+
+            foreach (EnemyData data in types)
+                CountEnemyType(data);
 
             for (int i = types.Count - 1; i > 0; i--)
             {
@@ -276,7 +281,7 @@ namespace KeepCoreSafe.Managers
 
         private void SpawnEnemy(SpawnRequest request)
         {
-            EnemyData data = request.IsRanged ? rangedEnemyData : meleeEnemyData;
+            EnemyData data = request.Data;
             if (data == null || data.Prefab == null)
             {
                 Debug.LogError($"{data?.name ?? "EnemyData"} has no Enemy prefab assigned.", data);
@@ -307,6 +312,14 @@ namespace KeepCoreSafe.Managers
             enemy.Initialize(data, pathCells, routeTarget);
             enemy.Died += HandleEnemyDied;
             activeEnemies.Add(enemy);
+        }
+
+        private void CountEnemyType(EnemyData data)
+        {
+            if (data is RangedEnemyData)
+                currentRangedEnemyCount++;
+            else if (data is SuicideEnemyData)
+                currentSuicideEnemyCount++;
         }
 
         private Vector3 GetRandomSpawnPosition()

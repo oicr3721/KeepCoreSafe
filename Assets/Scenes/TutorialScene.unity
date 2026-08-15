@@ -1238,6 +1238,7 @@ MonoBehaviour:
   selectionHoldDuration: 0.42
   unselectedBackwardOffset: 24
   exitDuration: 0.24
+  exitStagger: 0.1
   exitDistance: 120
   backgroundFadeDuration: 0.14
   purchaseSuccessSound:
@@ -1374,6 +1375,53 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!1 &322985518
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 322985519}
+  - component: {fileID: 322985520}
+  m_Layer: 0
+  m_Name: Explosion Particle Pool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &322985519
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322985518}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 377410320}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &322985520
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322985518}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d823b5cf425112443b63a19a63b67b90, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.ExplosionParticleEffectManager
+  effectPrefab: {fileID: 5455457182271035070, guid: aa3a14c4a8797b147a910ddb9f08b088, type: 3}
+  initialPoolSize: 12
+  effectRoot: {fileID: 322985519}
 --- !u!1 &323095815
 GameObject:
   m_ObjectHideFlags: 0
@@ -1609,6 +1657,8 @@ Transform:
   m_Children:
   - {fileID: 190248027}
   - {fileID: 323095816}
+  - {fileID: 322985519}
+  - {fileID: 1671922787}
   m_Father: {fileID: 559701217}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &401692809
@@ -4515,8 +4565,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03f698887f451984bbe0316ba41d5c06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Managers.WaveManager
-  meleeEnemyData: {fileID: 11400000, guid: 3bcd9b0ad59249141a3c68a36f2ef851, type: 2}
-  rangedEnemyData: {fileID: 11400000, guid: a33a61aaae561b34eb18a39810d58306, type: 2}
+  fallbackEnemyData: {fileID: 11400000, guid: 3bcd9b0ad59249141a3c68a36f2ef851, type: 2}
   waveStartSound:
     clips:
     - {fileID: 8300000, guid: ab7a61fbbbe5a36429f05e1be3cd9656, type: 3}
@@ -7247,6 +7296,53 @@ MonoBehaviour:
   label: {fileID: 1669667999}
   localizationKey: ui.confirm
   fallbackText: CONFIRM
+--- !u!1 &1671922786
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1671922787}
+  - component: {fileID: 1671922788}
+  m_Layer: 0
+  m_Name: Heal Particle Pool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1671922787
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1671922786}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 377410320}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1671922788
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1671922786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7890762c52fe06a42b3fe5b792586126, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Presentation.HealParticleEffectManager
+  effectPrefab: {fileID: 5455457182271035070, guid: 1121b19d93532094ead8f2fb501f0b9b, type: 3}
+  initialPoolSize: 12
+  effectRoot: {fileID: 1671922787}
 --- !u!1 &1681358681
 GameObject:
   m_ObjectHideFlags: 0

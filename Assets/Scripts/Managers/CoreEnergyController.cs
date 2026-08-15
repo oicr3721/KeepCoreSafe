@@ -73,6 +73,24 @@ namespace KeepCoreSafe.Managers
             return true;
         }
 
+        public bool CanAddPreparationEnergy(int amount)
+        {
+            return amount > 0
+                   && GameManager.Phase == GamePhase.Preparation
+                   && Energy.CurrentValue < Energy.MaxValue;
+        }
+
+        public bool TryAddPreparationEnergy(int amount)
+        {
+            if (!CanAddPreparationEnergy(amount))
+                return false;
+
+            // Preparation energy must not use AddEnergy: reaching the cap while
+            // preparing must not trigger the combat shockwave.
+            Energy.AddValue(amount);
+            return true;
+        }
+
         public void BeginWave(int requiredEnergy)
         {
             automaticChargeAccumulator = 0f;

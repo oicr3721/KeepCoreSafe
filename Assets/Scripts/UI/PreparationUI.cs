@@ -46,6 +46,8 @@ namespace KeepCoreSafe.UI
                 inventoryRoot = transform;
             if (supplyController != null)
                 supplyController.SupplyChanged += Refresh;
+            if (placementController != null)
+                placementController.SelectionChanged += HandleSelectionChanged;
             if (rerollButton != null)
                 rerollButton.onClick.AddListener(HandleReroll);
             if (confirmButton != null)
@@ -65,6 +67,8 @@ namespace KeepCoreSafe.UI
         {
             if (supplyController != null)
                 supplyController.SupplyChanged -= Refresh;
+            if (placementController != null)
+                placementController.SelectionChanged -= HandleSelectionChanged;
             if (rerollButton != null)
                 rerollButton.onClick.RemoveListener(HandleReroll);
             if (confirmButton != null)
@@ -104,6 +108,10 @@ namespace KeepCoreSafe.UI
                     descriptionTooltip,
                     () => placementController.SelectGrantedBlock(supplyIndex));
             }
+
+            HandleSelectionChanged(placementController != null
+                ? placementController.SelectedSupplyIndex
+                : -1);
 
             if (supplyPresentation != null)
             {
@@ -203,6 +211,15 @@ namespace KeepCoreSafe.UI
         private void HandleLanguageChanged()
         {
             Refresh(false);
+        }
+
+        private void HandleSelectionChanged(int selectedIndex)
+        {
+            for (int i = 0; i < buttonPool.Count; i++)
+            {
+                SupplyBlockButtonView view = buttonPool[i];
+                view.SetSelected(view.gameObject.activeSelf && i == selectedIndex);
+            }
         }
 
         private void RefreshReroll()

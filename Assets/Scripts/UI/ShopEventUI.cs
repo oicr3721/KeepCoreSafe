@@ -17,7 +17,7 @@ namespace KeepCoreSafe.UI
         [SerializeField] private GameObject visualRoot;
         [SerializeField] private Transform offerRoot;
         [SerializeField] private GameObject offerButtonPrefab;
-        [SerializeField] private CanvasGroup backgroundGroup;
+        [SerializeField] private CanvasGroup offerVisualGroup;
 
         [Header("Card Reveal")]
         [SerializeField, Min(0.05f)] private float cardRevealDuration = 0.32f;
@@ -32,6 +32,7 @@ namespace KeepCoreSafe.UI
         [SerializeField, Min(0f)] private float selectionHoldDuration = 0.42f;
         [SerializeField, Min(0f)] private float unselectedBackwardOffset = 24f;
         [SerializeField, Min(0.05f)] private float exitDuration = 0.24f;
+        [SerializeField, Min(0f)] private float exitStagger = 0.1f;
         [SerializeField, Min(0f)] private float exitDistance = 120f;
         [SerializeField, Min(0f)] private float backgroundFadeDuration = 0.14f;
         [SerializeField] private AudioCue purchaseSuccessSound = new();
@@ -44,14 +45,14 @@ namespace KeepCoreSafe.UI
         private void Awake()
         {
             visualRoot.SetActive(false);
-            if (backgroundGroup == null && visualRoot != null)
-                backgroundGroup = visualRoot.GetComponent<CanvasGroup>();
+            if (offerVisualGroup == null && visualRoot != null)
+                offerVisualGroup = visualRoot.GetComponentInChildren<CanvasGroup>();
         }
 
         private void OnEnable()
         {
             controller.ShopOpened += Show;
-            controller.ShopClosed += Hide;
+            controller.ShopClosing += Hide;
             controller.OffersChanged += HandleOffersChanged;
             controller.OfferSelected += HandleOfferSelected;
             LocalizationManager.LanguageChanged += RefreshVisibleText;
@@ -60,7 +61,7 @@ namespace KeepCoreSafe.UI
         private void OnDisable()
         {
             controller.ShopOpened -= Show;
-            controller.ShopClosed -= Hide;
+            controller.ShopClosing -= Hide;
             controller.OffersChanged -= HandleOffersChanged;
             controller.OfferSelected -= HandleOfferSelected;
             LocalizationManager.LanguageChanged -= RefreshVisibleText;
@@ -69,12 +70,12 @@ namespace KeepCoreSafe.UI
         private void Show()
         {
             visualRoot.SetActive(true);
-            if (backgroundGroup != null)
+            if (offerVisualGroup != null)
             {
-                backgroundGroup.alpha = 0f;
-                backgroundGroup.interactable = true;
-                backgroundGroup.blocksRaycasts = true;
-                backgroundGroup.DOFade(1f, backgroundFadeDuration).SetUpdate(true);
+                offerVisualGroup.alpha = 0f;
+                offerVisualGroup.interactable = true;
+                offerVisualGroup.blocksRaycasts = true;
+                offerVisualGroup.DOFade(1f, backgroundFadeDuration).SetUpdate(true);
             }
             PrepareCardsBack();
             PlayRevealSequence();
@@ -91,10 +92,10 @@ namespace KeepCoreSafe.UI
                 card.StopFloating(true);
                 card.gameObject.SetActive(false);
             }
-            if (backgroundGroup != null)
+            if (offerVisualGroup != null)
             {
-                backgroundGroup.blocksRaycasts = false;
-                backgroundGroup.interactable = false;
+                offerVisualGroup.blocksRaycasts = false;
+                offerVisualGroup.interactable = false;
             }
             visualRoot.SetActive(false);
         }
@@ -115,6 +116,12 @@ namespace KeepCoreSafe.UI
             ShopOfferCardView card = cardPool[offerIndex];
             if (card == null || !card.gameObject.activeSelf)
                 return;
+
+            if (offerVisualGroup != null)
+            {
+                offerVisualGroup.interactable = false;
+                offerVisualGroup.blocksRaycasts = false;
+            }
 
             PlaySelectionSequence(offerIndex);
         }
@@ -192,7 +199,7 @@ namespace KeepCoreSafe.UI
 
         private void ApplyOfferToCard(ShopOfferCardView card, ShopOfferData offer, int offerIndex)
         {
-            card.SetText($"{offer.DisplayName}\n{offer.Description}");
+            card.SetInfo(offer.DisplayImage, offer.DisplayName, offer.Description);
 
             Button button = card.Button;
             if (button == null)
@@ -343,28 +350,18 @@ namespace KeepCoreSafe.UI
 
             cardSequence.AppendInterval(selectionHoldDuration);
             int activeCount = GetActiveCardCount();
+            // Every exit is scheduled from one fixed origin so the full-duration tweens overlap.
+            float exitStartTime = cardSequence.Duration();
             for (int i = 0; i < activeCount; i++)
             {
                 Tween exit = cardPool[i].PlaySupplyExit(exitDuration, exitDistance);
                 if (exit != null)
-                    cardSequence.Insert(cardSequence.Duration() + i * revealStagger * 0.5f, exit);
+                    cardSequence.Insert(exitStartTime + i * exitStagger, exit);
             }
 
-            cardSequence.AppendCallback(() =>
-            {
-                if (backgroundGroup != null)
-                {
-                    backgroundGroup.interactable = false;
-                    backgroundGroup.blocksRaycasts = false;
-                }
-            });
-            if (backgroundGroup != null)
-                cardSequence.Append(backgroundGroup.DOFade(0f, backgroundFadeDuration));
-            cardSequence.OnComplete(() =>
-            {
-                Hide();
-                controller.CloseShop();
-            });
+            if (offerVisualGroup != null)
+                cardSequence.Append(offerVisualGroup.DOFade(0f, backgroundFadeDuration));
+            cardSequence.OnComplete(controller.CloseShop);
         }
 
         private void OnDestroy()

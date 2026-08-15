@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace KeepCoreSafe.Data
@@ -27,10 +27,11 @@ namespace KeepCoreSafe.Data
         [Tooltip("Random Min/Max enemy count at the late-game wave.")]
         [SerializeField] private Vector2Int lateGameEnemyCount = new(38, 56);
 
-        [Header("Ranged Enemy Ratio Range")]
-        [Tooltip("A ratio is randomly rolled inside this range each wave.")]
-        [SerializeField] private Vector2 firstWaveRangedRatio = new(0.12f, 0.24f);
-        [SerializeField] private Vector2 lateGameRangedRatio = new(0.22f, 0.42f);
+        [Header("Wave Data Pool")]
+        [SerializeField] private List<WaveData> normalWaveList = new();
+        [SerializeField] private List<WaveData> specialWaveList = new();
+        [Tooltip("Every Nth wave uses the Special Wave List. Set to 0 to disable special waves.")]
+        [SerializeField, Min(0)] private int specialWaveInterval = 5;
 
         [Header("Spawn Pressure")]
         [SerializeField, Min(0.02f)] private float firstWaveSpawnInterval = 0.58f;
@@ -44,9 +45,12 @@ namespace KeepCoreSafe.Data
         [SerializeField, Min(0)] private int requiredEnergyGrowthPerExtraWave = 2;
         [SerializeField, Range(0.9f, 1f)] private float spawnIntervalMultiplierPerExtraWave = 0.985f;
         [SerializeField, Min(0f)] private float spawnMarginReductionPerExtraWave = 0.01f;
-        [SerializeField, Min(0f)] private float rangedRatioGrowthPerExtraWave = 0.002f;
 
-        public WaveDifficultySnapshot Roll(int waveIndex)
+        public IReadOnlyList<WaveData> NormalWaveList => normalWaveList;
+        public IReadOnlyList<WaveData> SpecialWaveList => specialWaveList;
+        public int SpecialWaveInterval => specialWaveInterval;
+
+        public WaveDifficultySnapshot Roll(int waveIndex, WaveData previousWaveData = null)
         {
             float normalizedWave = Mathf.InverseLerp(1f, lateGameWave, Mathf.Max(1, waveIndex));
             float difficulty = Mathf.Clamp01(progressionCurve.Evaluate(normalizedWave));
@@ -60,30 +64,53 @@ namespace KeepCoreSafe.Data
             countRange.x = Mathf.Max(1, countRange.x);
             countRange.y = Mathf.Max(countRange.x, countRange.y);
 
-            Vector2 ratioRange = new(
-                Mathf.Lerp(firstWaveRangedRatio.x, lateGameRangedRatio.x, difficulty),
-                Mathf.Lerp(firstWaveRangedRatio.y, lateGameRangedRatio.y, difficulty));
-            ratioRange += Vector2.one * (extraWaves * rangedRatioGrowthPerExtraWave);
-            ratioRange.x = Mathf.Clamp01(ratioRange.x);
-            ratioRange.y = Mathf.Clamp(ratioRange.y, ratioRange.x, 1f);
+            bool isSpecialWave = specialWaveInterval > 0 && waveIndex % specialWaveInterval == 0;
+            WaveData selectedWaveData = SelectWaveData(
+                isSpecialWave ? specialWaveList : normalWaveList,
+                previousWaveData);
 
-            int enemyCount = UnityEngine.Random.Range(countRange.x, countRange.y + 1);
-            float rangedRatio = UnityEngine.Random.Range(ratioRange.x, ratioRange.y);
             return new WaveDifficultySnapshot(
                 waveIndex,
                 difficulty,
                 Mathf.RoundToInt(Mathf.Lerp(firstWaveRequiredEnergy, lateGameRequiredEnergy, difficulty))
                 + extraWaves * requiredEnergyGrowthPerExtraWave,
                 countRange,
-                enemyCount,
-                ratioRange,
-                rangedRatio,
+                UnityEngine.Random.Range(countRange.x, countRange.y + 1),
                 Mathf.Lerp(firstWaveSpawnInterval, lateGameSpawnInterval, difficulty)
                 * Mathf.Pow(spawnIntervalMultiplierPerExtraWave, extraWaves),
                 Mathf.Max(
                     0.2f,
                     Mathf.Lerp(firstWaveSpawnMargin, lateGameSpawnMargin, difficulty)
-                    - extraWaves * spawnMarginReductionPerExtraWave));
+                    - extraWaves * spawnMarginReductionPerExtraWave),
+                selectedWaveData,
+                isSpecialWave);
+        }
+
+        private static WaveData SelectWaveData(IReadOnlyList<WaveData> pool, WaveData previous)
+        {
+            if (pool == null || pool.Count == 0)
+                return null;
+
+            List<WaveData> valid = new(pool.Count);
+            bool hasAlternative = false;
+            foreach (WaveData waveData in pool)
+            {
+                if (waveData == null || !waveData.HasValidComposition() || valid.Contains(waveData))
+                    continue;
+
+                valid.Add(waveData);
+                if (waveData != previous)
+                    hasAlternative = true;
+            }
+
+            if (valid.Count == 0)
+                return null;
+            if (valid.Count == 1)
+                return valid[0];
+
+            if (hasAlternative && previous != null)
+                valid.Remove(previous);
+            return valid[UnityEngine.Random.Range(0, valid.Count)];
         }
     }
 
@@ -95,20 +122,20 @@ namespace KeepCoreSafe.Data
             int requiredEnergy,
             Vector2Int enemyCountRange,
             int enemyCount,
-            Vector2 rangedRatioRange,
-            float rangedRatio,
             float spawnInterval,
-            float spawnMargin)
+            float spawnMargin,
+            WaveData waveData = null,
+            bool isSpecialWave = false)
         {
             WaveIndex = waveIndex;
             NormalizedDifficulty = normalizedDifficulty;
             RequiredEnergy = Mathf.Max(1, requiredEnergy);
             EnemyCountRange = enemyCountRange;
             EnemyCount = enemyCount;
-            RangedRatioRange = rangedRatioRange;
-            RangedRatio = rangedRatio;
             SpawnInterval = spawnInterval;
             SpawnMargin = spawnMargin;
+            WaveData = waveData;
+            IsSpecialWave = isSpecialWave;
         }
 
         public int WaveIndex { get; }
@@ -116,14 +143,9 @@ namespace KeepCoreSafe.Data
         public int RequiredEnergy { get; }
         public Vector2Int EnemyCountRange { get; }
         public int EnemyCount { get; }
-        public Vector2 RangedRatioRange { get; }
-        public float RangedRatio { get; }
         public float SpawnInterval { get; }
         public float SpawnMargin { get; }
-        public int RangedEnemyCount => Mathf.Clamp(
-            Mathf.RoundToInt(EnemyCount * RangedRatio),
-            0,
-            EnemyCount);
-
+        public WaveData WaveData { get; }
+        public bool IsSpecialWave { get; }
     }
 }

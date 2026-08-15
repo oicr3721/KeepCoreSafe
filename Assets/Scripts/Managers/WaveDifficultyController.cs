@@ -8,6 +8,8 @@ namespace KeepCoreSafe.Managers
         [Tooltip("Single source of truth for every wave-scaled balance value.")]
         [SerializeField] private WaveDifficultyData difficultyData;
 
+        private WaveData previousWaveData;
+
         public WaveDifficultySnapshot Current { get; private set; }
 
         public WaveDifficultySnapshot RollForWave(int waveIndex)
@@ -21,14 +23,17 @@ namespace KeepCoreSafe.Managers
                     12,
                     new Vector2Int(5, 8),
                     UnityEngine.Random.Range(5, 9),
-                    new Vector2(0.15f, 0.25f),
-                    UnityEngine.Random.Range(0.15f, 0.25f),
                     0.5f,
                     1.2f);
                 return Current;
             }
 
-            Current = difficultyData.Roll(waveIndex);
+            if (Current.WaveIndex == waveIndex && Current.WaveData != null)
+                return Current;
+
+            Current = difficultyData.Roll(waveIndex, previousWaveData);
+            if (Current.WaveData != null)
+                previousWaveData = Current.WaveData;
             return Current;
         }
     }

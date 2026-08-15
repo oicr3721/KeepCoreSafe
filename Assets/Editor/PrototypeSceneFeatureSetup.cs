@@ -134,8 +134,8 @@ namespace KeepCoreSafe.Editor
             if (waveManager == null) return;
 
             SerializedObject waveObject = new SerializedObject(waveManager);
-            waveObject.FindProperty("rangedEnemyData").objectReferenceValue =
-                AssetDatabase.LoadAssetAtPath<RangedEnemyData>("Assets/Resources/Data/Enemy/RangedEnemyData.asset");
+            waveObject.FindProperty("fallbackEnemyData").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<MeleeEnemyData>("Assets/Resources/Data/Enemy/MeleeEnemyData.asset");
             waveObject.ApplyModifiedPropertiesWithoutUndo();
         }
 

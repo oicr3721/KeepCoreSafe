@@ -18,10 +18,6 @@ namespace KeepCoreSafe.Blocks
         [SerializeField, Min(0.01f)] private float projectileDuration = 0.22f;
         [SerializeField, Min(0f)] private float projectileCurveHeight = 0.22f;
 
-        [Header("Heal Feedback")]
-        [Tooltip("A pre-created particle system owned by this healer and moved to the heal target.")]
-        [SerializeField] private ParticleSystem healParticles;
-
         private float cooldownRemaining;
         private ComponentPool<HealProjectile> projectilePool;
         private readonly HashSet<Block> observedTargets = new();
@@ -157,16 +153,12 @@ namespace KeepCoreSafe.Blocks
             }
 
             float previousHP = target.HP.CurrentValue;
-            if (healParticles != null)
-            {
-                healParticles.transform.position = target.transform.position;
-                healParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-                healParticles.Play(true);
-            }
-
             target.Heal(HealerData.HealValue);
             if (target.HP.CurrentValue > previousHP)
+            {
+                HealParticleEffectManager.Instance?.PlayAt(target.transform.position);
                 AudioManager.PlayAt(HealerData.HealSound, target.transform.position);
+            }
         }
 
         private void HandleGridChanged()

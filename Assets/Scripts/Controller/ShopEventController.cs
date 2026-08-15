@@ -23,6 +23,7 @@ namespace KeepCoreSafe.Controllers
         private int lastEventWave;
         private bool resolvingSupply;
         private int selectedOfferIndex = -1;
+        private ShopOfferData pendingSelectedOffer;
 
         public IReadOnlyList<ShopOfferData> CurrentOffers => currentOffers;
         public SupplyBlock ActiveSupplyBlock => activeSupplyBlock != null
@@ -30,6 +31,7 @@ namespace KeepCoreSafe.Controllers
         public bool HasActiveSupply => ActiveSupplyBlock != null;
         public bool IsOpen { get; private set; }
         public event Action ShopOpened;
+        public event Action ShopClosing;
         public event Action ShopClosed;
         public event Action OffersChanged;
         public event Action<int> OfferSelected;
@@ -64,8 +66,7 @@ namespace KeepCoreSafe.Controllers
             if (!CanSelectOffer(offerIndex))
                 return false;
 
-            if (!currentOffers[offerIndex].TryApply(supplyController))
-                return false;
+            pendingSelectedOffer = currentOffers[offerIndex];
 
             selectedOfferIndex = offerIndex;
             OfferSelected?.Invoke(offerIndex);
@@ -107,12 +108,24 @@ namespace KeepCoreSafe.Controllers
             if (!IsOpen)
                 return;
 
+            ShopOfferData offerToApply = pendingSelectedOffer;
+            pendingSelectedOffer = null;
             IsOpen = false;
             currentOffers.Clear();
             selectedOfferIndex = -1;
             resolvingSupply = true;
             RemoveActiveSupply();
             resolvingSupply = false;
+            // Presentation closes first so every offer's result is visible during
+            // the supply/placement transition. Apply before ShopClosed because
+            // guaranteed blocks must be queued before BlockSupplyController deals.
+            ShopClosing?.Invoke();
+            if (offerToApply != null && !offerToApply.TryApply(supplyController))
+            {
+                Debug.LogWarning(
+                    $"Selected shop offer '{offerToApply.name}' could not be applied during the supply transition.",
+                    offerToApply);
+            }
             ShopClosed?.Invoke();
             GameManager.Instance?.RefreshPreparedWave();
         }
@@ -188,6 +201,7 @@ namespace KeepCoreSafe.Controllers
                 RemoveActiveSupply();
                 resolvingSupply = false;
                 // BlockSupplyController may already be waiting depending on listener order.
+                ShopClosing?.Invoke();
                 ShopClosed?.Invoke();
             }
         }
@@ -268,6 +282,7 @@ namespace KeepCoreSafe.Controllers
         {
             currentOffers.Clear();
             selectedOfferIndex = -1;
+            pendingSelectedOffer = null;
             List<ShopOfferData> candidates = new();
             foreach (ShopOfferData offer in shopData.Offers)
             {

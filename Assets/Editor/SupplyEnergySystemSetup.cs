@@ -96,7 +96,6 @@ namespace KeepCoreSafe.Editor
             {
                 WallBlock wall = wallRoot.GetComponent<WallBlock>();
                 SpriteRenderer renderer = wallRoot.GetComponentInChildren<SpriteRenderer>(true);
-                BoxCollider2D collider = wallRoot.GetComponent<BoxCollider2D>();
                 DamageFeedback feedback = wallRoot.GetComponent<DamageFeedback>();
                 SerializedObject wallSerialized = new(wall);
                 UnityEngine.Object healthBar = wallSerialized.FindProperty("healthBarPrefab").objectReferenceValue;
@@ -104,7 +103,6 @@ namespace KeepCoreSafe.Editor
                 SupplyBlock supply = wallRoot.AddComponent<SupplyBlock>();
                 SerializedObject supplySerialized = new(supply);
                 supplySerialized.FindProperty("visualRenderer").objectReferenceValue = renderer;
-                supplySerialized.FindProperty("blockCollider").objectReferenceValue = collider;
                 supplySerialized.FindProperty("damageFeedback").objectReferenceValue = feedback;
                 supplySerialized.FindProperty("healthBarPrefab").objectReferenceValue = healthBar;
                 supplySerialized.ApplyModifiedPropertiesWithoutUndo();

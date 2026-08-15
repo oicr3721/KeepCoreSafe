@@ -55,12 +55,18 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  firstWaveRequiredEnergy: 20
+  firstWaveRequiredEnergy: 15
   lateGameRequiredEnergy: 120
   firstWaveEnemyCount: {x: 3, y: 4}
   lateGameEnemyCount: {x: 38, y: 56}
-  firstWaveRangedRatio: {x: 0.12, y: 0.24}
-  lateGameRangedRatio: {x: 0.22, y: 0.42}
+  normalWaveList:
+  - {fileID: 11400000, guid: ffc14fcd61eafd74c9f6fc73ffd8e1b0, type: 2}
+  - {fileID: 11400000, guid: 13be9845dedf8f646a4cea0ea0aa7399, type: 2}
+  - {fileID: 11400000, guid: 36cac4f4bb28c2245a6988a64b848fed, type: 2}
+  specialWaveList:
+  - {fileID: 11400000, guid: e64d9bfe222100841b1fb7ffa2f90547, type: 2}
+  - {fileID: 11400000, guid: 0a83b13570dca36479b3907c89ba4404, type: 2}
+  specialWaveInterval: 5
   firstWaveSpawnInterval: 0.58
   lateGameSpawnInterval: 0.12
   firstWaveSpawnMargin: 1.8
@@ -69,4 +75,3 @@ MonoBehaviour:
   requiredEnergyGrowthPerExtraWave: 2
   spawnIntervalMultiplierPerExtraWave: 0.985
   spawnMarginReductionPerExtraWave: 0.01
-  rangedRatioGrowthPerExtraWave: 0.002

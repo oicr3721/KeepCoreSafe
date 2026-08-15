@@ -111,8 +111,23 @@ returning it to the current supply. Match consumption is not treated as dismantl
 
 # Combat, Enemy, and Camera
 
-Existing automatic Combat, Grid movement, enemy overlap rules, health bars, camera controls,
-time scale, Core death presentation, and Game Over behavior remain unchanged.
+Combat movement and obstruction are resolved only from the Grid. Enemies move at their configured
+constant speed toward each route cell's world position plus their personal visual offset. Blocks and
+Enemies do not use 2D physics bodies or colliders; Block occupancy comes from the Grid, and Enemy
+overlap is handled visually by the per-Enemy offset rather than collision or separation forces.
+
+At Preparation start, `WaveDifficultyData` rolls the next wave's total Enemy count, required
+Energy, and spawn pressure from the existing progression curve. It also selects one `WaveData`:
+
+- Waves divisible by a positive `Special Wave Interval` use only the Special Wave List.
+- All other waves use only the Normal Wave List.
+- The immediately previous WaveData is excluded when the current pool has another valid option.
+- A pool containing one valid WaveData may repeat it.
+- WaveData has no wave-number eligibility fields; its positive EnemyData weights alone determine
+  the composition of the rolled total Enemy count.
+
+The selected composition and total count are fixed in the prepared snapshot. Supply-event
+refreshes may rebuild spawn positions but keep the same selected WaveData for that wave.
 
 When a wave starts, all normal-enemy spawn positions and routes are fixed before delayed
 spawning begins. Route selection follows these rules:
@@ -131,6 +146,15 @@ the same stored route.
 Melee and Ranged enemies may be instantiated outside the Grid, but their first movement target
 must be the first in-bounds cell of the stored route. An out-of-bounds cell is never accepted as
 a movement destination.
+
+Suicide Enemies consume that same stored path. Reaching an adjacent position where a Melee Enemy
+would attack the Block occupying its next route Cell, or surviving a hit with 30% HP or less,
+stops movement and starts the shared self-destruct warning. If the route has no intervening Block,
+the final route target is treated by the same adjacent-target rule; merely consuming the last path
+Cell is not a separate trigger.
+The explosion uses the Enemy's current Grid cell, excludes the center, and damages only Blocks in
+the other eight cells. Each damaged Block receives one pooled Explosion Particle. Self-detonation
+does not grant Energy, while ordinary lethal damage retains the configured Energy reward.
 
 All Blocks refresh their world sprite and health-bar color when HP changes. Basic Blocks use
 the five `Blocks-Sheet_0` through `Blocks-Sheet_4` damage stages from highest to lowest HP.
@@ -152,6 +176,9 @@ configured merge sound through `AudioManager` at the same instant as the Merge B
 
 # Hover Readability
 
+- Hovering the Offer Event UI's full `Visual` Image fades its CanvasGroup to `0.001`; leaving
+  that Image or losing it as the current raycast target restores alpha to 1. Interactable and
+  Blocks Raycasts remain unchanged during both transitions.
 - Supply items and placed world Blocks use one shared tooltip view.
 - The tooltip displays name, description, HP, and role-specific values.
 - Hovering a placed area-effect Block displays its configured Grid effect range.

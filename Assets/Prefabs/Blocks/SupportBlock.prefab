@@ -101,7 +101,6 @@ GameObject:
   m_Component:
   - component: {fileID: 17225818561941205}
   - component: {fileID: 7005742919833205052}
-  - component: {fileID: 2674989877825659983}
   - component: {fileID: 3401206188443327361}
   m_Layer: 0
   m_Name: SupportBlock
@@ -142,7 +141,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Blocks.SupportBlock
   data: {fileID: 11400000, guid: ef7a65fc11644c341812b9f3ffc421cf, type: 2}
   visualRenderer: {fileID: 8179831868736157779}
-  blockCollider: {fileID: 2674989877825659983}
   damageFeedback: {fileID: 3401206188443327361}
   healthBarPrefab: {fileID: 7182853030608205029, guid: ebd1c8cef929bd74fb5e45bdab1d951e, type: 3}
   placementOvershoot: 1.08
@@ -160,52 +158,6 @@ MonoBehaviour:
   electricLinePrefab: {fileID: 6299946013597023600, guid: 4db9ba3b85a068341993393446cad9ef, type: 3}
   initialPoolSize: 4
   electricLineAttachPoint: {fileID: 8446572217803273433}
---- !u!61 &2674989877825659983
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5830948514621627024}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0, y: 0}
-    oldSize: {x: 0, y: 0}
-    newSize: {x: 0, y: 0}
-    adaptiveTilingThreshold: 0
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
-  m_EdgeRadius: 0
 --- !u!114 &3401206188443327361
 MonoBehaviour:
   m_ObjectHideFlags: 0

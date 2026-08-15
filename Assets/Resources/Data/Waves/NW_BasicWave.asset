@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9909680e47599c24fbec27dd097e8feb, type: 3}
+  m_Name: NW_BasicWave
+  m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.WaveData
+  waveName: Basic Wave
+  designIntent: "\uADFC\uC811 \uC801 \uC911\uC2EC\uC758 \uAE30\uBCF8 \uC804\uD22C
+    \uB9AC\uB4EC\uC744 \uC81C\uACF5\uD55C\uB2E4."
+  keyStrategy: "\uC548\uC815\uC801\uC778 \uBC29\uC5B4\uC120\uACFC \uACF5\uACA9 \uBC94\uC704\uB97C
+    \uAD6C\uC131\uD55C\uB2E4."
+  enemyComposition:
+  - enemyData: {fileID: 11400000, guid: 3bcd9b0ad59249141a3c68a36f2ef851, type: 2}
+    weight: 65
+  - enemyData: {fileID: 11400000, guid: a33a61aaae561b34eb18a39810d58306, type: 2}
+    weight: 35
