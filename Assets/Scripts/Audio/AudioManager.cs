@@ -28,9 +28,9 @@ namespace KeepCoreSafe.Audio
 
         [Header("Volume")]
         [Tooltip("Initial BGM volume multiplier used before a saved setting exists.")]
-        [SerializeField, Range(0f, 1f)] private float defaultMusicVolume = 1f;
+        [SerializeField, Range(0f, 1f)] private float defaultMusicVolume = 0.3f;
         [Tooltip("Initial SFX volume multiplier used before a saved setting exists.")]
-        [SerializeField, Range(0f, 1f)] private float defaultSfxVolume = 1f;
+        [SerializeField, Range(0f, 1f)] private float defaultSfxVolume = 0.4f;
 
         private const string MusicVolumePrefKey = "KeepCoreSafe.Audio.MusicVolume";
         private const string SfxVolumePrefKey = "KeepCoreSafe.Audio.SfxVolume";

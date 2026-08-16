@@ -195,3 +195,40 @@ configured merge sound through `AudioManager` at the same instant as the Merge B
 - A reserved spawn cell cannot accept a block.
 - Enemies spawn from those same stored positions. Routes are calculated at Combat start so they
   still reflect the final Grid layout.
+
+---
+
+# Tutorial Selection Safety
+
+- While the Tutorial requires the Red block for the first Attack match, selecting a Green
+  granted block is rejected before `PlacementController` changes its selection state.
+- A rejected Green selection starts the red/green distinction guidance, unlocks the Colorblind
+  Mode setting only when it is still locked, and then shows the apply/later prompt.
+- The guidance and prompt may be requested again while the Red step is active. The first-unlock
+  dialogue is not repeated after the persistent unlock state has been recorded.
+- The current Colorblind Mode flag is an accessibility integration point only; no color-correction
+  rendering rule is part of the current Tutorial task.
+- Closing the prompt always returns control to the same Red placement step, so a rejected
+  selection never consumes a grant or creates a Tutorial soft lock.
+- Tutorial scripted supply is Green, Green, Red. Around the Core, the unchanged Up, Down, Left,
+  and Right positions reference Green, Red, Blue, and Red respectively. These are scene references;
+  the Red and Green BlockData assets remain unchanged.
+
+---
+
+# Interactive Prologue
+
+- The existing Tutorial completion dialogue, glitch, and blackout remain the only entry into
+  PrologueScene.
+- During Tutorial, Lily occupies the Grid cell configured as an offset from the Core. Player Blocks
+  cannot be placed in that cell; a rejected attempt does not consume or create a Block.
+- Prologue begins with only the Tutorial Core and a comatose Lily on the Grid. Left-clicking a placed
+  Lily directly selects/lifts her; the next in-bounds Grid click places her without an inventory step.
+- The initial camera focus is Core position plus the Prologue Director's serialized camera offset.
+- The Lily cell is highlighted while placed; the Core cell is highlighted while Lily is selected.
+- Only placement on the Core completes the Prologue. Completion locks input, changes the Tutorial
+  Core sprite to the normal Lily-containing Core sprite, clears every hostile command, and enters
+  GameScene through the normal black Scene Transition.
+- Hostile command labels deliberately mix unlocalized languages, binary, hexadecimal, command syntax,
+  and error messages across the whole screen. They establish no named network, faction, alliance, or
+  other story detail beyond machines ordering the elimination of humans.

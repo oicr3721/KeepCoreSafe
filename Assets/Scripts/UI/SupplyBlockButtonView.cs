@@ -43,6 +43,7 @@ namespace KeepCoreSafe.UI
             if (icon != null && data != null)
             {
                 icon.sprite = data.Sprite;
+                icon.SetNativeSize();
                 icon.color = data.VisualColor;
             }
 

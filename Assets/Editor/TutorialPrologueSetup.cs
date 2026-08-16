@@ -49,7 +49,8 @@ namespace KeepCoreSafe.Editor
 
             EditorSceneManager.OpenScene(PrologueScenePath, OpenSceneMode.Single);
             if (Object.FindFirstObjectByType<PrologueDirector>(FindObjectsInactive.Include) == null
-                || Object.FindFirstObjectByType<TypewriterText>(FindObjectsInactive.Include) == null)
+                || Object.FindFirstObjectByType<PrologueThreatOverlay>(FindObjectsInactive.Include) == null
+                || Object.FindFirstObjectByType<GridManager>(FindObjectsInactive.Include) == null)
             {
                 throw new System.InvalidOperationException("Prologue scene references are incomplete.");
             }
@@ -122,9 +123,9 @@ namespace KeepCoreSafe.Editor
             data.FindProperty("useScriptedSupply").boolValue = true;
             SerializedProperty blocks = data.FindProperty("scriptedBlocks");
             blocks.arraySize = 3;
-            blocks.GetArrayElementAtIndex(0).objectReferenceValue = red;
-            blocks.GetArrayElementAtIndex(1).objectReferenceValue = red;
-            blocks.GetArrayElementAtIndex(2).objectReferenceValue = green;
+            blocks.GetArrayElementAtIndex(0).objectReferenceValue = green;
+            blocks.GetArrayElementAtIndex(1).objectReferenceValue = green;
+            blocks.GetArrayElementAtIndex(2).objectReferenceValue = red;
             data.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -138,10 +139,10 @@ namespace KeepCoreSafe.Editor
             data.FindProperty("useScriptedStartingBlocks").boolValue = true;
             SerializedProperty blocks = data.FindProperty("scriptedStartingBlocks");
             blocks.arraySize = 4;
-            SetStartingBlock(blocks.GetArrayElementAtIndex(0), Vector2Int.up, red);
-            SetStartingBlock(blocks.GetArrayElementAtIndex(1), Vector2Int.down, green);
+            SetStartingBlock(blocks.GetArrayElementAtIndex(0), Vector2Int.up, green);
+            SetStartingBlock(blocks.GetArrayElementAtIndex(1), Vector2Int.down, red);
             SetStartingBlock(blocks.GetArrayElementAtIndex(2), Vector2Int.left, blue);
-            SetStartingBlock(blocks.GetArrayElementAtIndex(3), Vector2Int.right, green);
+            SetStartingBlock(blocks.GetArrayElementAtIndex(3), Vector2Int.right, red);
             data.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -269,74 +270,7 @@ namespace KeepCoreSafe.Editor
 
         private static void SetupPrologueScene()
         {
-            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            GameObject cameraObject = new("Main Camera", typeof(Camera), typeof(AudioListener));
-            cameraObject.tag = "MainCamera";
-            Camera camera = cameraObject.GetComponent<Camera>();
-            camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = Color.black;
-            camera.orthographic = true;
-            cameraObject.transform.position = new Vector3(0f, 0f, -10f);
-
-            GameObject eventSystem = new("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
-            GameObject canvasObject = new("Prologue Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            Canvas canvas = canvasObject.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-
-            GameObject input = GetOrCreateUI(canvas.transform, "Input Background", typeof(Image), typeof(Button));
-            Stretch(input.GetComponent<RectTransform>());
-            input.GetComponent<Image>().color = Color.black;
-
-            GameObject earth = GetOrCreateUI(canvas.transform, "Earth Illustration Slot", typeof(Image), typeof(CanvasGroup));
-            RectTransform earthRect = earth.GetComponent<RectTransform>();
-            earthRect.anchorMin = earthRect.anchorMax = new Vector2(0.5f, 1f);
-            earthRect.pivot = new Vector2(0.5f, 1f);
-            earthRect.anchoredPosition = new Vector2(0f, -55f);
-            earthRect.sizeDelta = new Vector2(920f, 470f);
-            Image earthImage = earth.GetComponent<Image>();
-            EnsureSpriteImporter(PrologueEarthPath);
-            earthImage.sprite = Load<Sprite>(PrologueEarthPath);
-            earthImage.color = Color.white;
-            earthImage.raycastTarget = false;
-            earth.GetComponent<CanvasGroup>().alpha = 0f;
-
-            GameObject textObject = GetOrCreateUI(canvas.transform, "Prologue Text", typeof(TextMeshProUGUI), typeof(TypewriterText));
-            RectTransform textRect = textObject.GetComponent<RectTransform>();
-            textRect.anchorMin = new Vector2(0.16f, 0.08f);
-            textRect.anchorMax = new Vector2(0.84f, 0.5f);
-            textRect.offsetMin = textRect.offsetMax = Vector2.zero;
-            TMP_Text label = textObject.GetComponent<TMP_Text>();
-            ApplyFont(label, null);
-            label.fontSize = 30f;
-            label.color = new Color(0.88f, 0.94f, 1f, 1f);
-            label.alignment = TextAlignmentOptions.TopLeft;
-            label.raycastTarget = false;
-            TypewriterText writer = textObject.GetComponent<TypewriterText>();
-            SerializedObject writerData = new(writer);
-            writerData.FindProperty("textLabel").objectReferenceValue = label;
-            writerData.FindProperty("inputButton").objectReferenceValue = input.GetComponent<Button>();
-            writerData.FindProperty("charactersPerSecond").floatValue = 30f;
-            writerData.ApplyModifiedPropertiesWithoutUndo();
-
-            GameObject blackout = GetOrCreateUI(canvas.transform, "Blackout", typeof(Image), typeof(CanvasGroup));
-            Stretch(blackout.GetComponent<RectTransform>());
-            blackout.GetComponent<Image>().color = Color.black;
-            blackout.GetComponent<Image>().raycastTarget = false;
-            blackout.GetComponent<CanvasGroup>().alpha = 0f;
-
-            GameObject directorObject = new("Prologue Director", typeof(PrologueDirector));
-            PrologueDirector director = directorObject.GetComponent<PrologueDirector>();
-            SerializedObject directorData = new(director);
-            directorData.FindProperty("typewriter").objectReferenceValue = writer;
-            directorData.FindProperty("earthIllustration").objectReferenceValue = earth.GetComponent<CanvasGroup>();
-            directorData.FindProperty("blackout").objectReferenceValue = blackout.GetComponent<CanvasGroup>();
-            directorData.ApplyModifiedPropertiesWithoutUndo();
-            CreateAudioManager();
-
-            EditorSceneManager.SaveScene(scene, PrologueScenePath);
+            InteractivePrologueSetup.Apply();
         }
 
         private static void CreateAudioManager()

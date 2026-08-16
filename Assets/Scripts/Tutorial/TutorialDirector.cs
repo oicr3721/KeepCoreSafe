@@ -4,6 +4,7 @@ using KeepCoreSafe.Controllers;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Localization;
 using KeepCoreSafe.Managers;
+using KeepCoreSafe.Settings;
 using KeepCoreSafe.UI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -24,6 +25,11 @@ namespace KeepCoreSafe.Tutorial
         [SerializeField] private TypewriterText typewriter;
         [SerializeField] private TutorialGridHighlight gridHighlight;
         [SerializeField] private TutorialGlitchTransition glitchTransition;
+        [SerializeField] private TutorialColorblindPrompt colorblindPrompt;
+        [SerializeField] private Transform lilyTransform;
+        [SerializeField] private Animator lilyAnimator;
+        [SerializeField] private Vector2Int lilyOffsetFromCore = new(4, 0);
+        [SerializeField, Min(0.1f)] private float happyReactionDuration = 0.9f;
 
         [Header("Tutorial Data")]
         [SerializeField] private BasicBlockData redBlock;
@@ -33,19 +39,30 @@ namespace KeepCoreSafe.Tutorial
         private bool advanceRequested;
         private bool healerCreated;
         private bool attackCreated;
-        private bool wrongGreenPlacement;
-        private Block wrongGreenBlock;
-        private bool wrongGreenBlockDismantled;
-        private int redBlocksPlaced;
+        private bool wrongFirstPlacement;
+        private Block wrongFirstBlock;
+        private bool wrongFirstBlockDismantled;
+        private int greenBlocksPlaced;
         private ClearType clearType;
         private bool gameOver;
-        private Vector2Int greenTarget;
+        private Vector2Int firstTarget;
         private Coroutine invalidDismantleWarningRoutine;
+        private Coroutine colorblindGuidanceRoutine;
+        private bool firstLessonSelectionRequired;
+        private Coroutine lilyReactionRoutine;
+        private Coroutine lilyPlacementWarningRoutine;
+        private Vector2Int lilyCell;
+
+        private static readonly int IdleTrigger = Animator.StringToHash("Idle");
+        private static readonly int HappyTrigger = Animator.StringToHash("Happy");
 
         private void Start()
         {
             typewriter.AdvanceRequested += HandleAdvance;
             placementController.BlockPlaced += HandleBlockPlaced;
+            placementController.GrantedBlockSelectionRequested += CanSelectGrantedBlock;
+            placementController.BlockPlacementValidationRequested += CanPlaceBlockAtLilyCell;
+            placementController.BlockPlacementRejected += HandleBlockPlacementRejected;
             placementController.BlockDismantleRequested += CanDismantleBlock;
             placementController.BlockDismantled += HandleBlockDismantled;
             placementController.SkillBlockCreated += HandleSkillCreated;
@@ -54,6 +71,8 @@ namespace KeepCoreSafe.Tutorial
             preparationUI.SetStartWaveAllowed(false);
             dialogueRoot.SetActive(false);
             gridHighlight.Hide();
+            PositionLilyOnGrid();
+            SetLilyTrigger(IdleTrigger);
             StartCoroutine(RunTutorial());
         }
 
@@ -70,41 +89,45 @@ namespace KeepCoreSafe.Tutorial
 
             yield return new WaitUntil(() => placementController.PlacementInputEnabled);
             Vector2Int core = GridManager.Instance.Grid.Core.GridPosition;
-            greenTarget = core + Vector2Int.right + Vector2Int.down;
-            yield return SayKey("tutorial.green.connect");
-            gridHighlight.Show(greenTarget);
+            firstTarget = core + Vector2Int.right + Vector2Int.down;
+            firstLessonSelectionRequired = true;
+            placementController.ClearSelection();
+            yield return SayKey("tutorial.first.red.connect");
+            gridHighlight.Show(firstTarget);
 
-            while (!healerCreated)
+            while (!attackCreated)
             {
-                if (wrongGreenPlacement)
+                if (wrongFirstPlacement)
                 {
-                    wrongGreenPlacement = false;
+                    wrongFirstPlacement = false;
                     gridHighlight.Hide();
-                    yield return SayKey("tutorial.green.wrong");
-                    yield return new WaitUntil(() => wrongGreenBlockDismantled || wrongGreenBlock == null);
-                    wrongGreenBlock = null;
-                    wrongGreenBlockDismantled = false;
-                    supplyController.AddGrantedBlock(greenBlock, false);
-                    gridHighlight.Show(greenTarget);
+                    yield return SayKey("tutorial.first.red.wrong");
+                    yield return new WaitUntil(() => wrongFirstBlockDismantled || wrongFirstBlock == null);
+                    wrongFirstBlock = null;
+                    wrongFirstBlockDismantled = false;
+                    supplyController.AddGrantedBlock(redBlock, false);
+                    gridHighlight.Show(firstTarget);
                 }
                 yield return null;
             }
 
             gridHighlight.Hide();
-            yield return SayKey("tutorial.green.success");
-            yield return SayKey("tutorial.red.connect");
-            while (redBlocksPlaced < 2)
+            firstLessonSelectionRequired = false;
+            yield return SayKey("tutorial.first.attack.success");
+            yield return SayKey("tutorial.second.green.connect");
+            while (greenBlocksPlaced < 2)
             {
-                Vector2Int target = core + Vector2Int.up + (redBlocksPlaced == 0 ? Vector2Int.left : Vector2Int.right);
+                Vector2Int target = core
+                    + (greenBlocksPlaced == 0 ? Vector2Int.right + Vector2Int.up : Vector2Int.right);
                 gridHighlight.Show(target);
                 yield return null;
             }
             gridHighlight.Hide();
 
-            if (attackCreated)
-                yield return SayKey("tutorial.attack.success");
+            if (healerCreated)
+                yield return SayKey("tutorial.second.healer.success");
             else
-                yield return SayKey("tutorial.attack.fail");
+                yield return SayKey("tutorial.second.healer.fail");
 
             preparationUI.SetStartWaveAllowed(true);
             yield return new WaitUntil(() => GameManager.Phase == GamePhase.Combat || gameOver);
@@ -123,6 +146,7 @@ namespace KeepCoreSafe.Tutorial
             else
                 yield return SayKey("tutorial.clear.killall");
 
+            PlayHappyReaction();
             dialogueRoot.SetActive(true);
             typewriter.Play(LocalizationManager.Get("tutorial.glitch.last"));
             yield return new WaitForSecondsRealtime(0.65f);
@@ -146,25 +170,101 @@ namespace KeepCoreSafe.Tutorial
 
         private void HandleBlockPlaced(Block block, Vector2Int position)
         {
-            if (block.Data == greenBlock && !healerCreated && position != greenTarget)
+            if (block.Data == redBlock && !attackCreated && position != firstTarget)
             {
-                wrongGreenPlacement = true;
-                wrongGreenBlock = block;
-                wrongGreenBlockDismantled = false;
+                wrongFirstPlacement = true;
+                wrongFirstBlock = block;
+                wrongFirstBlockDismantled = false;
             }
-            if (block.Data == redBlock)
-                redBlocksPlaced++;
+            if (block.Data == greenBlock)
+                greenBlocksPlaced++;
+        }
+
+        private void PositionLilyOnGrid()
+        {
+            if (lilyTransform == null
+                || GridManager.Instance == null
+                || GridManager.Instance.Grid?.Core == null)
+            {
+                Debug.LogError("Tutorial Lily or Core is not ready for Grid positioning.", this);
+                return;
+            }
+
+            lilyCell = GridManager.Instance.Grid.Core.GridPosition + lilyOffsetFromCore;
+            if (!GridManager.Instance.Grid.IsWithinBounds(lilyCell))
+            {
+                Debug.LogError($"Tutorial Lily cell {lilyCell} is outside the Grid.", this);
+                return;
+            }
+
+            lilyTransform.position = GridManager.Instance.GridToWorld(lilyCell);
+        }
+
+        private bool CanPlaceBlockAtLilyCell(BlockData _, Vector2Int position)
+        {
+            return lilyTransform == null || position != lilyCell;
+        }
+
+        private void HandleBlockPlacementRejected(BlockData _, Vector2Int position)
+        {
+            if (lilyTransform == null || position != lilyCell)
+                return;
+
+            PlayHappyReaction();
+            if (lilyPlacementWarningRoutine == null && !dialogueRoot.activeSelf)
+                lilyPlacementWarningRoutine = StartCoroutine(ShowLilyPlacementWarning());
+        }
+
+        private IEnumerator ShowLilyPlacementWarning()
+        {
+            yield return SayKey("tutorial.lily.placement_blocked");
+            lilyPlacementWarningRoutine = null;
+        }
+
+        private bool CanSelectGrantedBlock(
+            int _,
+            BlockSupplyController.GrantedBlock grant)
+        {
+            if (!firstLessonSelectionRequired || attackCreated || grant.Data != greenBlock)
+                return true;
+
+            if (colorblindGuidanceRoutine == null)
+                colorblindGuidanceRoutine = StartCoroutine(ShowColorblindGuidance());
+            return false;
+        }
+
+        private IEnumerator ShowColorblindGuidance()
+        {
+            yield return SayKey("tutorial.colorblind.question");
+
+            if (colorblindPrompt == null)
+            {
+                Debug.LogError("Tutorial Colorblind Prompt is not configured.", this);
+                colorblindGuidanceRoutine = null;
+                yield break;
+            }
+
+            bool resolved = false;
+            bool enableMode = false;
+            colorblindPrompt.Show(choice =>
+            {
+                enableMode = choice;
+                resolved = true;
+            });
+            yield return new WaitUntil(() => resolved);
+            AccessibilitySettings.SetColorblindModeEnabled(enableMode);
+            colorblindGuidanceRoutine = null;
         }
 
         private void HandleBlockDismantled(Block block, Vector2Int _)
         {
-            if (block == wrongGreenBlock)
-                wrongGreenBlockDismantled = true;
+            if (block == wrongFirstBlock)
+                wrongFirstBlockDismantled = true;
         }
 
         private bool CanDismantleBlock(Block block, Vector2Int _)
         {
-            if (block != null && block == wrongGreenBlock)
+            if (block != null && block == wrongFirstBlock)
                 return true;
 
             ShowInvalidDismantleWarning();
@@ -192,9 +292,44 @@ namespace KeepCoreSafe.Tutorial
         private void HandleSkillCreated(Block block, Vector2Int _)
         {
             if (block is HealerBlock)
+            {
                 healerCreated = true;
+                PlayHappyReaction();
+            }
             if (block is AttackBlock)
+            {
                 attackCreated = true;
+                firstLessonSelectionRequired = false;
+                PlayHappyReaction();
+            }
+        }
+
+        private void PlayHappyReaction()
+        {
+            if (lilyAnimator == null)
+                return;
+
+            if (lilyReactionRoutine != null)
+                StopCoroutine(lilyReactionRoutine);
+            lilyReactionRoutine = StartCoroutine(PlayHappyReactionRoutine());
+        }
+
+        private IEnumerator PlayHappyReactionRoutine()
+        {
+            SetLilyTrigger(HappyTrigger);
+            yield return new WaitForSecondsRealtime(happyReactionDuration);
+            SetLilyTrigger(IdleTrigger);
+            lilyReactionRoutine = null;
+        }
+
+        private void SetLilyTrigger(int trigger)
+        {
+            if (lilyAnimator == null)
+                return;
+
+            lilyAnimator.ResetTrigger(IdleTrigger);
+            lilyAnimator.ResetTrigger(HappyTrigger);
+            lilyAnimator.SetTrigger(trigger);
         }
 
         private void HandleStageCleared(int _, ClearType clearType)
@@ -216,12 +351,17 @@ namespace KeepCoreSafe.Tutorial
             if (placementController != null)
             {
                 placementController.BlockPlaced -= HandleBlockPlaced;
+                placementController.GrantedBlockSelectionRequested -= CanSelectGrantedBlock;
+                placementController.BlockPlacementValidationRequested -= CanPlaceBlockAtLilyCell;
+                placementController.BlockPlacementRejected -= HandleBlockPlacementRejected;
                 placementController.BlockDismantleRequested -= CanDismantleBlock;
                 placementController.BlockDismantled -= HandleBlockDismantled;
                 placementController.SkillBlockCreated -= HandleSkillCreated;
             }
             GameManager.StageCleared -= HandleStageCleared;
             GameManager.PhaseChanged -= HandlePhaseChanged;
+            if (lilyReactionRoutine != null)
+                StopCoroutine(lilyReactionRoutine);
         }
     }
 }

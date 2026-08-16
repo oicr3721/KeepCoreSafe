@@ -826,7 +826,7 @@ MonoBehaviour:
   visualRoot: {fileID: 419837678}
   offerRoot: {fileID: 622027161}
   offerButtonPrefab: {fileID: 304815387675893510, guid: b6eb9a17ffb1d5b45ab084f491d0f965, type: 3}
-  backgroundGroup: {fileID: 419837683}
+  offerVisualGroup: {fileID: 0}
   cardRevealDuration: 0.32
   revealStagger: 0.12
   revealSlideDistance: 90
@@ -2167,8 +2167,8 @@ MonoBehaviour:
   musicPlayer: {fileID: 46425108}
   defaultMusic: {fileID: 0}
   stageMusic: []
-  defaultMusicVolume: 1
-  defaultSfxVolume: 1
+  defaultMusicVolume: 0.3
+  defaultSfxVolume: 0.4
 --- !u!4 &720562232
 Transform:
   m_ObjectHideFlags: 0

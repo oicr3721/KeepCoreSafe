@@ -115,6 +115,22 @@ namespace KeepCoreSafe.Controllers
             PlayCinematicFocus(target, zoom, duration);
         }
 
+        public void SetDefaultViewCenter(Vector3 focusPosition, bool moveImmediately = true)
+        {
+            isCinematicFocus = false;
+            isReturning = false;
+            RemoveAppliedShakeOffset();
+            shakeRemaining = 0f;
+            transform.DOKill();
+            worldCamera.DOKill();
+
+            defaultFocusPosition = focusPosition;
+            targetPosition = WithCameraDepth(focusPosition);
+            panVelocity = Vector3.zero;
+            if (moveImmediately)
+                transform.position = targetPosition;
+        }
+
         public void PlayCinematicFocus(Transform target, float zoom, float duration)
         {
             if (target == null)

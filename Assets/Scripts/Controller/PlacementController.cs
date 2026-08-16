@@ -55,6 +55,9 @@ public sealed class PlacementController : MonoBehaviour
     public bool PlacementInputEnabled => placementInputEnabled;
     public int SelectedSupplyIndex => selectedSupplyIndex;
     public event Action<int> SelectionChanged;
+    public event Func<int, BlockSupplyController.GrantedBlock, bool> GrantedBlockSelectionRequested;
+    public event Func<BlockData, Vector2Int, bool> BlockPlacementValidationRequested;
+    public event Action<BlockData, Vector2Int> BlockPlacementRejected;
     public event Action<Block, Vector2Int> BlockPlaced;
     public event Func<Block, Vector2Int, bool> BlockDismantleRequested;
     public event Action<Block, Vector2Int> BlockDismantled;
@@ -129,11 +132,33 @@ public sealed class PlacementController : MonoBehaviour
             return;
         }
 
+        if (!CanSelectGrantedBlock(supplyIndex, grant))
+            return;
+
         selectedSupplyIndex = supplyIndex;
         selectedGrant = grant;
         previewRenderer.sprite = grant.Data.Sprite;
         previewRenderer.color = grant.Data.VisualColor;
         SelectionChanged?.Invoke(selectedSupplyIndex);
+    }
+
+    private bool CanSelectGrantedBlock(
+        int supplyIndex,
+        BlockSupplyController.GrantedBlock grant)
+    {
+        if (GrantedBlockSelectionRequested == null)
+            return true;
+
+        foreach (Delegate listener in GrantedBlockSelectionRequested.GetInvocationList())
+        {
+            if (listener is Func<int, BlockSupplyController.GrantedBlock, bool> validator
+                && !validator(supplyIndex, grant))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public void ClearSelection()
@@ -166,10 +191,11 @@ public sealed class PlacementController : MonoBehaviour
 
     private void TryPlaceSelectedBlock(Vector2Int position)
     {
-        if (GridManager.Instance.IsInteractionLocked(position)
-            || IsNextWaveSpawnCell(position)
-            || !GridManager.Instance.IsCellEmpty(position))
+        if (!CanPlaceSelectedBlock(position))
+        {
+            BlockPlacementRejected?.Invoke(selectedGrant.Data, position);
             return;
+        }
 
         Block block = CreateBlock(selectedGrant.Data);
         if (block == null)
@@ -327,9 +353,7 @@ public sealed class PlacementController : MonoBehaviour
     {
         Vector3 worldPosition = GridManager.Instance.GridToWorld(position);
         previewRenderer.gameObject.SetActive(true);
-        bool canPlace = !GridManager.Instance.IsInteractionLocked(position)
-            && !IsNextWaveSpawnCell(position)
-            && GridManager.Instance.IsCellEmpty(position);
+        bool canPlace = CanPlaceSelectedBlock(position);
         previewRenderer.color = canPlace
             ? WithPreviewAlpha(selectedGrant.Data.VisualColor, normalColor.a)
             : invalidColor;
@@ -345,6 +369,31 @@ public sealed class PlacementController : MonoBehaviour
         {
             effectVisualizer?.HidePlacement();
         }
+    }
+
+    private bool CanPlaceSelectedBlock(Vector2Int position)
+    {
+        if (selectedGrant.Data == null
+            || GridManager.Instance.IsInteractionLocked(position)
+            || IsNextWaveSpawnCell(position)
+            || !GridManager.Instance.IsCellEmpty(position))
+        {
+            return false;
+        }
+
+        if (BlockPlacementValidationRequested == null)
+            return true;
+
+        foreach (Delegate listener in BlockPlacementValidationRequested.GetInvocationList())
+        {
+            if (listener is Func<BlockData, Vector2Int, bool> validator
+                && !validator(selectedGrant.Data, position))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private bool IsNextWaveSpawnCell(Vector2Int position)

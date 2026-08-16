@@ -212,3 +212,26 @@ the wave spawner, allowing placement decisions to account for the incoming attac
 
 World blocks and Supply items expose the same tooltip information. Hovering a placed
 skill block also displays the same effect-area visualization used during placement.
+
+The Tutorial shares the current GameScene UI layout and typography while retaining its green
+palette and Tutorial-only dialogue, highlight, and glitch presentation. Tutorial block references
+are arranged so the first lesson completes a Red Attack match and the second lesson completes a
+Green Healer match, without changing either BlockData asset. During the first Red match lesson,
+attempting to select Green opens repeatable red/green accessibility guidance instead
+of allowing a choice that can block progression. The prompt records Colorblind Mode unlock and
+enabled state for a future visual-correction feature; it does not currently recolor gameplay.
+
+After the existing Tutorial glitch and blackout, the Prologue becomes a short interactive scene
+rather than a paragraph sequence. A comatose Lily appears below the Tutorial Core on a dark red
+Grid. Left-clicking a placed Lily immediately lifts and selects her; clicking another Grid cell places
+her there, and a placed Lily can be lifted again. Pickup and placement each play their own sound.
+The Core is highlighted while Lily is selected, and the initial camera frames the Core with an
+Inspector-configurable offset.
+Placing her on the Core locks input and plays a focused lift, pulse, burst, Core sprite replacement,
+threat rejection flicker, and the normal black transition into GameScene. Raw English, Korean, Japanese,
+binary, hexadecimal, shell-like, and error strings cover the full screen to imply noisy machine
+directives rather than a clean localized UI, without adding fixed lore.
+
+During Tutorial, Lily occupies an Inspector-configured Grid cell relative to the Core. That cell is
+not a valid Block placement target; attempting the placement leaves the grant untouched and prompts
+Lily's localized reaction animation/dialogue.

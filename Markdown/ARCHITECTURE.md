@@ -236,8 +236,8 @@ New upgrade behavior should be a new `ShopOfferData` subtype.
 - Every Block Prefab similarly owns one nested `Dust Particle System`. The expected Grid size
   and one-system-per-block cost do not justify a central pool, and simultaneous hits cannot
   contend for a limited shared pool.
-- `HealerBlock` owns one nested `Heal Particle System`, moves it to the resolved target, plays
-  it, and then applies the heal.
+- `HealParticleEffectManager` owns a scene-authored `ComponentPool<ParticleSystem>` used by both
+  `HealerBlock` and color-recovery Shop offers. Healers no longer own one particle instance each.
 
 ## Merge audio
 
@@ -253,6 +253,9 @@ New upgrade behavior should be a new `ShopOfferData` subtype.
 - Resolves survival, selects unique free offers, and coordinates application.
 - Exposes the active Supply target and additional-hunter count to `WaveManager`.
 - Has no knowledge of concrete upgrade implementation.
+- Records the selected offer without applying it during the covered card presentation. On close,
+  it raises `ShopClosing` so the UI hides, applies the selected offer, and only then raises
+  `ShopClosed` so guaranteed blocks are queued before `BlockSupplyController` deals the grant.
 
 ## SupplySpawnPresentationController
 
@@ -313,6 +316,54 @@ New upgrade behavior should be a new `ShopOfferData` subtype.
   Placement request has priority; otherwise a renderable Hover request is shown.
 - Tooltip requests are owner-scoped so Supply and World systems cannot hide each other.
 - Reusable visual structure is scene/prefab-authored; runtime code supplies state and animation.
+
+## Tutorial UI and accessibility entry point
+
+- `TutorialScene` synchronizes common UI RectTransform, typography, layout, and graphic settings
+  from the current `GameScene`. Chromatic UI colors retain the source saturation, value, and alpha
+  while using the Tutorial green hue; semantic red feedback remains red.
+- Self-contained Offer, Energy, Wave Announcement, and Stage Clear UI roots reuse the current
+  GameScene structure. Tutorial-only Dialogue, Glitch Transition, and Grid Highlight are preserved,
+  and common UI that the Tutorial does not use remains inactive rather than being deleted.
+- `PlacementController.GrantedBlockSelectionRequested` is a general pre-selection validation hook.
+  `TutorialDirector` uses it only during the first Red lesson to reject Green without mutating selection.
+- `TutorialDirector.redBlock` and `greenBlock` remain explicit color-identity references. The scene's
+  scripted supply/starting arrays and the Director's stage usage determine the swapped Tutorial order;
+  neither source `BasicBlockData` asset is modified.
+- `TutorialColorblindPrompt` is a prefab-authored localized modal. `AccessibilitySettings` persists
+  Colorblind Mode unlock/enabled flags and exposes change events as the integration seam for a
+  future rendering implementation; it currently owns no visual correction behavior.
+- `TutorialDirector` drives Lily's existing `Idle` and `Happy` Animator triggers. Successful
+  Attack/Healer creation and the completed defense produce a short Happy reaction before returning
+  to Idle; the existing glitch and blackout still own the transition into PrologueScene.
+- `TutorialDirector.lilyOffsetFromCore` positions its explicit Lily Transform reference through
+  `GridManager.GridToWorld`. `PlacementController.BlockPlacementValidationRequested` is the shared,
+  side-effect-free extension point used by both placement preview and commit; Tutorial rejects the
+  Lily cell there and handles the commit-only rejection event with localized dialogue and `Happy`.
+
+## Interactive Prologue
+
+- `PrologueDirector` owns the one-scene state machine: recognition delay, direct left-click Lily
+  selection, Grid placement preview, Core destination detection, input lock, fusion sequence,
+  Tutorial-Core to completed-Core sprite swap, and the normal black GameScene transition.
+- It reuses `GridManager` coordinates, `TutorialGridHighlight`, `GameCameraController`,
+  `CoreEnergyPulseView`, `ShockwaveRingView`, and the Merge Burst particle prefab. Lily is a visual
+  interaction object rather than a combat `Block`, preventing Prologue-only behavior from entering
+  normal placement, matching, health, or wave rules.
+- Clicking a placed Lily immediately lifts it into placement state without an inventory-button
+  intermediate step. Pickup and placement use separate Inspector-assigned AudioClips.
+- `PrologueDirector.cameraOffset` is applied to the Core position through
+  `GameCameraController.SetDefaultViewCenter`, keeping the Core centered by default while allowing
+  scene-specific framing adjustments in the Inspector.
+- `PrologueThreatOverlay` manages a fixed scene-authored pool of TMP labels. Each label independently
+  chooses from raw mixed-language/code/binary commands, a random full-screen position, a 12-multiple
+  font size, jitter, duration, and flicker; the fusion sequence rejects and clears all labels together
+  without creating UI objects.
+- `InteractivePrologueSetup` performs an idempotent scene migration: it preserves the existing scene,
+  disables only the obsolete paragraph visuals, wires explicit Inspector references, and validates
+  both the Prologue and Tutorial Lily Transform/Animator connections.
+- Prologue uses the same unmodified black `SceneTransition.Load` flow as every other scene. The old
+  Lily inventory button and Prologue White Flash scene objects remain inactive for safe UI preservation.
 
 ---
 
