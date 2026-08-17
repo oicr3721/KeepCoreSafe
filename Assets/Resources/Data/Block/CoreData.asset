@@ -15,13 +15,8 @@ MonoBehaviour:
   displayName: block.core.name
   description: block.core.desc
   maxHP: 100
-  sprite: {fileID: 2626857050666206334, guid: a6b9be541f599064daf92ce1ca91f21f, type: 3}
-  healthStageSprites:
-  - {fileID: 2626857050666206334, guid: a6b9be541f599064daf92ce1ca91f21f, type: 3}
-  - {fileID: 2626857050666206334, guid: a6b9be541f599064daf92ce1ca91f21f, type: 3}
-  - {fileID: 2626857050666206334, guid: a6b9be541f599064daf92ce1ca91f21f, type: 3}
-  - {fileID: 2626857050666206334, guid: a6b9be541f599064daf92ce1ca91f21f, type: 3}
-  - {fileID: 2626857050666206334, guid: a6b9be541f599064daf92ce1ca91f21f, type: 3}
+  sprite: {fileID: -2547592560836905299, guid: 9186ea0d2d5dd8844b9bf390c2d8ff3e, type: 3}
+  healthStageSprites: []
   color: {fileID: 11400000, guid: 2ba180ba48dd68a438b8866ec1aaf1c3, type: 2}
   prefab: {fileID: 6595445646424716651, guid: f44b028d3bd7a334fb493b74fb5d5d27, type: 3}
   additionalProperties: 0

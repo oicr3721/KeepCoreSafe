@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Linq;
+using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Controllers;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.GridSystem;
@@ -60,7 +61,7 @@ namespace KeepCoreSafe.Editor
             SerializedObject directorObject = new(director);
             string[] requiredReferences =
             {
-                "gridManager", "coreTransform", "coreRenderer", "tutorialCoreData", "completedCoreData",
+                "gridManager", "coreSpawnAnchor", "tutorialCoreData", "inGameCoreData",
                 "lilyTransform", "lilyRenderer", "lilyAnimator", "placementPreview", "gridHighlight",
                 "cameraController", "objectiveGroup", "threatOverlay", "atmosphereOverlay",
                 "energyPulsePrefab", "shockwavePrefab", "burstParticlesPrefab",
@@ -71,6 +72,21 @@ namespace KeepCoreSafe.Editor
                 SerializedProperty property = directorObject.FindProperty(propertyName);
                 if (property == null || property.objectReferenceValue == null)
                     throw new InvalidOperationException($"PrologueDirector.{propertyName} is not assigned.");
+            }
+
+            CoreBlockData tutorialCore = directorObject.FindProperty("tutorialCoreData")
+                .objectReferenceValue as CoreBlockData;
+            CoreBlockData inGameCore = directorObject.FindProperty("inGameCoreData")
+                .objectReferenceValue as CoreBlockData;
+            Transform coreAnchor = directorObject.FindProperty("coreSpawnAnchor")
+                .objectReferenceValue as Transform;
+            if (tutorialCore?.Prefab is not CoreBlock
+                || inGameCore?.Prefab is not CoreBlock
+                || tutorialCore.Prefab == inGameCore.Prefab
+                || coreAnchor.GetComponent<SpriteRenderer>() != null)
+            {
+                throw new InvalidOperationException(
+                    "Prologue Core must use distinct Tutorial/In-Game CoreData prefabs and a visual-free spawn anchor.");
             }
 
             SerializedProperty labels = new SerializedObject(threats).FindProperty("commandLabels");
@@ -167,9 +183,9 @@ namespace KeepCoreSafe.Editor
             CoreBlockData tutorialCore = AssetDatabase.LoadAssetAtPath<CoreBlockData>(TutorialCorePath);
             CoreBlockData completedCore = AssetDatabase.LoadAssetAtPath<CoreBlockData>(CorePath);
             GameObject coreObject = GetOrCreateRoot(scene, "Prologue Core");
-            SpriteRenderer coreRenderer = GetOrAdd<SpriteRenderer>(coreObject);
-            coreRenderer.sprite = tutorialCore.Sprite;
-            coreRenderer.sortingOrder = 10;
+            if (coreObject.TryGetComponent(out SpriteRenderer obsoleteCoreRenderer))
+                UnityEngine.Object.DestroyImmediate(obsoleteCoreRenderer);
+            coreObject.SetActive(false);
 
             GameObject lilyObject = GetOrCreateRoot(scene, "Lily");
             SpriteRenderer lilyRenderer = GetOrAdd<SpriteRenderer>(lilyObject);
@@ -212,10 +228,9 @@ namespace KeepCoreSafe.Editor
             PrologueDirector director = GetOrAdd<PrologueDirector>(directorObject);
             SerializedObject directorData = new(director);
             Assign(directorData, "gridManager", gridManager);
-            Assign(directorData, "coreTransform", coreObject.transform);
-            Assign(directorData, "coreRenderer", coreRenderer);
+            Assign(directorData, "coreSpawnAnchor", coreObject.transform);
             Assign(directorData, "tutorialCoreData", tutorialCore);
-            Assign(directorData, "completedCoreData", completedCore);
+            Assign(directorData, "inGameCoreData", completedCore);
             Assign(directorData, "lilyTransform", lilyObject.transform);
             Assign(directorData, "lilyRenderer", lilyRenderer);
             Assign(directorData, "lilyAnimator", lilyAnimator);

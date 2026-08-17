@@ -61,13 +61,14 @@ namespace KeepCoreSafe.Blocks
             }
         }
 
-        public void Initialize(BlockData blockData)
+        public void Initialize(BlockData blockData, bool createHealthBar = true)
         {
             HP.OnValueChanged -= HandleHealthChanged;
             data = blockData;
             HP.Initialize(data.MaxHP, data.MaxHP);
             ApplyBaseVisual();
-            CreateHealthBar();
+            if (createHealthBar)
+                CreateHealthBar();
             HP.OnValueChanged += HandleHealthChanged;
             UpdateHealthVisual(1f);
         }
@@ -84,7 +85,7 @@ namespace KeepCoreSafe.Blocks
         {
         }
 
-        public void TakeDamage(int amount)
+        public virtual void TakeDamage(int amount)
         {
             if (amount <= 0 || HP.CurrentValue <= 0)
             {
@@ -184,10 +185,15 @@ namespace KeepCoreSafe.Blocks
         public void UpdateHealthVisual(float healthRatio)
         {
             float clampedRatio = Mathf.Clamp01(healthRatio);
-            if (visualRenderer != null && data != null)
-                visualRenderer.sprite = data.GetHealthSprite(clampedRatio);
+            UpdateVisualSprite(clampedRatio);
 
             healthBar?.UpdateHealthVisual(clampedRatio);
+        }
+
+        protected virtual void UpdateVisualSprite(float healthRatio)
+        {
+            if (visualRenderer != null && data != null)
+                visualRenderer.sprite = data.GetHealthSprite(healthRatio);
         }
 
         internal void SetGridPosition(Vector2Int position)

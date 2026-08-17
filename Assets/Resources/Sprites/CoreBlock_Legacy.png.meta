@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 9186ea0d2d5dd8844b9bf390c2d8ff3e
+guid: a6b9be541f599064daf92ce1ca91f21f
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2547592560836905299
-    second: CoreBlock_Tutorialt_0
+      213: 2626857050666206334
+    second: CoreBlock_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,7 +100,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: CoreBlock_Tutorialt_0
+      name: CoreBlock_Legacy
       rect:
         serializedVersion: 2
         x: 0
@@ -108,15 +108,15 @@ TextureImporter:
         width: 32
         height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: da673ea401225acd0800000000000000
-      internalID: -2547592560836905299
+      spriteID: e7480b4e198747420800000000000000
+      internalID: 2626857050666206334
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 043f2f994ea8caa4b95cc6567a9031af
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      CoreBlock_Tutorialt_0: -2547592560836905299
+      CoreBlock_Legacy: 2626857050666206334
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

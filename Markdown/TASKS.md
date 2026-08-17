@@ -1,376 +1,300 @@
-# 구현 상태
+# 5. Core Block의 Tutorial / In-Game Prefab 분리 구조 확립
 
-완료 (2026-08-17)
+## 핵심 목표
 
-- Tutorial Director에서 Lily의 Core 기준 Grid Offset과 Transform 참조를 편집할 수 있다.
-- Lily 셀은 공통 배치 검증 경로에서 차단되며, 실제 시도 시 현지화 대사와 `Happy` 반응을 재생한다.
-- Prologue의 설치된 Lily 회수 입력을 좌클릭으로 수정했다.
-- Lily의 비-Core 재배치/재회수, Core 강조, 융합 VFX와 GameScene 전환 흐름을 검증했다.
-- 후속 변경으로 White Flash를 제거하고 기존 검정 Scene Transition을 그대로 사용한다.
-- Lily 클릭 즉시 선택 상태가 되며, 들어올림/배치 Clip을 각각 재생한다.
-- Prologue 카메라는 Core와 Inspector의 Camera Offset을 기준으로 시작한다.
+Core Block은 더 이상 **하나의 Core Block Prefab에 Sprite만 변경해서 Tutorial / In-Game 상태를 표현하는 구조를 사용하지 않는다.**
 
----
+앞으로는 다음과 같이 **Tutorial용 Core Block과 In-Game용 Core Block을 서로 다른 Prefab으로 관리**한다.
 
-좋아. 지금 상태가 **Prologue Scene이 이미 어느 정도 구현되어 있지만 동작이 완전하지 않은 상태**라서, 코덱스에게 단순 신규 구현으로 요청하기보다는 **현재 구현을 먼저 검수하고, 기존 구조를 최대한 유지하면서 누락/버그를 수정하라**는 방향으로 작성하는 게 좋겠어.
+* Tutorial Core Block Prefab
+* In-Game Core Block Prefab
 
-아래처럼 전달하면 될 것 같아.
+두 Prefab은 각각 독립적인 GameObject 구조를 가질 수 있어야 한다.
 
----
+특히 In-Game Core Block에는 향후 Core와 함께 동작하는 **Lily Animation Object 등의 자식 GameObject를 포함할 수 있어야 한다.**
 
-# Tutorial / Prologue 인터랙션 및 연출 검수·구현
+따라서 Core의 종류를 단순히 Sprite 교체로 표현하는 기존 구조를 제거하고, **Prefab 자체를 교체하는 구조로 통일한다.**
 
-## 작업 목표
+# 5-1. Core Prefab 선택의 Source of Truth
 
-Tutorial Scene에서 Lily의 위치와 배치 충돌 처리를 추가하고, 이후 Prologue Scene에서 Lily를 직접 Core에 동면시키는 인터랙티브 연출이 **현재 기획대로 완전히 동작하도록 검수 및 수정한다.**
+Tutorial Core와 In-Game Core 중 어떤 Prefab을 사용할 것인지는 **반드시 BlockData를 기준으로 결정한다.**
 
-Prologue Scene은 현재 일부 구현되어 있으므로, **처음부터 새로 만드는 것이 아니라 현재 구현을 먼저 확인하고 기존 구조를 최대한 재사용한다.**
+현재 BlockData에는 이미 다음과 같이 Core Prefab에 대한 참조가 각각 존재한다.
 
-특히 현재 Prologue Scene에서 **쓰러져 있는 Lily를 클릭해도 수거되지 않는 문제**가 있으므로 해당 문제를 반드시 확인하고 수정한다.
+* Tutorial용 Core Prefab 참조
+* In-Game용 Core Prefab 참조
 
----
-
-# 1. Tutorial Scene - Lily 위치 및 배치 충돌 처리
-
-Tutorial Scene에서 Lily가 특정 Grid Cell에 서 있도록 한다.
-
-### Lily 위치 설정
-
-Lily가 서 있을 위치는 `Tutorial Director`에서 에디터상으로 편집 가능하도록 한다.
-
-Core를 기준으로 Lily의 위치를 다음과 같이 설정할 수 있도록 한다.
-
-```text
-Lily Offset X
-Lily Offset Y
-```
-
-또는 적절한 Vector2/Vector2Int 직렬화 필드를 사용한다.
-
-즉,
-
-> Core 위치 + 지정된 X/Y Offset = Lily 위치
-
-가 되도록 한다.
-
-### 요구사항
-
-* `Tutorial Director`가 씬 내의 Lily 객체를 Serialized Reference로 참조한다.
-* Tutorial Scene 시작 시 `Tutorial Director`가 설정된 Offset을 기준으로 Lily의 위치를 결정한다.
-* Lily는 해당 Grid Cell에 정확하게 배치되어야 한다.
-* Lily의 위치를 Scene View에서 직접 수정하는 것이 아니라, **Tutorial Director의 Inspector에서 Core 기준 Offset을 수정하는 방식**을 기본으로 한다.
-* 기존 Grid/Block 위치 계산 방식을 우선 재사용한다.
-
----
-
-# 2. Tutorial Scene - Lily가 있는 칸에 블록 배치 차단
-
-플레이어가 Lily가 서 있는 Grid Cell에 블록을 배치하려고 하면 해당 배치를 차단한다.
-
-배치가 차단될 때 Lily가 다음 대사를 출력한다.
-
-> **"엥?! 여기엔 내가 서 있잖아…!"**
-
-동시에 Lily Animator에:
-
-```csharp
-Animator.SetTrigger("Happy");
-```
-
-를 실행한다.
-
-`Happy`라는 이름이 실제 상황과 완전히 일치하지는 않지만, 현재 애니메이션이 Lily의 점프/반응 연출로 사용하기 적합하므로 그대로 사용한다.
-
-### 중요
-
-이 상황에서는 **블록 배치가 실제로 이루어지면 안 된다.**
+이 구조를 앞으로 Core Prefab 선택의 **단일 Source of Truth**로 사용한다.
 
 즉:
 
-```text
-플레이어가 Lily가 있는 칸 선택
-↓
-배치 가능 여부 검사
-↓
-Lily가 해당 위치에 있음
-↓
-배치 차단
-↓
-Lily 대사 출력
-↓
-Happy Trigger
-```
+> `BlockData`
+> → 현재 필요한 Core 종류에 해당하는 Prefab 선택
+> → 해당 Prefab을 Instantiate
+> → Core Block GameObject로 사용
 
-가 되어야 한다.
+이 구조를 기본 원칙으로 한다.
 
-기존 Block Placement 시스템에 이미 배치 가능 여부를 검사하는 지점이 있다면 해당 로직을 우선 활용한다.
+## 5-2. Core 종류를 Sprite로 판단하지 않는다
 
-별도의 중복 배치 시스템을 만들지 않는다.
+다음과 같은 방식은 더 이상 사용하지 않는다.
 
----
+* Core가 Tutorial Core인지 Sprite를 보고 판단
+* Core가 In-Game Core인지 Sprite를 보고 판단
+* Core의 상태에 따라 Sprite를 직접 교체해서 Tutorial / In-Game Core를 표현
+* `CoreBlock_Legacy`를 기준으로 Core의 외형을 복구
+* 특정 상황에서 기존 Core Sprite를 직접 할당
 
-# 3. Prologue Scene - 현재 구현 검수
+**Core의 종류는 Sprite가 아니라 BlockData와 해당 Prefab에 의해 결정되어야 한다.**
 
-현재 Prologue Scene에는 아래 기능들이 일부 구현되어 있으므로 **먼저 현재 씬과 관련 스크립트를 확인한다.**
+따라서 Core에 대한 외형 변경이 필요한 경우에도 먼저:
 
-특히 다음 문제를 반드시 검증한다.
+> "현재 Core가 어떤 Prefab에서 생성되었는가?"
 
-### 현재 알려진 문제
+를 기준으로 처리해야 한다.
 
-> Prologue Scene에서 쓰러져 있는 Lily를 클릭해도 Lily가 수거되지 않는다.
+# 5-3. Tutorial → In-Game 전환 방식 변경
 
-Lily를 클릭하면 정상적으로:
+프롤로그에서 Tutorial Core에서 In-Game Core로 전환되는 연출은 **Sprite 교체가 아니라 GameObject / Prefab 자체를 교체하는 방식**으로 구현한다.
+굳이 Instantiate/Destroy 하지 않고 에디터 내에 미리 생성해둔 후 참조를 따라 SetActive(true)/(false) 하는 방식도 가능하다. (둘 중에 나은 쪽으로 구현할 것.)
 
-```text
-Lily 클릭
-↓
-Lily가 즉시 선택되어 들어올려짐
-```
+예:
 
-이 동작이 이루어져야 한다.
+> Tutorial Core Prefab
+> → 프롤로그 종료 시점
+> → In-Game Core Prefab으로 교체
+> → 이후 In-Game Core Prefab을 실제 게임의 Core로 사용
 
-마우스 좌클릭/우클릭 중 기존 프로젝트의 배치 선택 방식과 충돌하지 않는 적절한 입력을 사용한다.
+In-Game Core Prefab에는 Tutorial Core에는 존재하지 않는 자식 GameObject를 포함할 수 있다.
 
-**이미 구현된 Lily 수거/배치 로직이 있다면 원인을 분석하여 수정하고, 동일 기능을 새로 중복 구현하지 않는다.**
-
----
-
-# 4. Prologue Scene - 시작 상태
-
-튜토리얼의 기존 연출은 그대로 유지한다.
+예:
 
 ```text
-Tutorial 완료
-↓
-기존 Glitch / Error 연출
-↓
-기존 암전
+InGameCorePrefab
+├── Core Sprite / Visual
+├── Core 관련 VFX
+├── Lily Animation Object
+└── 기타 In-Game 전용 Components / Objects
 ```
 
-**여기까지의 기존 연출은 변경하지 않는다.**
+따라서 Tutorial Core와 In-Game Core는 단순히 Sprite만 다른 객체가 아니라 **GameObject Hierarchy 자체가 달라도 정상적인 구조**여야 한다.
 
-암전이 끝난 이후부터 Prologue Scene의 새로운 연출이 시작된다.
+프롤로그에서 Core 전환이 필요한 경우에도 기존 Core Object의 Sprite만 변경하지 않는다.
 
-### 화면 구성
+가능하다면 기존 Core의 상태를 적절히 보존한 뒤:
 
-암전이 끝나면 튜토리얼과 완전히 다른 분위기를 만든다.
+1. Tutorial Core Object 정리
+2. BlockData에서 In-Game Core Prefab 참조
+3. In-Game Core Prefab 생성
+4. 필요한 Runtime State를 새 Core에 전달
+5. 이후 In-Game Core를 사용
 
-* 튜토리얼 맵의 조명을 붉은 분위기로 변경
-* 기존 블록은 제거
-* Core Block 하나만 남김
-* Core 앞쪽, 즉 **Core의 아래쪽 Grid Cell**에 Lily 배치
-* Lily는 `Coma` 상태
+하는 방식으로 처리한다.
 
-Lily의 Animator에는:
+단, 현재 프로젝트에 이미 더 적절한 Block 생성 / 교체 시스템이 존재한다면 해당 시스템을 우선 재사용한다.
 
-```csharp
-Animator.SetTrigger("Coma");
-```
+# 5-4. `CoreBlock_Legacy` 사용 완전 제거
 
-를 사용한다.
+현재 `Sprites` 폴더에 있는:
 
----
+`CoreBlock_Legacy`
 
-# 5. Lily 동면 목표 안내
+는 더 이상 Core Block의 외형 표현에 사용하지 않는다.
 
-Prologue Scene이 화면에 나타난 직후 바로 문구를 출력하지 말고, 플레이어가 화면을 인식할 수 있도록 **짧은 지연 시간**을 둔다.
+이번 작업을 통해 프로젝트 전체에서 `CoreBlock_Legacy`를 사용하고 있는 코드를 먼저 검색한다.
 
-그 후 다음 문구를 표시한다.
+특히 다음과 같은 로직을 확인한다.
 
-> **"Lily를 Core에 동면시키면 살릴 수 있다."**
+* Core가 Damage를 받았을 때 Sprite 변경
+* Core가 Shockwave를 발사할 때 Sprite 변경
+* Core 상태 갱신 시 Sprite 변경
+* Core 생성 시 Legacy Sprite 할당
+* Core 초기화 시 Legacy Sprite 할당
+* Core 복구 / Reset 시 Legacy Sprite 할당
+* Tutorial → In-Game 전환 시 Legacy Sprite 할당
+* 기타 Core 관련 Visual 갱신 코드
 
-동시에 Lily가 위치한 Grid Cell에 기존 Highlight 시스템을 사용하여 강조한다.
+이러한 코드가 발견되면 **Sprite를 `CoreBlock_Legacy`로 변경하는 로직 자체를 제거하거나 새로운 Prefab 기반 구조에 맞게 수정한다.**
 
-목표는 플레이어가 별도의 설명 없이:
+목표는 다음과 같다.
 
-> **"Lily를 Core로 옮겨야 하는구나."**
+> **Core의 어떤 상태 변화가 발생하더라도 `CoreBlock_Legacy` Sprite가 다시 할당되지 않아야 한다.**
 
-라고 이해하는 것이다.
+# 5-5. 현재 발생하고 있는 Sprite 되돌아감 문제 수정
 
----
+현재 In-Game Core는 정상적으로 In-Game Core Prefab을 사용하더라도 특정 상황에서 기존 Sprite로 되돌아가는 문제가 있다.
 
-# 6. Prologue Scene - Lily 선택 / 배치
+대표적인 상황:
 
-플레이어가 쓰러져 있는 Lily를 클릭하면 Lily를 선택한다.
+* Core가 Damage를 받을 때
+* Core가 Shockwave를 발사할 때
+* Core의 상태가 갱신될 때
+* 기타 Core Visual Refresh가 발생할 때
 
-클릭 즉시 Lily를 들어올린 선택 상태로 전환하며 별도의 배치 목록 버튼을 거치지 않는다.
+이 과정에서 기존 `CoreBlock_Legacy` Sprite가 다시 할당되어 **In-Game Core Prefab에서 사용하던 외형이 사라지는 문제**가 발생한다.
 
-### Lily 배치 규칙
+이번 작업에서는 단순히 해당 한두 군데의 Sprite 할당만 제거하는 것이 아니라, **왜 Core 상태 갱신 과정에서 Legacy Sprite가 다시 적용되는지 전체 호출 흐름을 확인한다.**
 
-* Lily를 클릭하면 즉시 선택 상태가 된다.
-* 기존 블록을 배치하는 것과 유사한 방식으로 Lily를 배치할 수 있다.
-* Lily는 Core가 아닌 위치에도 배치할 수 있다.
-* 설치된 Lily는 다시 클릭하여 즉시 들어올릴 수 있다.
-* 설치된 Lily가 있는 Grid Cell에는 계속 Highlight를 표시한다.
-* Lily가 Core가 아닌 위치에 배치되었을 경우에도 Prologue는 완료되지 않는다.
-* Lily를 선택한 상태에서는 Core의 Grid Cell에 Highlight를 표시한다.
-
-가능하면 기존 Block Placement / Selection / Highlight 시스템을 최대한 재사용한다.
-
----
-
-# 7. Lily 선택 시 Core 강조
-
-Lily가 현재 선택된 상태라면 Core를 목표 위치로 명확하게 표시한다.
-
-기존 Highlight / Effect Cell 시스템을 사용한다.
+예를 들어:
 
 ```text
-Lily 선택
-↓
-Core Highlight 활성화
-↓
-플레이어가 Core 위치에 Lily 배치
+Core Damage
+→ Core Visual Refresh
+→ Sprite 변경
+→ CoreBlock_Legacy 할당
 ```
 
-가 자연스럽게 이어져야 한다.
+와 같은 기존 흐름이 있다면 해당 구조 자체를 확인하고 수정한다.
 
----
+Core의 상태가 변경되더라도:
 
-# 8. Lily를 Core에 배치했을 때의 동면 연출
+> **현재 사용 중인 Core Prefab의 Visual 구조를 유지해야 한다.**
 
-플레이어가 Lily를 Core 위치에 배치하면 일반적인 블록 배치 처리를 하지 않고 **Prologue 전용 동면 연출**을 실행한다.
+Damage나 Shockwave 등의 상태 변화는 해당 Prefab이 제공하는 Visual / Animation / VFX를 변경하거나 재생하는 방식으로 처리하고, **Core 종류 자체를 Sprite 교체로 변경하지 않는다.**
 
-### 연출 흐름
+# 5-6. Core Visual 갱신 시스템 점검
 
-```text
-Lily가 Core 위에 배치
-↓
-Lily가 Core 위에서 둥실둥실 떠오름
-↓
-Core Energy가 반응
-↓
-Energy Pulse
-↓
-Lily 주변에 빛/Particle 발생
-↓
-Lily와 Core가 강하게 빛남
-↓
-Lily가 Core의 에너지와 융합되는 듯한 연출
-↓
-융합 연출 완료
-↓
-기존 검정 Scene Transition
-↓
-GameScene 시작
-```
+현재 프로젝트에 Core의 상태에 따라 Sprite를 갱신하는 공통 로직이 있다면 해당 로직을 반드시 확인한다.
 
----
+특히 다음과 같은 형태의 코드가 있다면 주의한다.
 
-# 9. 기존 VFX 재사용
+* `spriteRenderer.sprite = ...`
+* `SetSprite(...)`
+* `SetCoreSprite(...)`
+* `CoreBlock_Legacy` 참조
+* Core 상태 변경 시 Sprite 재할당
+* Damage / Shockwave 이벤트에서 Core Sprite 갱신
 
-새로운 VFX를 무조건 제작하지 말고 현재 프로젝트의 기존 연출을 우선 재사용한다.
+이러한 로직이 **Core Prefab 기반 구조와 충돌한다면 전면적으로 수정한다.**
 
-다음 VFX를 검토한다.
+단순히 `CoreBlock_Legacy` 참조만 삭제하고 다른 곳에서 동일한 방식으로 Sprite를 강제로 교체하는 구조를 남겨서는 안 된다.
 
-* Core Energy 충격파
-* Merge Burst
-* Mask Flash
-* Energy Pulse
-* Light Particle
-* 기존 Particle System
+이번 작업의 목적은:
 
-필요하다면 기존 VFX의 Scale / Alpha / Position 등을 조합하여 Prologue 전용 연출을 만든다.
+> **Core의 외형을 Sprite 단위로 교체하는 기존 구조 자체에서 벗어나 Core Prefab을 기준으로 관리하는 것**
 
-연출의 핵심은:
+이다.
 
-> **Lily가 Core에 흡수되어 사라지는 것이 아니라, Core의 에너지와 융합되어 보호/동면되는 느낌**
+# 5-7. Runtime State 보존
 
-이 되도록 한다.
+Tutorial Core → In-Game Core 전환 시 Core의 Runtime State를 유지해야 하는 값이 있다면 기존 시스템을 확인하여 새 Prefab에 전달한다.
 
----
+예:
 
-# 10. Scene Transition
+* 현재 HP
+* 최대 HP
+* Core 관련 상태
+* Shockwave 관련 상태
+* 기타 Core Runtime State
 
-White Flash는 사용하지 않고 현재 프로젝트에서 실제 사용 중인 **기존 검정 Scene Transition Fade 시스템을 그대로 재사용한다.**
+단, 실제로 필요한 값만 기존 시스템을 확인하여 전달한다.
 
-### 전환 흐름
+새 Core Prefab으로 교체한다고 해서 ScriptableObject / BlockData에 Runtime State를 저장하는 구조로 변경하지 않는다.
 
-```text
-기존 Transition Image
-Color = Black
+**BlockData는 어떤 Prefab을 사용할지를 결정하는 Source of Truth이고, Runtime State는 Runtime 객체가 관리한다.**
 
-        ↓
+# 5-8. 기존 Block 시스템과의 일관성 유지
 
-Prologue 동면 연출 시작
+Core 역시 일반 Block과 마찬가지로 가능한 한 기존 Block 생성 / 배치 / 초기화 구조를 따른다.
 
-        ↓
+단, Core는 일반 Block과 달리 Tutorial / In-Game Prefab이 분리되어 있고 Prefab의 Hierarchy가 서로 다를 수 있으므로, 이를 고려하여 기존 시스템을 확장한다.
 
-GameScene Load
+새로운 Core 전용 시스템을 무조건 만드는 것이 아니라:
 
-        ↓
+1. 현재 Block 생성 구조 확인
+2. BlockData에서 Prefab을 선택하는 현재 방식 확인
+3. Core만 필요한 추가 분기 확인
+4. 기존 구조로 처리 가능한 경우 기존 구조 재사용
+5. 필요한 부분만 최소한으로 확장
 
-기존 Black Fade Out
-```
+하는 순서로 작업한다.
 
-중요한 것은 **Scene Transition 시스템 자체를 새로 만들지 않는 것**이다.
+# 5-9. 반드시 제거해야 하는 기존 구조
 
-Transition Image 색상은 변경하지 않는다.
+이번 작업을 통해 다음과 같은 구조가 남아 있지 않도록 한다.
 
-이후 다른 Scene Transition에 영향을 주면 안 된다.
+* `CoreBlock_Legacy`를 Core의 기본 Sprite로 사용하는 코드
+* Damage 발생 시 Legacy Sprite로 변경하는 코드
+* Shockwave 발사 시 Legacy Sprite로 변경하는 코드
+* Core 상태 변경 시 Legacy Sprite로 변경하는 코드
+* Tutorial / In-Game Core를 Sprite 차이로 구분하는 코드
+* Tutorial Core → In-Game Core 전환을 Sprite 교체로 처리하는 코드
+* 현재 Core Prefab의 외형을 무시하고 Sprite를 강제로 재할당하는 코드
 
----
+**다른 코드에서 이러한 구조가 발견되며 새로운 Core Prefab 구조와 충돌한다면 해당 규칙에 맞게 전면 수정한다.**
 
-# 11. 기존 구현 및 버그 검수
+단순히 이번에 발견된 한 군데의 버그만 수정하는 것이 아니라, **프로젝트 전체에서 Core를 Sprite 기반으로 교체하고 있는 기존 흐름을 찾아 새로운 Prefab 기반 구조로 통일하는 것**이 목표다.
 
-이번 작업은 단순 신규 기능 추가가 아니라 **현재 Prologue 구현의 검수 및 완성 작업**이다.
+# 6. 구현 전후 검증
 
-특히 아래 항목을 실제 플레이하면서 모두 확인한다.
+작업 전에 프로젝트 전체에서 다음을 검색한다.
+
+* `CoreBlock_Legacy`
+* Core Sprite 직접 할당
+* Core Sprite 변경 함수
+* Core Visual Refresh
+* Damage 시 Core Visual 변경
+* Shockwave 시 Core Visual 변경
+* Tutorial Core 관련 생성 / 교체 코드
+* In-Game Core 관련 생성 / 교체 코드
+
+작업 후에는 다음을 확인한다.
 
 ### Tutorial
 
-* [ ] Tutorial Director에서 Core 기준 Lily X/Y 위치를 설정할 수 있는가?
-* [ ] Tutorial 시작 시 Lily가 해당 위치로 이동하는가?
-* [ ] Tutorial Director가 씬의 Lily 객체를 정상적으로 참조하는가?
-* [ ] Lily가 있는 칸에 블록을 배치할 수 없는가?
-* [ ] 배치 시 Lily 대사가 출력되는가?
-* [ ] 배치 시 `Happy` Trigger가 실행되는가?
-* [ ] 실제 블록 배치가 차단되는가?
+* Tutorial에서는 Tutorial Core Prefab이 생성되는가?
+* Tutorial Core의 Hierarchy가 정상적으로 유지되는가?
+* Tutorial 진행 중 Sprite를 Legacy Sprite로 교체하는 코드가 실행되지 않는가?
 
-### Prologue
+### 프롤로그 → In-Game
 
-* [ ] 기존 Glitch / Error → 암전 연출이 그대로 유지되는가?
-* [ ] 암전 이후 붉고 절망적인 분위기가 조성되는가?
-* [ ] Core 하나만 남는가?
-* [ ] Lily가 Core 아래 칸에 배치되는가?
-* [ ] Lily가 `Coma` 상태인가?
-* [ ] 안내 문구가 정상적으로 출력되는가?
-* [ ] Lily 위치에 Highlight가 표시되는가?
-* [ ] Lily 클릭 시 정상적으로 수거되는가?
-* [ ] Lily 클릭 즉시 선택 상태가 되는가?
-* [ ] Lily를 다시 배치할 수 있는가?
-* [ ] 설치된 Lily를 다시 수거할 수 있는가?
-* [ ] 설치된 Lily 위치의 Highlight가 정상적으로 유지되는가?
-* [ ] Lily 선택 중 Core Highlight가 표시되는가?
-* [ ] Lily를 Core에 배치하면 동면 연출이 시작되는가?
-* [ ] Core Energy / Merge Burst 등의 기존 VFX가 자연스럽게 연계되는가?
-* [ ] GameScene으로 정상 전환되는가?
-* [ ] 기존 Black Scene Transition이 정상 동작하는가?
-* [ ] Prologue 종료 후 기존 게임 Scene Transition에 영향이 없는가?
+* Tutorial Core에서 In-Game Core Prefab으로 정상적으로 교체되는가?
+* Sprite만 변경되는 것이 아니라 실제 GameObject / Prefab 자체가 변경되는가?
+* In-Game Core Prefab의 자식 GameObject가 정상적으로 생성되는가?
+* Lily Animation Object 등 In-Game 전용 Child Object가 정상적으로 동작하는가?
 
----
+### In-Game
 
-# 12. 구현 원칙
+* Core가 Damage를 받아도 In-Game Core Prefab이 유지되는가?
+* Core가 Shockwave를 발사해도 In-Game Core Prefab이 유지되는가?
+* Core의 상태가 갱신되어도 Legacy Sprite로 되돌아가지 않는가?
+* `CoreBlock_Legacy`가 더 이상 사용되지 않는가?
+* 일반 Wave의 Core 동작에 문제가 없는가?
 
-* 구현 전에 반드시 현재 `Tutorial Director`, Lily 관련 스크립트, Block Placement, Highlight, Scene Transition, Prologue 관련 스크립트를 먼저 확인한다.
-* 현재 구현된 Prologue 기능을 함부로 삭제하고 처음부터 재작성하지 않는다.
-* 기존 시스템을 확장할 수 있다면 확장한다.
-* 동일한 기능을 수행하는 별도 시스템을 중복해서 만들지 않는다.
-* 기존 Animator의 `Happy`, `Idle`, `Coma` Trigger를 그대로 사용한다.
-* 기존 Highlight / Effect Cell 시스템을 우선 사용한다.
-* 기존 Scene Transition 시스템을 재사용한다.
-* 기존 VFX를 우선 재사용한다.
-* 기존 Localization 시스템을 사용한다.
-* Scene / Prefab / Inspector에 사용자가 설정해둔 값은 임의로 초기화하거나 덮어쓰지 않는다.
-* 코드 수정 전에 현재 Scene과 Prefab의 실제 상태를 확인한다.
-* 연출 관련 값은 필요한 범위에서 간단한 `[SerializeField]`로 Inspector에서 조정 가능하게 한다.
-* 연출에 DOTween이 적합하면 사용하되, 단순한 연출에 과도한 구조를 만들 필요는 없다.
-* 구현 완료 후 **Tutorial 시작 → Tutorial 완료 → Glitch → Prologue → Lily 선택 → Lily 배치 → Core 동면 → 기존 Transition → GameScene 진입**을 실제 플레이 흐름으로 검증한다.
+### 구조
 
-### 최종 목표
+* Core Prefab 선택이 BlockData를 Source of Truth로 사용하는가?
+* Runtime State가 BlockData에 저장되는 구조로 변하지 않았는가?
+* 기존 Block 시스템과 불필요하게 중복되는 새로운 Core 시스템이 생기지 않았는가?
+* 기존 에디터에서 설정된 Inspector 값과 오브젝트 배치를 임의로 덮어쓰지 않았는가?
 
-이번 작업의 최종 목표는 단순히 기능을 추가하는 것이 아니라,
+# 7. 최종 구현 원칙
 
-> **튜토리얼에서 Lily와 상호작용한다 → 튜토리얼 종료 후 Lily가 위기에 처한다 → 플레이어가 직접 Lily를 Core로 옮긴다 → Lily가 Core에 동면된다 → 기존 Transition → 실제 게임 시작**
+이번 Core 작업의 핵심은 **"Core Sprite를 올바르게 바꾸는 것"이 아니다.**
 
-이라는 하나의 자연스러운 플레이 흐름을 완성하는 것이다.
+Core의 종류와 구조를 다음과 같이 명확하게 분리하는 것이 목적이다.
+
+```text
+BlockData
+ ├─ Tutorial Core Prefab
+ └─ In-Game Core Prefab
+          ↓
+       Prefab 자체가
+       Core의 종류와 구조를 결정
+```
+
+따라서:
+
+> **Core의 종류 = BlockData가 선택한 Prefab**
+
+이며,
+
+> **Core의 외형 = 해당 Prefab의 Hierarchy / Components / Visual**
+
+이다.
+
+Core가 Damage를 받거나 Shockwave를 발사하는 등의 상태 변화가 발생하더라도 **현재 사용 중인 Prefab의 정체성을 Sprite 교체로 덮어쓰지 않는다.**
+
+이번 작업에서 기존 구조가 이 원칙과 충돌하는 부분이 발견된다면, 단순히 해당 버그만 우회하지 말고 **새로운 Prefab 기반 Core 구조에 맞도록 관련 로직을 수정한다.**
+
+단, 수정 범위는 현재 프로젝트 구조를 먼저 분석한 후 결정하며, 기존 시스템을 최대한 재사용하고 불필요한 신규 시스템과 중복 구조를 만들지 않는다.

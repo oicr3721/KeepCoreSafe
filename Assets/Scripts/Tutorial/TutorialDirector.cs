@@ -2,6 +2,7 @@ using System.Collections;
 using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Controllers;
 using KeepCoreSafe.Data;
+using KeepCoreSafe.Enemies;
 using KeepCoreSafe.Localization;
 using KeepCoreSafe.Managers;
 using KeepCoreSafe.Settings;
@@ -31,6 +32,13 @@ namespace KeepCoreSafe.Tutorial
         [SerializeField] private Vector2Int lilyOffsetFromCore = new(4, 0);
         [SerializeField, Min(0.1f)] private float happyReactionDuration = 0.9f;
 
+        [Header("Finale Presentation")]
+        [SerializeField] private SuicideEnemyData finaleSuicideEnemyData;
+        [SerializeField] private Vector2Int finaleSpawnOffsetFromCore = new(10, 0);
+        [SerializeField, Min(0.1f)] private float finaleCameraZoom = 3.2f;
+        [SerializeField, Min(0f)] private float finaleCameraFocusDuration = 0.65f;
+        [SerializeField, Min(0f)] private float finaleGlitchStartDelay = 1.3f;
+
         [Header("Tutorial Data")]
         [SerializeField] private BasicBlockData redBlock;
         [SerializeField] private BasicBlockData greenBlock;
@@ -52,6 +60,9 @@ namespace KeepCoreSafe.Tutorial
         private Coroutine lilyReactionRoutine;
         private Coroutine lilyPlacementWarningRoutine;
         private Vector2Int lilyCell;
+        private SuicideEnemy finaleSuicideEnemy;
+        private CoreBlock protectedCore;
+        private bool finalePresentationStarted;
 
         private static readonly int IdleTrigger = Animator.StringToHash("Idle");
         private static readonly int HappyTrigger = Animator.StringToHash("Happy");
@@ -147,10 +158,70 @@ namespace KeepCoreSafe.Tutorial
                 yield return SayKey("tutorial.clear.killall");
 
             PlayHappyReaction();
+            BeginFinalePresentation();
             dialogueRoot.SetActive(true);
             typewriter.Play(LocalizationManager.Get("tutorial.glitch.last"));
-            yield return new WaitForSecondsRealtime(0.65f);
+            yield return new WaitForSecondsRealtime(finaleGlitchStartDelay);
             glitchTransition.Play();
+        }
+
+        private void BeginFinalePresentation()
+        {
+            if (finalePresentationStarted)
+                return;
+
+            finalePresentationStarted = true;
+            GameCameraController.Instance?.PlayCinematicFocus(
+                lilyTransform,
+                finaleCameraZoom,
+                finaleCameraFocusDuration);
+
+            GridManager gridManager = GridManager.Instance;
+            if (gridManager == null
+                || gridManager.Grid?.Core is not CoreBlock core
+                || lilyTransform == null
+                || finaleSuicideEnemyData == null
+                || finaleSuicideEnemyData.Prefab == null)
+            {
+                Debug.LogError("Tutorial finale references are incomplete.", this);
+                return;
+            }
+
+            Vector2Int coreCell = gridManager.Grid.Core.GridPosition;
+            Vector3 spawnPosition = gridManager.GridToWorld(
+                coreCell + finaleSpawnOffsetFromCore);
+            GridPathfinder pathfinder = new(
+                gridManager,
+                finaleSuicideEnemyData,
+                GetInstanceID());
+            if (!pathfinder.TryBuildPath(
+                    spawnPosition,
+                    lilyCell,
+                    out GridPathfinder.PathResult path))
+            {
+                Debug.LogError("Tutorial finale enemy could not build a route to Lily.", this);
+                return;
+            }
+
+            Enemy spawnedEnemy = Instantiate(
+                finaleSuicideEnemyData.Prefab,
+                spawnPosition,
+                Quaternion.identity);
+            finaleSuicideEnemy = spawnedEnemy as SuicideEnemy;
+            if (finaleSuicideEnemy == null)
+            {
+                Destroy(spawnedEnemy.gameObject);
+                Debug.LogError("Tutorial finale data must reference a SuicideEnemy prefab.", this);
+                return;
+            }
+
+            finaleSuicideEnemy.name = finaleSuicideEnemyData.DisplayName;
+            finaleSuicideEnemy.Initialize(
+                finaleSuicideEnemyData,
+                path.Cells);
+            finaleSuicideEnemy.ConfigureScriptedDestination(lilyCell, lilyTransform);
+            protectedCore = core;
+            protectedCore.SetDestructionProtected(true);
         }
 
         private IEnumerator SayKey(string key)
@@ -362,6 +433,7 @@ namespace KeepCoreSafe.Tutorial
             GameManager.PhaseChanged -= HandlePhaseChanged;
             if (lilyReactionRoutine != null)
                 StopCoroutine(lilyReactionRoutine);
+            protectedCore?.SetDestructionProtected(false);
         }
     }
 }

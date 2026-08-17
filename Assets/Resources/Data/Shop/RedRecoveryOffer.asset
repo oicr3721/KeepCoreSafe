@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 018156c0d18255a4c8775e251678a8d1, type: 3}
   m_Name: RedRecoveryOffer
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.ColorRecoveryShopOfferData
-  displayImage: {fileID: -7008412969330441016, guid: 5d7a9309e5a0ae24c9728b799e1920e1, type: 3}
+  displayImage: {fileID: -5498705101797193710, guid: 95aca7d3280a48b45a63cb8c49e8940f, type: 3}
   displayName: shop.offer.recovery.red.name
   description: shop.offer.recovery.red.desc
   targetColor: {fileID: 11400000, guid: 7aa1a08fb4776804a96992504216d361, type: 2}

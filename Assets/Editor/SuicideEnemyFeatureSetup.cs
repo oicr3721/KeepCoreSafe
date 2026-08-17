@@ -6,6 +6,7 @@ using KeepCoreSafe.Data;
 using KeepCoreSafe.Enemies;
 using KeepCoreSafe.Managers;
 using KeepCoreSafe.Presentation;
+using KeepCoreSafe.Tutorial;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -255,16 +256,68 @@ namespace KeepCoreSafe.Editor
         {
             EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
             WaveManager wave = UnityEngine.Object.FindFirstObjectByType<WaveManager>(FindObjectsInactive.Include);
+            PlacementController placement =
+                UnityEngine.Object.FindFirstObjectByType<PlacementController>(FindObjectsInactive.Include);
             ExplosionParticleEffectManager manager =
                 UnityEngine.Object.FindFirstObjectByType<ExplosionParticleEffectManager>(
                     FindObjectsInactive.Include);
             SerializedObject managerSerialized = manager != null ? new SerializedObject(manager) : null;
-            if (wave == null || manager == null
+            SerializedObject placementSerialized = placement != null
+                ? new SerializedObject(placement)
+                : null;
+            if (wave == null || placement == null || manager == null
                 || managerSerialized.FindProperty("effectPrefab").objectReferenceValue == null
-                || managerSerialized.FindProperty("effectRoot").objectReferenceValue == null)
+                || managerSerialized.FindProperty("effectRoot").objectReferenceValue == null
+                || placementSerialized.FindProperty("invalidBlinkMinimumAlpha").floatValue <= 0f
+                || placementSerialized.FindProperty("invalidBlinkDuration").floatValue <= 0f)
             {
                 throw new InvalidOperationException($"{scenePath} has incomplete Suicide Enemy references.");
             }
+
+            if (scenePath.EndsWith("TutorialScene.unity", StringComparison.Ordinal))
+                ValidateTutorialFinale();
+        }
+
+        private static void ValidateTutorialFinale()
+        {
+            TutorialDirector director =
+                UnityEngine.Object.FindFirstObjectByType<TutorialDirector>(FindObjectsInactive.Include);
+            GridManager grid =
+                UnityEngine.Object.FindFirstObjectByType<GridManager>(FindObjectsInactive.Include);
+            if (director == null || grid == null)
+                throw new InvalidOperationException("Tutorial finale systems are missing.");
+
+            if (grid.Grid == null)
+            {
+                typeof(GridManager).GetMethod(
+                        "Awake",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?.Invoke(grid, null);
+            }
+
+            SerializedObject serialized = new(director);
+            SuicideEnemyData data = serialized.FindProperty("finaleSuicideEnemyData")
+                .objectReferenceValue as SuicideEnemyData;
+            Transform lily = serialized.FindProperty("lilyTransform")
+                .objectReferenceValue as Transform;
+            Vector2Int lilyOffset = serialized.FindProperty("lilyOffsetFromCore").vector2IntValue;
+            Vector2Int spawnOffset = serialized.FindProperty("finaleSpawnOffsetFromCore").vector2IntValue;
+            if (data?.Prefab is not SuicideEnemy || lily == null)
+                throw new InvalidOperationException("Tutorial finale enemy or Lily reference is invalid.");
+
+            Vector2Int coreCell = new(grid.Width / 2, grid.Height / 2);
+            Vector2Int lilyCell = coreCell + lilyOffset;
+            Vector3 spawnPosition = grid.GridToWorld(coreCell + spawnOffset);
+            GridPathfinder pathfinder = new(grid, data, 1);
+            if (!pathfinder.TryBuildPath(spawnPosition, lilyCell, out GridPathfinder.PathResult path)
+                || path.Cells.Count == 0
+                || path.Cells[path.Cells.Count - 1] != lilyCell)
+            {
+                throw new InvalidOperationException(
+                    "Tutorial finale enemy does not have an exact Grid route to Lily.");
+            }
+
+            Debug.Log("TUTORIAL_FINALE_VALIDATION_COMPLETE");
         }
 
         private static void CopyMatchingSerializedProperties(UnityEngine.Object source, UnityEngine.Object destination)

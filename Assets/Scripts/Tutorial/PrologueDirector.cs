@@ -1,6 +1,7 @@
 using System.Collections;
 using DG.Tweening;
 using KeepCoreSafe.Audio;
+using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Controllers;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Managers;
@@ -21,10 +22,9 @@ namespace KeepCoreSafe.Tutorial
 
         [Header("World")]
         [SerializeField] private GridManager gridManager;
-        [SerializeField] private Transform coreTransform;
-        [SerializeField] private SpriteRenderer coreRenderer;
+        [SerializeField] private Transform coreSpawnAnchor;
         [SerializeField] private CoreBlockData tutorialCoreData;
-        [SerializeField] private CoreBlockData completedCoreData;
+        [SerializeField] private CoreBlockData inGameCoreData;
         [SerializeField] private Transform lilyTransform;
         [SerializeField] private SpriteRenderer lilyRenderer;
         [SerializeField] private Animator lilyAnimator;
@@ -67,6 +67,7 @@ namespace KeepCoreSafe.Tutorial
         private bool lilySelected;
         private bool fusionStarted;
         private Tween atmosphereTween;
+        private CoreBlock activeCore;
 
         private void Start()
         {
@@ -75,11 +76,20 @@ namespace KeepCoreSafe.Tutorial
 
             coreCell = new Vector2Int(gridManager.Width / 2, gridManager.Height / 2);
             lilyCell = coreCell + Vector2Int.down;
-            coreTransform.position = gridManager.GridToWorld(coreCell);
+            Vector3 corePosition = gridManager.GridToWorld(coreCell);
+            activeCore = CreateCore(tutorialCoreData, corePosition);
+            if (activeCore == null)
+                return;
+
+            if (coreSpawnAnchor != null)
+            {
+                Destroy(coreSpawnAnchor.gameObject);
+                coreSpawnAnchor = null;
+            }
+
             lilyTransform.position = gridManager.GridToWorld(lilyCell);
             cameraController.SetDefaultViewCenter(
-                coreTransform.position + (Vector3)cameraOffset);
-            coreRenderer.sprite = tutorialCoreData.Sprite;
+                activeCore.transform.position + (Vector3)cameraOffset);
             lilyAnimator.ResetTrigger(IdleTrigger);
             lilyAnimator.SetTrigger(ComaTrigger);
             placementPreview.gameObject.SetActive(false);
@@ -180,24 +190,25 @@ namespace KeepCoreSafe.Tutorial
             cameraController.ReturnToDefaultView(cameraFocusDuration);
             AudioManager.Play(fusionSound);
 
-            Vector3 corePosition = coreTransform.position;
+            Vector3 corePosition = activeCore.transform.position;
             Vector3 liftedPosition = corePosition + Vector3.up * 0.55f;
             SpawnPulse(corePosition, Mathf.Max(0.1f, lilyLiftDuration), 3, 0.1f, 1.45f, 1.3f);
             yield return DOTween.Sequence()
                 .SetUpdate(true)
                 .Append(lilyTransform.DOMove(liftedPosition, lilyLiftDuration).SetEase(Ease.OutCubic))
                 .Join(lilyTransform.DOScale(1.18f, lilyLiftDuration).SetEase(Ease.OutBack))
-                .Join(coreTransform.DOScale(1.08f, lilyLiftDuration).SetEase(Ease.InOutSine))
+                .Join(activeCore.transform.DOScale(1.08f, lilyLiftDuration).SetEase(Ease.InOutSine))
                 .WaitForCompletion();
 
             SpawnPulse(liftedPosition, fusionHoldDuration + 0.2f, 2, 0.08f, 1.1f, 1.65f);
             yield return new WaitForSecondsRealtime(fusionHoldDuration);
 
-            coreRenderer.sprite = completedCoreData.Sprite;
+            if (!ReplaceCore(inGameCoreData))
+                yield break;
+
             PlayBurst(corePosition);
             yield return lilyRenderer.DOFade(0f, 0.18f).SetUpdate(true).WaitForCompletion();
             lilyRenderer.enabled = false;
-            coreTransform.localScale = Vector3.one;
 
             yield return threatOverlay.RejectAndClear(threatRejectionDuration);
             yield return new WaitForSecondsRealtime(postThreatSilence);
@@ -207,6 +218,40 @@ namespace KeepCoreSafe.Tutorial
                 SceneLoader.Load(SceneType.Game);
             else
                 SceneManager.LoadScene("GameScene");
+        }
+
+        private CoreBlock CreateCore(CoreBlockData data, Vector3 position)
+        {
+            if (data == null || data.Prefab is not CoreBlock prefab)
+            {
+                Debug.LogError($"{data?.name ?? "CoreData"} must reference a CoreBlock prefab.", data);
+                return null;
+            }
+
+            CoreBlock core = Instantiate(prefab, position, Quaternion.identity);
+            core.name = data.DisplayName;
+            core.Initialize(data, false);
+            return core;
+        }
+
+        private bool ReplaceCore(CoreBlockData replacementData)
+        {
+            if (activeCore == null)
+                return false;
+
+            Vector3 position = activeCore.transform.position;
+            float healthRatio = activeCore.HP.MaxValue > 0f
+                ? activeCore.HP.CurrentValue / activeCore.HP.MaxValue
+                : 1f;
+            CoreBlock replacement = CreateCore(replacementData, position);
+            if (replacement == null)
+                return false;
+
+            replacement.HP.SetValue(replacement.HP.MaxValue * Mathf.Clamp01(healthRatio));
+            activeCore.transform.DOKill(false);
+            Destroy(activeCore.gameObject);
+            activeCore = replacement;
+            return true;
         }
 
         private void PlayBurst(Vector3 position)
@@ -262,10 +307,9 @@ namespace KeepCoreSafe.Tutorial
         private bool ValidateReferences()
         {
             bool valid = gridManager != null
-                         && coreTransform != null
-                         && coreRenderer != null
+                         && coreSpawnAnchor != null
                          && tutorialCoreData != null
-                         && completedCoreData != null
+                         && inGameCoreData != null
                          && lilyTransform != null
                          && lilyRenderer != null
                          && lilyAnimator != null
@@ -285,8 +329,8 @@ namespace KeepCoreSafe.Tutorial
             transform.DOKill(false);
             if (lilyTransform != null)
                 lilyTransform.DOKill(false);
-            if (coreTransform != null)
-                coreTransform.DOKill(false);
+            if (activeCore != null)
+                activeCore.transform.DOKill(false);
             objectiveGroup?.DOKill(false);
         }
     }

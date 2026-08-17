@@ -1560,8 +1560,13 @@ MonoBehaviour:
   colorblindPrompt: {fileID: 1864372733}
   lilyTransform: {fileID: 1032533394}
   lilyAnimator: {fileID: 1032533395}
-  lilyOffsetFromCore: {x: 4, y: 0}
+  lilyOffsetFromCore: {x: 2, y: -2}
   happyReactionDuration: 0.9
+  finaleSuicideEnemyData: {fileID: 11400000, guid: 0074243abb8c8ff4b8206b9d8aca6e2d, type: 2}
+  finaleSpawnOffsetFromCore: {x: 11, y: -2}
+  finaleCameraZoom: 3.2
+  finaleCameraFocusDuration: 0.55
+  finaleGlitchStartDelay: 1.3
   redBlock: {fileID: 11400000, guid: a6b090c0674199442b92fc85889c56a9, type: 2}
   greenBlock: {fileID: 11400000, guid: e33b7c340d8e1034eaf04a12aec08be7, type: 2}
 --- !u!1001 &219584703
@@ -2563,6 +2568,8 @@ MonoBehaviour:
   previewRenderer: {fileID: 2066270419}
   normalColor: {r: 1, g: 1, b: 1, a: 0.39215687}
   invalidColor: {r: 0.6603774, g: 0.09033466, b: 0.09033466, a: 0.39215687}
+  invalidBlinkMinimumAlpha: 0.12
+  invalidBlinkDuration: 0.6
   effectVisualizer: {fileID: 109184918}
   supplyController: {fileID: 1404725722}
   waveManager: {fileID: 1343450261}
@@ -4512,7 +4519,7 @@ Transform:
   m_GameObject: {fileID: 1032533392}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.5, y: 0.3, z: 0}
+  m_LocalPosition: {x: 2, y: -2, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -7893,8 +7900,8 @@ MonoBehaviour:
   rerollStagger: 0.025
   confirmFeedbackDelay: 0.11
   dockDuration: 0.34
-  expandedBackgroundColor: {r: 0.009745464, g: 0.028301895, b: 0.01593094, a: 0.5882353}
-  dockedBackgroundColor: {r: 0.007843138, g: 0.019607844, b: 0.011764706, a: 0.94}
+  expandedBackgroundColor: {r: 0.009745464, g: 0.028301895, b: 0.01593094, a: 0.19607843}
+  dockedBackgroundColor: {r: 0.007564964, g: 0.01886791, b: 0.011332612, a: 0.9019608}
 --- !u!225 &1585977512
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -8455,8 +8462,8 @@ MonoBehaviour:
   redFlash: {fileID: 701260552}
   noiseLabel: {fileID: 1403630159}
   blackout: {fileID: 440145001}
-  duration: 1
-  blackoutDuration: 2
+  duration: 1.25
+  blackoutDuration: 1.8
   glitchSound:
     clips:
     - {fileID: 8300000, guid: 1625cb5b458d7d14b9688f357593a1f8, type: 3}
@@ -8667,7 +8674,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.011569945, g: 0.03773582, b: 0.022821274, a: 0.5882353}
+  m_Color: {r: 0.011569945, g: 0.03773582, b: 0.022821274, a: 0.19607843}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

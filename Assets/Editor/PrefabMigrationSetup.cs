@@ -36,11 +36,14 @@ namespace KeepCoreSafe.Editor
                 "Assets/Prefabs/Blocks/AttackBlock.prefab",
                 healthBarPrefab,
                 lineMaterial);
-            CoreBlock corePrefab = CreateBlockPrefab<CoreBlock>(
-                "CoreBlock",
-                "Assets/Prefabs/Blocks/CoreBlock.prefab",
-                healthBarPrefab,
-                lineMaterial);
+            CoreBlock corePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                    "Assets/Prefabs/Blocks/CoreBlock.prefab")
+                ?.GetComponent<CoreBlock>();
+            if (corePrefab == null)
+            {
+                throw new System.InvalidOperationException(
+                    "The authored In-Game CoreBlock prefab is missing. Migration will not recreate it.");
+            }
             HealerBlock healerPrefab = CreateBlockPrefab<HealerBlock>(
                 "HealerBlock",
                 "Assets/Prefabs/Blocks/HealerBlock.prefab",

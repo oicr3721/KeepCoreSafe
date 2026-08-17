@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.UI;
 using UnityEditor;
@@ -24,6 +25,14 @@ namespace KeepCoreSafe.Editor
                 SerializedObject serialized = new(blockData);
                 SerializedProperty baseSprite = serialized.FindProperty("sprite");
                 SerializedProperty stages = serialized.FindProperty("healthStageSprites");
+                if (blockData is CoreBlockData)
+                {
+                    stages.arraySize = 0;
+                    serialized.ApplyModifiedPropertiesWithoutUndo();
+                    EditorUtility.SetDirty(blockData);
+                    continue;
+                }
+
                 stages.arraySize = HealthStageCount;
 
                 if (blockData is BasicBlockData || blockData is WallBlockData)
@@ -60,6 +69,17 @@ namespace KeepCoreSafe.Editor
                 SerializedObject serialized = new(blockData);
                 SerializedProperty baseSprite = serialized.FindProperty("sprite");
                 SerializedProperty stages = serialized.FindProperty("healthStageSprites");
+                if (blockData is CoreBlockData)
+                {
+                    if (stages.arraySize != 0 || blockData.Prefab is not CoreBlock)
+                    {
+                        throw new InvalidOperationException(
+                            $"{blockData.name} must use its CoreBlock prefab visual without health-stage Sprites.");
+                    }
+
+                    continue;
+                }
+
                 if (stages.arraySize != HealthStageCount)
                     throw new InvalidOperationException($"{blockData.name} must define five health-stage Sprites.");
 

@@ -25,7 +25,10 @@ public sealed class PlacementController : MonoBehaviour
     [Header("Preview")]
     [SerializeField] private SpriteRenderer previewRenderer;
     [SerializeField] private Color normalColor = new(1f, 1f, 1f, 0.55f);
-    [SerializeField] private Color invalidColor = new(1f, 0.2f, 0.2f, 0.55f);
+    [SerializeField, HideInInspector] private Color invalidColor = new(1f, 0.2f, 0.2f, 0.55f);
+    [SerializeField, Range(0f, 1f)] private float invalidBlinkMinimumAlpha = 0.12f;
+    [SerializeField, Min(0.05f), Tooltip("Seconds for one full invalid-preview alpha pulse.")]
+    private float invalidBlinkDuration = 0.6f;
     [SerializeField] private PlacementVisualizer effectVisualizer;
 
     [Header("Granted Blocks")]
@@ -51,6 +54,8 @@ public sealed class PlacementController : MonoBehaviour
     private int selectedSupplyIndex = -1;
     private BlockMatchResolver matchResolver;
     private bool placementInputEnabled;
+    private bool previewWasInvalid;
+    private float invalidBlinkStartTime;
 
     public bool PlacementInputEnabled => placementInputEnabled;
     public int SelectedSupplyIndex => selectedSupplyIndex;
@@ -354,9 +359,15 @@ public sealed class PlacementController : MonoBehaviour
         Vector3 worldPosition = GridManager.Instance.GridToWorld(position);
         previewRenderer.gameObject.SetActive(true);
         bool canPlace = CanPlaceSelectedBlock(position);
-        previewRenderer.color = canPlace
-            ? WithPreviewAlpha(selectedGrant.Data.VisualColor, normalColor.a)
-            : invalidColor;
+        if (!canPlace && !previewWasInvalid)
+            invalidBlinkStartTime = Time.unscaledTime;
+        previewWasInvalid = !canPlace;
+        float previewAlpha = canPlace
+            ? normalColor.a
+            : GetInvalidPreviewAlpha();
+        previewRenderer.color = WithPreviewAlpha(
+            selectedGrant.Data.VisualColor,
+            previewAlpha);
         previewRenderer.transform.position = worldPosition;
         if (canPlace)
         {
@@ -431,6 +442,7 @@ public sealed class PlacementController : MonoBehaviour
 
     private void HidePreview()
     {
+        previewWasInvalid = false;
         if (previewRenderer != null)
             previewRenderer.gameObject.SetActive(false);
         effectVisualizer?.HidePlacement();
@@ -532,5 +544,15 @@ public sealed class PlacementController : MonoBehaviour
     {
         color.a = alpha;
         return color;
+    }
+
+    private float GetInvalidPreviewAlpha()
+    {
+        float maximumAlpha = normalColor.a;
+        float minimumAlpha = Mathf.Min(invalidBlinkMinimumAlpha, maximumAlpha);
+        float duration = Mathf.Max(0.05f, invalidBlinkDuration);
+        float elapsed = Mathf.Max(0f, Time.unscaledTime - invalidBlinkStartTime);
+        float pingPong = Mathf.PingPong(elapsed * 2f / duration, 1f);
+        return Mathf.Lerp(maximumAlpha, minimumAlpha, pingPong);
     }
 }

@@ -1,6 +1,9 @@
 #if UNITY_EDITOR
 using System;
+using System.Linq;
 using System.Reflection;
+using KeepCoreSafe.Blocks;
+using KeepCoreSafe.Data;
 using KeepCoreSafe.Controllers;
 using KeepCoreSafe.Managers;
 using KeepCoreSafe.Tutorial;
@@ -20,6 +23,7 @@ namespace KeepCoreSafe.Editor
         private static double startedAt;
         private static bool placementTriggered;
         private static bool prologueRequested;
+        private static bool prefabSwapObserved;
         private static string failure;
 
         static InteractiveProloguePlayModeValidation()
@@ -36,6 +40,7 @@ namespace KeepCoreSafe.Editor
             placementTriggered = false;
             prologueRequested = false;
             failure = null;
+            prefabSwapObserved = false;
             SessionState.SetBool(RunningKey, true);
             SessionState.SetBool(PlacementKey, false);
             SessionState.SetBool(PrologueRequestedKey, false);
@@ -49,6 +54,7 @@ namespace KeepCoreSafe.Editor
             placementTriggered = SessionState.GetBool(PlacementKey, false);
             prologueRequested = SessionState.GetBool(PrologueRequestedKey, false);
             failure = null;
+            prefabSwapObserved = false;
             HookCallbacks();
         }
 
@@ -97,11 +103,13 @@ namespace KeepCoreSafe.Editor
                 FieldInfo inputEnabled = typeof(PrologueDirector).GetField("inputEnabled", flags);
                 FieldInfo lilySelected = typeof(PrologueDirector).GetField("lilySelected", flags);
                 FieldInfo lilyPlaced = typeof(PrologueDirector).GetField("lilyPlaced", flags);
-                FieldInfo coreTransform = typeof(PrologueDirector).GetField("coreTransform", flags);
+                FieldInfo activeCore = typeof(PrologueDirector).GetField("activeCore", flags);
+                FieldInfo tutorialCoreData = typeof(PrologueDirector).GetField("tutorialCoreData", flags);
                 FieldInfo cameraController = typeof(PrologueDirector).GetField("cameraController", flags);
                 FieldInfo cameraOffset = typeof(PrologueDirector).GetField("cameraOffset", flags);
                 if (select == null || place == null || inputEnabled == null
-                    || lilySelected == null || lilyPlaced == null || coreTransform == null
+                    || lilySelected == null || lilyPlaced == null || activeCore == null
+                    || tutorialCoreData == null
                     || cameraController == null || cameraOffset == null)
                 {
                     Finish(false, "Prologue interaction methods are unavailable.");
@@ -111,12 +119,21 @@ namespace KeepCoreSafe.Editor
                 if (!(bool)inputEnabled.GetValue(director))
                     return;
 
-                Transform core = coreTransform.GetValue(director) as Transform;
+                CoreBlock coreBlock = activeCore.GetValue(director) as CoreBlock;
+                CoreBlockData tutorialData = tutorialCoreData.GetValue(director) as CoreBlockData;
+                Transform core = coreBlock != null ? coreBlock.transform : null;
                 GameCameraController camera = cameraController.GetValue(director) as GameCameraController;
                 Vector2 offset = (Vector2)cameraOffset.GetValue(director);
+                if (coreBlock == null
+                    || coreBlock.Data != tutorialData
+                    || camera == null)
+                {
+                    Finish(false, "Prologue did not instantiate its Tutorial Core prefab.");
+                    return;
+                }
+
                 Vector3 expectedCameraCenter = core.position + (Vector3)offset;
-                if (camera == null
-                    || Vector2.Distance(camera.transform.position, expectedCameraCenter) > 0.01f)
+                if (Vector2.Distance(camera.transform.position, expectedCameraCenter) > 0.01f)
                 {
                     Finish(false, "Prologue camera is not centered on Core plus its configured offset.");
                     return;
@@ -142,8 +159,34 @@ namespace KeepCoreSafe.Editor
                 SessionState.SetBool(PlacementKey, true);
             }
 
+            if (placementTriggered && activeScene == "PrologueScene" && !prefabSwapObserved)
+            {
+                PrologueDirector director = UnityEngine.Object.FindFirstObjectByType<PrologueDirector>();
+                BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                CoreBlock currentCore = typeof(PrologueDirector).GetField("activeCore", flags)
+                    ?.GetValue(director) as CoreBlock;
+                CoreBlockData inGameData = typeof(PrologueDirector).GetField("inGameCoreData", flags)
+                    ?.GetValue(director) as CoreBlockData;
+                if (currentCore != null && currentCore.Data == inGameData)
+                {
+                    if (!currentCore.GetComponentsInChildren<Animator>(true).Any())
+                    {
+                        Finish(false, "In-Game Core prefab hierarchy lost its Lily Animator child.");
+                        return;
+                    }
+
+                    prefabSwapObserved = true;
+                }
+            }
+
             if (SceneManager.GetActiveScene().name == "GameScene")
             {
+                if (!prefabSwapObserved)
+                {
+                    Finish(false, "Prologue never replaced the Tutorial Core with the In-Game Core prefab.");
+                    return;
+                }
+
                 SceneTransition transition = SceneTransition.Instance;
                 if (transition == null)
                 {

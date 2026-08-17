@@ -55,10 +55,13 @@ components adds only a few Transforms; it does not add MonoBehaviours or Update 
   sprites, optional `BlockColorData`, prefab, and filtering tags.
 - `BasicBlockData`: uses the shared color identity for matching and adds passive Wall behavior.
 - `AttackBlockData`, `HealerBlockData`, `SupportBlockData`: completed skill configuration.
-- `CoreBlockData`: Core identity.
+- `CoreBlockData`: Core identity and the sole reference to that Core variant's authored prefab.
 
 `BlockData.GetHealthSprite` resolves the configured highest-to-lowest health sprite array
 using equal ratio bands and falls back to the base sprite for an empty or missing entry.
+`CoreBlock` deliberately overrides the sprite-refresh hook: HP changes still update its shared
+health bar, but never replace the SpriteRenderer authored in the selected Core prefab. Tutorial and
+In-Game CoreData therefore keep empty health-stage arrays and reference distinct Core prefabs.
 
 ## Match data
 
@@ -314,6 +317,9 @@ New upgrade behavior should be a new `ShopOfferData` subtype.
   the shared tooltip for placed Blocks.
 - `PlacementVisualizer` owns independent Placement and Hover requests. A renderable
   Placement request has priority; otherwise a renderable Hover request is shown.
+- `PlacementController` preserves the selected BlockData RGB for both valid and invalid previews.
+  Invalid Cells use an unscaled-time alpha pulse with serialized minimum alpha and cycle duration;
+  hiding the preview or returning to a valid Cell resets that pulse immediately.
 - Tooltip requests are owner-scoped so Supply and World systems cannot hide each other.
 - Reusable visual structure is scene/prefab-authored; runtime code supplies state and animation.
 
@@ -336,6 +342,14 @@ New upgrade behavior should be a new `ShopOfferData` subtype.
 - `TutorialDirector` drives Lily's existing `Idle` and `Happy` Animator triggers. Successful
   Attack/Healer creation and the completed defense produce a short Happy reaction before returning
   to Idle; the existing glitch and blackout still own the transition into PrologueScene.
+- The final dialogue also starts a non-blocking finale presentation. `TutorialDirector` injects
+  Lily's Grid Cell into the existing `SuicideEnemyData.Prefab`, requests an exact-cell route from
+  `GridPathfinder`, enables that Enemy's normal simulation outside Combat, and asks the shared
+  camera controller to focus on Lily. Warning, audio, explosion VFX, and Block damage remain owned
+  by `SuicideEnemy`; the Director does not duplicate them or wait for their completion.
+- `CoreBlock.SetDestructionProtected` is enabled only for that finale and clamps otherwise-lethal
+  damage to one remaining HP. Normal Tutorial combat and every main-game wave keep the existing
+  Core destruction and Game Over path unchanged.
 - `TutorialDirector.lilyOffsetFromCore` positions its explicit Lily Transform reference through
   `GridManager.GridToWorld`. `PlacementController.BlockPlacementValidationRequested` is the shared,
   side-effect-free extension point used by both placement preview and commit; Tutorial rejects the
@@ -345,7 +359,11 @@ New upgrade behavior should be a new `ShopOfferData` subtype.
 
 - `PrologueDirector` owns the one-scene state machine: recognition delay, direct left-click Lily
   selection, Grid placement preview, Core destination detection, input lock, fusion sequence,
-  Tutorial-Core to completed-Core sprite swap, and the normal black GameScene transition.
+  Tutorial-Core prefab to In-Game-Core prefab replacement, and the normal black GameScene transition.
+- The inactive `Prologue Core` object is only a visual-free spawn anchor. At runtime the Director
+  instantiates `tutorialCoreData.Prefab` through normal Block initialization without a gameplay HP bar.
+  Fusion instantiates `inGameCoreData.Prefab`, transfers the current HP ratio, then destroys the old
+  Tutorial Core object. Prefab-authored children such as the In-Game Lily Animator remain intact.
 - It reuses `GridManager` coordinates, `TutorialGridHighlight`, `GameCameraController`,
   `CoreEnergyPulseView`, `ShockwaveRingView`, and the Merge Burst particle prefab. Lily is a visual
   interaction object rather than a combat `Block`, preventing Prologue-only behavior from entering
@@ -360,8 +378,8 @@ New upgrade behavior should be a new `ShopOfferData` subtype.
   font size, jitter, duration, and flicker; the fusion sequence rejects and clears all labels together
   without creating UI objects.
 - `InteractivePrologueSetup` performs an idempotent scene migration: it preserves the existing scene,
-  disables only the obsolete paragraph visuals, wires explicit Inspector references, and validates
-  both the Prologue and Tutorial Lily Transform/Animator connections.
+  disables only the obsolete paragraph visuals, keeps the Core anchor visual-free, wires explicit
+  Inspector references, and validates both distinct Core prefabs plus the Lily connections.
 - Prologue uses the same unmodified black `SceneTransition.Load` flow as every other scene. The old
   Lily inventory button and Prologue White Flash scene objects remain inactive for safe UI preservation.
 

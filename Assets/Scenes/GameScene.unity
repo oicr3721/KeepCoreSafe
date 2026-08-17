@@ -1956,6 +1956,8 @@ MonoBehaviour:
   previewRenderer: {fileID: 2066270419}
   normalColor: {r: 1, g: 1, b: 1, a: 0.39215687}
   invalidColor: {r: 0.6603774, g: 0.09033466, b: 0.09033466, a: 0.39215687}
+  invalidBlinkMinimumAlpha: 0.12
+  invalidBlinkDuration: 0.6
   effectVisualizer: {fileID: 109184918}
   supplyController: {fileID: 1052357098}
   waveManager: {fileID: 285405788}

@@ -221,14 +221,27 @@ attempting to select Green opens repeatable red/green accessibility guidance ins
 of allowing a choice that can block progression. The prompt records Colorblind Mode unlock and
 enabled state for a future visual-correction feature; it does not currently recolor gameplay.
 
+An invalid placement preview keeps the selected Block's original RGB identity and pulses only its
+alpha between the normal preview opacity and an Inspector-tuned minimum. Returning to a valid Cell
+immediately restores the normal preview opacity.
+
+When Lily starts her final Tutorial line, the camera smoothly focuses and zooms on her while the
+normal Suicide Enemy prefab enters from a Core-relative off-grid position. It follows the shared
+Grid path to Lily's Cell, then uses its normal accelerating warning, sound, explosion particle, and
+3x3 Block damage. The Tutorial protects only the Core's final HP during this finale so the real
+damage cannot cause Game Over. The existing glitch/blackout timing remains the sole trigger for
+loading Prologue; it never waits for the enemy or explosion.
+
 After the existing Tutorial glitch and blackout, the Prologue becomes a short interactive scene
 rather than a paragraph sequence. A comatose Lily appears below the Tutorial Core on a dark red
 Grid. Left-clicking a placed Lily immediately lifts and selects her; clicking another Grid cell places
 her there, and a placed Lily can be lifted again. Pickup and placement each play their own sound.
 The Core is highlighted while Lily is selected, and the initial camera frames the Core with an
 Inspector-configurable offset.
-Placing her on the Core locks input and plays a focused lift, pulse, burst, Core sprite replacement,
-threat rejection flicker, and the normal black transition into GameScene. Raw English, Korean, Japanese,
+Placing her on the Core locks input and plays a focused lift, pulse, burst, a full Tutorial-to-In-Game
+Core prefab replacement, threat rejection flicker, and the normal black transition into GameScene.
+The In-Game prefab owns its Lily animation child and remains visually intact through later damage and
+Shockwave refreshes. Raw English, Korean, Japanese,
 binary, hexadecimal, shell-like, and error strings cover the full screen to imply noisy machine
 directives rather than a clean localized UI, without adding fixed lore.
 

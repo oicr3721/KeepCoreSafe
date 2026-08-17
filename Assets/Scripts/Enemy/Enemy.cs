@@ -34,6 +34,7 @@ namespace KeepCoreSafe.Enemies
 
         private bool isDead;
         private bool isShockwaveEliminationPlaying;
+        private bool simulateOutsideCombat;
         private bool isMovingToCell;
         private Vector2Int movementDestination;
         private Vector2 personalCellOffset;
@@ -81,7 +82,8 @@ namespace KeepCoreSafe.Enemies
 
         protected virtual void Update()
         {
-            if (!isShockwaveEliminationPlaying && GameManager.Phase == GamePhase.Combat)
+            if (!isShockwaveEliminationPlaying
+                && (GameManager.Phase == GamePhase.Combat || simulateOutsideCombat))
             {
                 OnCombatUpdate(Time.deltaTime);
             }
@@ -104,6 +106,11 @@ namespace KeepCoreSafe.Enemies
 
         protected virtual void OnCombatUpdate(float deltaTime) { }
         protected virtual void OnDamaged(int amount) { }
+
+        public void SetSimulateOutsideCombat(bool enabled)
+        {
+            simulateOutsideCombat = enabled;
+        }
 
         protected bool ContinueCellMovement(float deltaTime)
         {
@@ -177,6 +184,12 @@ namespace KeepCoreSafe.Enemies
                 ? target.GridPosition - currentCell
                 : target.transform.position - transform.position;
             UpdateMovementPresentation(ToCardinalAnimationMove(direction));
+        }
+
+        protected void FacePosition(Vector3 targetPosition)
+        {
+            UpdateMovementPresentation(ToCardinalAnimationMove(
+                targetPosition - transform.position));
         }
 
         protected void Die(bool awardEnergy = true)

@@ -36,6 +36,9 @@ namespace KeepCoreSafe.Enemies
         private float pulsePhase;
         private Vector3 warningBaseScale = Vector3.one;
         private Color baseColor = Color.white;
+        private bool usesScriptedDestination;
+        private Vector2Int scriptedDestination;
+        private Transform scriptedPresentationTarget;
 
         private SuicideEnemyData SuicideData => Data as SuicideEnemyData;
 
@@ -44,7 +47,9 @@ namespace KeepCoreSafe.Enemies
             base.Start();
             pathCells = InitialPathCells;
             hasPlan = pathCells.Count > 0;
-            routeGoal = InitialRouteTarget != null ? InitialRouteTarget : GridManager.Grid.Core;
+            routeGoal = usesScriptedDestination
+                ? null
+                : InitialRouteTarget != null ? InitialRouteTarget : GridManager.Grid.Core;
             if (routeGoal is SupplyBlock)
                 routeGoal.Died += HandleRouteGoalDied;
             if (warningRenderer != null)
@@ -58,6 +63,16 @@ namespace KeepCoreSafe.Enemies
                 Debug.LogError($"{name} requires SuicideEnemyData.", this);
                 enabled = false;
             }
+        }
+
+        public void ConfigureScriptedDestination(
+            Vector2Int destination,
+            Transform presentationTarget)
+        {
+            usesScriptedDestination = true;
+            scriptedDestination = destination;
+            scriptedPresentationTarget = presentationTarget;
+            SetSimulateOutsideCombat(true);
         }
 
         protected override void OnDamaged(int amount)
@@ -87,6 +102,25 @@ namespace KeepCoreSafe.Enemies
             }
 
             SkipCurrentPathCell();
+            if (usesScriptedDestination && pathIndex >= pathCells.Count)
+            {
+                if (TryGetCurrentCell(out Vector2Int current)
+                    && current == scriptedDestination)
+                {
+                    StopMoving(false);
+                    FacePosition(scriptedPresentationTarget != null
+                        ? scriptedPresentationTarget.position
+                        : GridManager.GridToWorld(scriptedDestination));
+                    BeginSelfDestruct();
+                }
+                else
+                {
+                    StopMoving();
+                }
+
+                return;
+            }
+
             if (currentTarget == null)
                 AcquireNextTargetOrMove();
 
@@ -202,6 +236,7 @@ namespace KeepCoreSafe.Enemies
 
             StopMoving();
             AudioManager.PlayAt(SuicideData.ExplosionSound, transform.position);
+            ExplosionParticleEffectManager.Instance?.PlayAt(transform.position);
             Vector2Int center = TryGetCurrentCell(out Vector2Int currentCell)
                 ? currentCell
                 : GridManager.WorldToGrid(transform.position);

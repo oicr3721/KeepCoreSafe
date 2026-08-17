@@ -152,14 +152,16 @@ would attack the Block occupying its next route Cell, or surviving a hit with 30
 stops movement and starts the shared self-destruct warning. If the route has no intervening Block,
 the final route target is treated by the same adjacent-target rule; merely consuming the last path
 Cell is not a separate trigger.
-The explosion uses the Enemy's current Grid cell, excludes the center, and damages only Blocks in
-the other eight cells. Each damaged Block receives one pooled Explosion Particle. Self-detonation
-does not grant Energy, while ordinary lethal damage retains the configured Energy reward.
+The explosion uses the Enemy's current Grid cell, excludes the center from damage, and damages only
+Blocks in the other eight cells. One pooled Explosion Particle marks the Enemy's detonation point,
+and each damaged Block receives another pooled particle. Self-detonation does not grant Energy,
+while ordinary lethal damage retains the configured Energy reward.
 
-All Blocks refresh their world sprite and health-bar color when HP changes. Basic Blocks use
+Non-Core Blocks refresh their world sprite and health-bar color when HP changes. Basic Blocks use
 the five `Blocks-Sheet_0` through `Blocks-Sheet_4` damage stages from highest to lowest HP.
-Blocks without dedicated damage art repeat their existing sprite across all five stages.
-Health bars use discrete healthy (green), warning (orange), and critical (red) bands.
+Blocks without dedicated damage art repeat their existing sprite across all five stages. Core Blocks
+update only the health bar and retain their prefab-authored visual hierarchy. Health bars use discrete
+healthy (green), warning (orange), and critical (red) bands.
 
 Damage destruction plays a pooled fragment effect tinted from the destroyed Block's
 `BlockColorData`. Dismantling and match consumption do not count as damage destruction.
@@ -200,6 +202,10 @@ configured merge sound through `AudioManager` at the same instant as the Merge B
 
 # Tutorial Selection Safety
 
+- Placement previews always retain the selected Block's source RGB. An invalid Cell pulses only
+  alpha from the normal preview opacity to its configured minimum; validity or hiding restores the
+  normal opacity immediately.
+
 - While the Tutorial requires the Red block for the first Attack match, selecting a Green
   granted block is rejected before `PlacementController` changes its selection state.
 - A rejected Green selection starts the red/green distinction guidance, unlocks the Colorblind
@@ -213,6 +219,12 @@ configured merge sound through `AudioManager` at the same instant as the Merge B
 - Tutorial scripted supply is Green, Green, Red. Around the Core, the unchanged Up, Down, Left,
   and Right positions reference Green, Red, Blue, and Red respectively. These are scene references;
   the Red and Green BlockData assets remain unchanged.
+- Lily's final dialogue starts a camera focus and spawns the configured Suicide Enemy prefab at a
+  Core-relative off-grid position. It follows an exact Grid route to Lily, then runs the normal
+  warning and damaging 3x3 explosion. During only this finale, lethal Core damage is clamped to one
+  remaining HP so Game Over cannot interrupt the sequence.
+- Tutorial completion never waits for that Enemy. The existing glitch and blackout still determine
+  when PrologueScene loads.
 
 ---
 
@@ -226,9 +238,11 @@ configured merge sound through `AudioManager` at the same instant as the Merge B
   Lily directly selects/lifts her; the next in-bounds Grid click places her without an inventory step.
 - The initial camera focus is Core position plus the Prologue Director's serialized camera offset.
 - The Lily cell is highlighted while placed; the Core cell is highlighted while Lily is selected.
-- Only placement on the Core completes the Prologue. Completion locks input, changes the Tutorial
-  Core sprite to the normal Lily-containing Core sprite, clears every hostile command, and enters
-  GameScene through the normal black Scene Transition.
+- Only placement on the Core completes the Prologue. Completion locks input, replaces the Tutorial
+  Core GameObject with the distinct In-Game CoreData prefab, preserves its HP ratio, clears every
+  hostile command, and enters GameScene through the normal black Scene Transition.
+- Core HP refreshes and Shockwave presentation never assign a Core Sprite. The active Core prefab's
+  authored Visual and children remain unchanged; CoreData health-stage Sprite arrays stay empty.
 - Hostile command labels deliberately mix unlocalized languages, binary, hexadecimal, command syntax,
   and error messages across the whole screen. They establish no named network, faction, alliance, or
   other story detail beyond machines ordering the elimination of humans.

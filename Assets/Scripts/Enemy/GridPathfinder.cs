@@ -71,6 +71,18 @@ namespace KeepCoreSafe.Enemies
             return false;
         }
 
+        public bool TryBuildPath(Vector3 origin, Vector2Int target, out PathResult result)
+        {
+            foreach (Vector2Int start in GetStartCandidates(origin))
+            {
+                if (CanUseStart(start) && TryBuildPathToCell(start, target, out result))
+                    return true;
+            }
+
+            result = null;
+            return false;
+        }
+
         public bool TryBuildPath(Vector2Int start, Block core, out PathResult result)
         {
             result = null;
@@ -84,7 +96,35 @@ namespace KeepCoreSafe.Enemies
             }
 
             HashSet<Vector2Int> goals = GetCoreApproaches(core.GridPosition);
-            int shortestDistance = GetShortestDistance(start, goals, core.GridPosition);
+            return TryBuildPath(start, goals, core.GridPosition, out result);
+        }
+
+        private bool TryBuildPathToCell(
+            Vector2Int start,
+            Vector2Int target,
+            out PathResult result)
+        {
+            result = null;
+            if (gridManager == null
+                || gridManager.Grid == null
+                || !gridManager.Grid.IsWithinBounds(target)
+                || !CanUseStart(start))
+            {
+                return false;
+            }
+
+            HashSet<Vector2Int> goals = new() { target };
+            return TryBuildPath(start, goals, null, out result);
+        }
+
+        private bool TryBuildPath(
+            Vector2Int start,
+            HashSet<Vector2Int> goals,
+            Vector2Int? excludedPosition,
+            out PathResult result)
+        {
+            result = null;
+            int shortestDistance = GetShortestDistance(start, goals, excludedPosition);
             if (shortestDistance < 0)
                 return false;
 
@@ -98,7 +138,6 @@ namespace KeepCoreSafe.Enemies
             int bestBlockingBlockCount = int.MaxValue;
             int bestDistance = int.MaxValue;
             int equalGoalCount = 0;
-
             for (int distance = 0; distance <= maximumDistance && currentLayer.Count > 0; distance++)
             {
                 List<SearchState> nextLayer = new();
@@ -123,13 +162,15 @@ namespace KeepCoreSafe.Enemies
                     foreach (Vector2Int direction in searchDirections)
                     {
                         Vector2Int next = state.Position + direction;
-                        if (!gridManager.Grid.IsWithinBounds(next) || next == core.GridPosition)
+                        if (!gridManager.Grid.IsWithinBounds(next)
+                            || excludedPosition.HasValue && next == excludedPosition.Value)
+                        {
                             continue;
+                        }
 
                         SearchState nextState = new(next, distance + 1);
                         int nextBlockingCount = record.BlockingBlockCount
                             + (IsDestructibleBlockOccupied(next) ? 1 : 0);
-
                         if (!records.TryGetValue(nextState, out SearchRecord nextRecord))
                         {
                             nextRecord = new SearchRecord
@@ -204,7 +245,7 @@ namespace KeepCoreSafe.Enemies
         private int GetShortestDistance(
             Vector2Int start,
             HashSet<Vector2Int> goals,
-            Vector2Int corePosition)
+            Vector2Int? excludedPosition)
         {
             bool[,] visited = new bool[gridManager.Width, gridManager.Height];
             Queue<(Vector2Int Position, int Distance)> queue = new();
@@ -221,7 +262,7 @@ namespace KeepCoreSafe.Enemies
                 {
                     Vector2Int next = current + direction;
                     if (!gridManager.Grid.IsWithinBounds(next)
-                        || next == corePosition
+                        || excludedPosition.HasValue && next == excludedPosition.Value
                         || visited[next.x, next.y])
                     {
                         continue;
