@@ -28,6 +28,18 @@
 - Before Preparation listeners present a new Supply grant, `GameManager` rolls the next base
   Energy requirement and asks `CoreEnergyController` to reset current Energy to zero.
 
+## Pause, Exit, and Records
+
+- `PauseMenuUI` is authored once as a prefab and instantiated in Game, Tutorial, and Prologue scenes;
+  the Title scene intentionally has no pause menu. ESC stores the exact current simulation speed,
+  sets `Time.timeScale` to zero, and restores that stored speed when ESC or Close dismisses the menu.
+- Returning to Title requires confirmation because the active run is abandoned. The transition first
+  restores time scale and records an analytics abandonment event, so the normal scaled scene fade can run.
+- `ApplicationQuitButton` is attached only to the Title menu's Quit button.
+- `BestWaveRecord` is the sole owner of the `PlayerPrefs` best-wave value. `GameManager` calls it only
+  after Core destruction in `GameScene`; Tutorial deaths, pause-menu abandonment, and application exit
+  never update the record. `GameOverUI` reads the result and runs an unscaled pulse only for a strict new best.
+
 The scene hierarchy exposes these responsibilities without adding new coordinating managers:
 
 ```text
@@ -389,3 +401,84 @@ New upgrade behavior should be a new `ShopOfferData` subtype.
 
 Grid A*, enemies, waves, Block combat behaviors, health bars, damage feedback, time scale,
 camera controls, Core death presentation, and Game Over remain independent of the new loop.
+
+---
+
+# Pre-Logging Runtime Refactor
+
+- `CombatBlock` owns the Combat-phase tick shared only by Attack, Healer, and Support blocks.
+  Passive Wall, Supply, and Core blocks no longer receive an empty per-frame `Update` callback.
+- `AttackBlock` enumerates `WaveManager.ActiveEnemies` through `GameManager` instead of running a
+  scene-wide `FindObjectsByType` query whenever it needs a target. WaveManager remains the owner of
+  Enemy registration and lifetime.
+- `GridManager.GetCooldownMultiplier` caches the first applicable Support multiplier per target
+  Cell. Any occupancy change clears this cache before `GridChanged` listeners run, preserving the
+  previous support-selection order while avoiding a full Block scan on every skill action.
+- `GridPathfinder` stores search records as values and reuses its next-layer list/set throughout one
+  search. Route selection, tie-breaking, path-length tolerance, and immutable result paths are unchanged.
+- `WaveManager` reuses one spawn-delay yield instruction throughout a wave instead of creating one
+  for every Enemy.
+- `BlockHealthBar` enables its unscaled visibility timer only after Combat damage. Inactive and
+  undamaged health bars have their component tick disabled and allocate no per-hit timer objects.
+- `PooledParticleEffectManager` contains the shared pool, playback, and return lifecycle used by the
+  existing Explosion and Heal particle services. Their concrete singleton APIs and serialized Scene
+  field names remain unchanged.
+- `GameManager.CaptureGameplayState` and `BlockSupplyController.CaptureSupplyState` return immutable,
+  allocation-free snapshots for future telemetry. They expose wave/composition, Enemy counts, Energy,
+  Core status, reroll, rare chance, and grant state without adding any logging or exposing mutable lists.
+
+---
+
+# Playtest Analytics
+
+- `AnalyticsService` is the sole gameplay-facing telemetry facade. It owns run and wave deduplication,
+  terminal board aggregates, and the distinction between Core-destruction Game Over and a graceful
+  application exit.
+- `AnalyticsSchema` centrally defines stable design-event IDs, progression IDs, tutorial steps,
+  exception types, and custom-field names.
+- `IAnalyticsBackend` isolates the transport. `GameAnalyticsBackend` is the only runtime class that
+  references the GameAnalytics SDK and converts project progression status to SDK status.
+- The SDK retains automatic User ID and session handling. Gameplay never depends on Analytics success,
+  and the recording backend used by Editor tests proves event timing without network access.
+- `AnalyticsConsentBootstrap` does not interrupt the first Title-screen visit. `SceneTransitionTrigger`
+  requests the Resources-authored consent prompt when Start or Tutorial is first selected and continues
+  to the originally requested scene after either answer. `AnalyticsConsentSettings` persists that first
+  decision, while the Title Settings row provides the same opt-in/withdrawal choice later.
+  `GameAnalyticsBackend` cannot initialize or send until consent is granted and disables future
+  submission immediately on withdrawal.
+- The Windows playtest build processor requires configured GameAnalytics credentials and build label,
+  then copies the private-playtest privacy notice beside the executable. Automatic SDK error,
+  advertising-ID, hardware, health, memory, and FPS collection are disabled.
+- See `Markdown/ANALYTICS_REPORT.md` for the selected event matrix and intentionally omitted data.
+
+---
+
+# Localization Build Preparation
+
+- `LocalizationManager` uses English when no valid saved locale exists. A locale previously saved in
+  `PlayerPrefs` still takes precedence and subsequent changes continue to be persisted.
+- `Tools > Localization > Build Font Atlases` scans every JSON file under `Assets/Resources/i18n`,
+  parses the same flat runtime string table, and therefore excludes `_meta` from glyph collection.
+- The project does not swap fonts per locale. The builder prepares the three localized UI fonts
+  (`Mona12`, `Mona12-Bold`, and compact `MonaS10x12`) from the union of every discovered locale while
+  preserving Dynamic population mode, atlas settings, materials, and fallback relationships.
+- Unicode code points are deduplicated before `TMP_FontAsset.TryAddCharacters` is called. The assets
+  and generated atlas data are saved through `AssetDatabase`; repeat runs add only newly required
+  glyphs and report both direct-font misses and misses remaining after fallback lookup.
+- Run the builder after changing or adding localization JSON and before making a release build.
+
+---
+
+# Pre-Build Resource Hygiene
+
+- Enabled build scenes plus assets in `Resources` and `StreamingAssets` are the conservative roots of
+  the project resource audit. Serialized dependencies are followed through scenes, prefabs,
+  ScriptableObjects, materials, animations, and other Unity assets.
+- Assets reachable only by a string-based runtime load are retained unless their disuse is proven.
+  Project Settings and linked Scene Template assets are also retained when automated inspection cannot
+  prove that removal is safe.
+- One-time setup, migration, and validation Editor scripts are removed after their generated state is
+  validated. Recurring maintenance tools such as localization synchronization and font-atlas building
+  remain in `Assets/Editor`.
+- The deletion and validation record for this cleanup is maintained in
+  `Markdown/RESOURCE_CLEANUP_REPORT.md`.

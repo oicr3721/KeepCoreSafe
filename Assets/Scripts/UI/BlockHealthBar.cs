@@ -36,24 +36,20 @@ namespace KeepCoreSafe.UI
 
         private void Update()
         {
-            if (GameManager.Phase != GamePhase.Combat
-                || combatVisibilityRemaining <= 0f)
-            {
-                return;
-            }
-
             combatVisibilityRemaining = Mathf.Max(
                 0f,
                 combatVisibilityRemaining - Time.unscaledDeltaTime);
-            if (combatVisibilityRemaining <= 0f)
-                SetVisible(false);
+            if (combatVisibilityRemaining > 0f)
+                return;
+
+            SetVisible(false);
+            enabled = false;
         }
 
         private void HandlePhaseChanged(GamePhase phase)
         {
-            combatVisibilityRemaining = GameManager.Phase == GamePhase.Preparation
-                ? 0f
-                : combatVisibleDuration;
+            combatVisibilityRemaining = 0f;
+            enabled = false;
             RefreshVisibility();
         }
 
@@ -76,11 +72,15 @@ namespace KeepCoreSafe.UI
 
             if (GameManager.Phase == GamePhase.Combat)
             {
-                combatVisibilityRemaining = combatVisibleDuration;
                 SetVisible(true);
+                combatVisibilityRemaining = combatVisibleDuration;
+                enabled = combatVisibilityRemaining > 0f;
+                if (!enabled)
+                    SetVisible(false);
             }
             else
             {
+                enabled = false;
                 RefreshVisibility();
             }
         }

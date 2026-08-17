@@ -7,6 +7,9 @@ namespace KeepCoreSafe.Data
 {
     public class BlockData : ScriptableObject
     {
+        [SerializeField, Tooltip("Stable analytics identifier. Falls back to the asset name when empty.")]
+        private string analyticsId;
+
         [SerializeField]
         [Tooltip("Localization key for the block display name.")]
         private string displayName;
@@ -44,6 +47,7 @@ namespace KeepCoreSafe.Data
         public string Description => LocalizationManager.Get(description, description);
         public string DisplayNameKey => displayName;
         public string DescriptionKey => description;
+        public string AnalyticsId => string.IsNullOrWhiteSpace(analyticsId) ? name : analyticsId;
         public int MaxHP => maxHP;
         public Sprite Sprite => sprite;
         public BlockColorData Color => color;

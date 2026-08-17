@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using KeepCoreSafe.Analytics;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Managers;
 using UnityEngine;
@@ -18,6 +19,38 @@ namespace KeepCoreSafe.Controllers
 
             public BlockData Data { get; }
             public bool IsRare { get; }
+        }
+
+        public readonly struct SupplyState
+        {
+            public SupplyState(
+                int grantedBlockCount,
+                int pendingGuaranteedBlockCount,
+                int rerollCount,
+                int nextRerollCost,
+                float rareBlockChance,
+                bool hasUsedBlock,
+                bool canReroll,
+                bool isWaitingForShopClose)
+            {
+                GrantedBlockCount = grantedBlockCount;
+                PendingGuaranteedBlockCount = pendingGuaranteedBlockCount;
+                RerollCount = rerollCount;
+                NextRerollCost = nextRerollCost;
+                RareBlockChance = rareBlockChance;
+                HasUsedBlock = hasUsedBlock;
+                CanReroll = canReroll;
+                IsWaitingForShopClose = isWaitingForShopClose;
+            }
+
+            public int GrantedBlockCount { get; }
+            public int PendingGuaranteedBlockCount { get; }
+            public int RerollCount { get; }
+            public int NextRerollCost { get; }
+            public float RareBlockChance { get; }
+            public bool HasUsedBlock { get; }
+            public bool CanReroll { get; }
+            public bool IsWaitingForShopClose { get; }
         }
 
         [SerializeField] private BlockSupplyData supplyData;
@@ -51,6 +84,19 @@ namespace KeepCoreSafe.Controllers
             && GameManager.Instance.CanApplyRerollCost(NextRerollCost);
 
         public event Action<bool> SupplyChanged;
+
+        public SupplyState CaptureSupplyState()
+        {
+            return new SupplyState(
+                grantedBlocks.Count,
+                guaranteedPreparationBlocks.Count,
+                RerollCount,
+                NextRerollCost,
+                CurrentRareBlockChance,
+                hasUsedBlock,
+                CanReroll,
+                waitingForShopClose);
+        }
 
         private void Start()
         {
@@ -95,10 +141,12 @@ namespace KeepCoreSafe.Controllers
             if (!CanReroll)
                 return false;
 
-            if (!GameManager.Instance.TryApplyRerollCost(NextRerollCost))
+            int paidCost = NextRerollCost;
+            if (!GameManager.Instance.TryApplyRerollCost(paidCost))
                 return false;
 
             RerollCount++;
+            AnalyticsService.RerollUsed(GameManager.WaveIndex + 1, RerollCount, paidCost);
             DealBlocks();
             return true;
         }

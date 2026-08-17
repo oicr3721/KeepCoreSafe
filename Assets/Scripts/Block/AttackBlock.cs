@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace KeepCoreSafe.Blocks
 {
-    public sealed class AttackBlock : Block
+    public sealed class AttackBlock : CombatBlock
     {
         private readonly List<Enemy> candidates = new();
 
@@ -75,7 +75,11 @@ namespace KeepCoreSafe.Blocks
             if (GridManager.Instance == null || !HasGridPosition)
                 return null;
 
-            foreach (Enemy enemy in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+            IReadOnlyCollection<Enemy> activeEnemies = GameManager.Instance?.ActiveEnemies;
+            if (activeEnemies == null)
+                return null;
+
+            foreach (Enemy enemy in activeEnemies)
             {
                 if (enemy == null || enemy.IsDead)
                     continue;

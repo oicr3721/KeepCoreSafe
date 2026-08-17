@@ -1,4 +1,4 @@
-using System;
+using KeepCoreSafe.Analytics;
 using UnityEngine;
 
 public class SceneTransitionTrigger : MonoBehaviour
@@ -7,6 +7,14 @@ public class SceneTransitionTrigger : MonoBehaviour
 
     public void LoadScene()
     {
+        if (sceneType == SceneType.Game || sceneType == SceneType.Tutorial)
+        {
+            SceneType requestedScene = sceneType;
+            AnalyticsConsentBootstrap.ContinueAfterDecision(
+                () => SceneLoader.Load(requestedScene));
+            return;
+        }
+
         SceneLoader.Load(sceneType);
     }
 }

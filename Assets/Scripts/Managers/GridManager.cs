@@ -43,6 +43,7 @@ namespace KeepCoreSafe.Managers
         private float cellSize = 1f;
 
         private readonly Dictionary<Block, Vector2Int> blockPositions = new();
+        private readonly Dictionary<Vector2Int, float> cooldownMultiplierCache = new();
 
         public RuntimeGrid Grid { get; private set; }
         public int Width => width;
@@ -65,7 +66,32 @@ namespace KeepCoreSafe.Managers
 
         private void NotifyGridChanged()
         {
+            cooldownMultiplierCache.Clear();
             GridChanged?.Invoke();
+        }
+
+        public float GetCooldownMultiplier(Vector2Int position)
+        {
+            if (cooldownMultiplierCache.TryGetValue(position, out float cachedMultiplier))
+                return cachedMultiplier;
+
+            float multiplier = 1f;
+            if (Grid != null)
+            {
+                foreach (Block block in Grid.GetBlocks())
+                {
+                    if (block is SupportBlock support
+                        && support.Data is SupportBlockData supportData
+                        && supportData.AffectsOffset(position - support.GridPosition))
+                    {
+                        multiplier = supportData.CooldownMultiplier;
+                        break;
+                    }
+                }
+            }
+
+            cooldownMultiplierCache[position] = multiplier;
+            return multiplier;
         }
 
         private void Awake()

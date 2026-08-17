@@ -1,6 +1,7 @@
 using System.Collections;
 using DG.Tweening;
 using KeepCoreSafe.Audio;
+using KeepCoreSafe.Analytics;
 using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Controllers;
 using KeepCoreSafe.Data;
@@ -71,6 +72,7 @@ namespace KeepCoreSafe.Tutorial
 
         private void Start()
         {
+            AnalyticsService.PrologueStarted();
             if (!ValidateReferences())
                 return;
 
@@ -214,6 +216,7 @@ namespace KeepCoreSafe.Tutorial
             yield return new WaitForSecondsRealtime(postThreatSilence);
             atmosphereTween?.Kill(false);
 
+            AnalyticsService.PrologueCompleted();
             if (SceneTransition.Instance != null)
                 SceneLoader.Load(SceneType.Game);
             else

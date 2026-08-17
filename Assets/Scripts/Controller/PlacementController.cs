@@ -1,5 +1,6 @@
 using System;
 using KeepCoreSafe.Audio;
+using KeepCoreSafe.Analytics;
 using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Controllers;
 using KeepCoreSafe.Data;
@@ -277,6 +278,7 @@ public sealed class PlacementController : MonoBehaviour
         }
 
         resultBlock.HP.SetValue(resultBlock.HP.MaxValue * mergedHealthRatio);
+        AnalyticsService.MergePerformed(match.ResultBlock, match.ConsumedBlocks.Count);
         SkillBlockCreated?.Invoke(resultBlock, match.Position);
         bool presentationStarted = mergePresentation != null
             && mergePresentation.Play(

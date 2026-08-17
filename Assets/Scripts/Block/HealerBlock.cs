@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace KeepCoreSafe.Blocks
 {
-    public sealed class HealerBlock : Block
+    public sealed class HealerBlock : CombatBlock
     {
         [Header("Heal Projectile Pool")]
         [Tooltip("Prefab containing HealProjectile and its projectile/impact renderers.")]

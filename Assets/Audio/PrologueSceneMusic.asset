@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4086074c9198aca4896a1eac7c5e3857, type: 3}
   m_Name: PrologueSceneMusic
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Audio.MusicTrackData
-  clip: {fileID: 8300000, guid: 8650f58ed9cb0294b947288b9d4a26fe, type: 3}
+  clip: {fileID: 8300000, guid: 9640f040eaea905419ae7ea3fd2559f9, type: 3}
   volume: 0.7
   loop: 1
   crossfadeDuration: 0.5

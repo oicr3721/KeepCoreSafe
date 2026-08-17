@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace KeepCoreSafe.Blocks
 {
-    public sealed class SupportBlock : Block
+    public sealed class SupportBlock : CombatBlock
     {
         [Header("Electric Link Pool")]
         [Tooltip("Prefab containing ElectricLine and a configured LineRenderer.")]
@@ -76,8 +76,8 @@ namespace KeepCoreSafe.Blocks
                          SupportData.AffectedDirections,
                          SupportData.EffectRange))
             {
-                if (block != null 
-                    && block != this 
+                if (block != null
+                    && block != this
                     && block.HP.CurrentValue > 0f
                     && block.Data is TimedAreaBlockData)
                     desiredTargets.Add(block);

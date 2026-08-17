@@ -186,10 +186,11 @@ namespace KeepCoreSafe.Managers
             if (indicatorHideDelay > 0f)
                 yield return new WaitForSecondsRealtime(indicatorHideDelay);
 
+            WaitForSeconds spawnDelay = new(currentSpawnInterval);
             for (int i = 0; i < spawnPlan.Count; i++)
             {
                 SpawnEnemy(spawnPlan[i]);
-                yield return new WaitForSeconds(currentSpawnInterval);
+                yield return spawnDelay;
             }
 
             isSpawning = false;

@@ -73,18 +73,6 @@ namespace KeepCoreSafe.Blocks
             UpdateHealthVisual(1f);
         }
 
-        protected virtual void Update()
-        {
-            if (GameManager.Phase == GamePhase.Combat)
-            {
-                OnCombatUpdate(Time.deltaTime);
-            }
-        }
-
-        protected virtual void OnCombatUpdate(float deltaTime)
-        {
-        }
-
         public virtual void TakeDamage(int amount)
         {
             if (amount <= 0 || HP.CurrentValue <= 0)
@@ -214,17 +202,7 @@ namespace KeepCoreSafe.Blocks
                 return baseCooldown;
             }
 
-            foreach (Block adjacentBlock in GridManager.Instance.GetBlocks())
-            {
-                if (adjacentBlock is SupportBlock supportBlock
-                    && supportBlock.Data is SupportBlockData supportData
-                    && supportData.AffectsOffset(GridPosition - supportBlock.GridPosition))
-                {
-                    return baseCooldown * supportData.CooldownMultiplier;
-                }
-            }
-
-            return baseCooldown;
+            return baseCooldown * GridManager.Instance.GetCooldownMultiplier(GridPosition);
         }
 
         private void CreateHealthBar()

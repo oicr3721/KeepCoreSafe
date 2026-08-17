@@ -1,16 +1,64 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using KeepCoreSafe.Blocks;
+using KeepCoreSafe.Analytics;
 using KeepCoreSafe.Controllers;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Presentation;
+using KeepCoreSafe.Enemies;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace KeepCoreSafe.Managers
 {
     public sealed class GameManager : MonoBehaviour
     {
+        public readonly struct GameplayState
+        {
+            public GameplayState(
+                GamePhase phase,
+                int waveIndex,
+                WaveData waveData,
+                bool isSpecialWave,
+                int plannedEnemyCount,
+                int activeEnemyCount,
+                int currentEnergy,
+                int requiredEnergy,
+                float coreHealth,
+                float coreMaximumHealth,
+                bool isStageClearPlaying,
+                bool isCoreDestructionPlaying)
+            {
+                Phase = phase;
+                WaveIndex = waveIndex;
+                WaveData = waveData;
+                IsSpecialWave = isSpecialWave;
+                PlannedEnemyCount = plannedEnemyCount;
+                ActiveEnemyCount = activeEnemyCount;
+                CurrentEnergy = currentEnergy;
+                RequiredEnergy = requiredEnergy;
+                CoreHealth = coreHealth;
+                CoreMaximumHealth = coreMaximumHealth;
+                IsStageClearPlaying = isStageClearPlaying;
+                IsCoreDestructionPlaying = isCoreDestructionPlaying;
+            }
+
+            public GamePhase Phase { get; }
+            public int WaveIndex { get; }
+            public WaveData WaveData { get; }
+            public bool IsSpecialWave { get; }
+            public int PlannedEnemyCount { get; }
+            public int ActiveEnemyCount { get; }
+            public int CurrentEnergy { get; }
+            public int RequiredEnergy { get; }
+            public float CoreHealth { get; }
+            public float CoreMaximumHealth { get; }
+            public bool IsStageClearPlaying { get; }
+            public bool IsCoreDestructionPlaying { get; }
+        }
+
         [Header("Game Systems")]
         [SerializeField] private WaveManager waveManager;
         [SerializeField] private WaveDifficultyController difficultyController;
@@ -41,12 +89,39 @@ namespace KeepCoreSafe.Managers
         public static GamePhase Phase { get; private set; } = GamePhase.Preparation;
         public static int WaveIndex { get; private set; }
         public ObservableInt CoreEnergy => coreEnergyController?.Energy;
+        public IReadOnlyCollection<Enemy> ActiveEnemies =>
+            waveManager != null ? waveManager.ActiveEnemies : Array.Empty<Enemy>();
+        public int ActiveEnemyCount => waveManager?.ActiveEnemyCount ?? 0;
+        public int CurrentWaveEnemyCount => waveManager?.CurrentWaveEnemyCount ?? 0;
+        public WaveData CurrentWaveData => waveManager?.CurrentWaveData;
+        public WaveDifficultySnapshot PreparedDifficulty => preparedDifficulty;
+        public bool IsStageClearPlaying => isStageClearPlaying;
+        public bool IsCoreDestructionPlaying => isCoreDestructionPlaying;
         public float CurrentTimeScale => TimeScaleOptions[timeScaleIndex];
 
         public static event Action<GamePhase> PhaseChanged;
         public static event Action<float> TimeScaleChanged;
         public static event Action<int> WaveStarted;
         public static event Action<int, ClearType> StageCleared;
+
+        public GameplayState CaptureGameplayState()
+        {
+            CoreBlock core = GridManager.Instance?.Grid?.Core as CoreBlock;
+            ObservableInt energy = coreEnergyController?.Energy;
+            return new GameplayState(
+                Phase,
+                WaveIndex,
+                waveManager?.CurrentWaveData ?? preparedDifficulty.WaveData,
+                preparedDifficulty.IsSpecialWave,
+                waveManager?.CurrentWaveEnemyCount ?? preparedDifficulty.EnemyCount,
+                waveManager?.ActiveEnemyCount ?? 0,
+                energy?.CurrentValue ?? 0,
+                energy?.MaxValue ?? preparedDifficulty.RequiredEnergy,
+                core?.HP.CurrentValue ?? 0f,
+                core?.HP.MaxValue ?? 0f,
+                isStageClearPlaying,
+                isCoreDestructionPlaying);
+        }
 
         private void Awake()
         {
@@ -66,6 +141,8 @@ namespace KeepCoreSafe.Managers
                 return;
             }
             SetTimeScale(1f);
+            if (SceneManager.GetActiveScene().name == "GameScene")
+                BestWaveRecord.BeginRun();
             RollNextWaveDifficulty(WaveIndex + 1);
         }
 
@@ -75,6 +152,8 @@ namespace KeepCoreSafe.Managers
             GridManager.Instance.CoreDestroyed += HandleCoreDestroyed;
 
             PrepareWaveSpawnData();
+            if (SceneManager.GetActiveScene().name == "GameScene")
+                AnalyticsService.GameStarted();
         }
 
         public bool TryStartCombat()
@@ -99,6 +178,7 @@ namespace KeepCoreSafe.Managers
             SetPhase(GamePhase.Combat);
             WaveStarted?.Invoke(WaveIndex);
             waveManager.StartWave(WaveIndex, difficulty);
+            AnalyticsService.WaveStarted(CaptureGameplayState());
             preparedWaveIndex = -1;
             return true;
         }
@@ -118,7 +198,11 @@ namespace KeepCoreSafe.Managers
             }
 
             isCoreDestructionPlaying = false;
+            GameplayState gameOverState = CaptureGameplayState();
             waveManager.StopWave();
+            AnalyticsService.GameOver(gameOverState, "core_destroyed");
+            if (SceneManager.GetActiveScene().name == "GameScene")
+                BestWaveRecord.RegisterGameOver(WaveIndex);
             SetPhase(GamePhase.GameOver);
         }
 
@@ -300,6 +384,9 @@ namespace KeepCoreSafe.Managers
                 return;
 
             isPostWaveTransitionPlaying = true;
+            AnalyticsService.WaveCompleted(
+                CaptureGameplayState(),
+                clearType.ToString().ToLowerInvariant());
             StageCleared?.Invoke(WaveIndex, clearType);
             if (shopEventController != null
                 && shopEventController.TryStartPostWaveSupplySequence(WaveIndex, EnterPreparation))

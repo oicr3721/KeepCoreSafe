@@ -28,6 +28,16 @@ not switch routes when blocks are destroyed later in the wave.
 3. Place granted blocks on the Grid.
 4. Connect same-colored basic blocks to create skill blocks.
 5. Start the wave and observe automatic combat.
+
+## Pause and Best-Wave Feedback
+
+- ESC pauses Game, Tutorial, and Prologue scenes and opens a menu with Close and To Title actions.
+  ESC or Close resumes at the exact speed selected before pausing. To Title first warns that the
+  current run will not be saved.
+- The Title menu includes a desktop Quit Game action.
+- A run qualifies for the best-wave record only when the Core is destroyed in the main Game scene.
+  Leaving early and Tutorial Game Over do not qualify. Game Over displays the saved best wave, and a
+  newly achieved strict best pulses to make the result immediately visible.
 6. Return to Preparation, receive a new grant, and repeat.
 7. After eligible waves, defend a Supply Block and choose a free reward if it survives.
 

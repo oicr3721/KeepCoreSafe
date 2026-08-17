@@ -1,0 +1,40 @@
+KeepCoreSafe Private Playtest Privacy Notice
+Last updated: 2026-08-17
+
+Who controls the data
+The independent KeepCoreSafe developer who provided this private playtest build controls the
+playtest data. Questions, withdrawal, access, or deletion requests should be sent through the
+same contact channel that was used to provide the build.
+
+Optional collection
+No GameAnalytics data is sent until the player actively chooses "Share Data" inside the game.
+Declining does not restrict the game. The choice can be changed at any time from the title screen's
+Settings menu. Turning sharing off stops future event submission; it does not automatically delete
+events that were already submitted.
+
+Data processed
+- A random installation identifier and random session identifier.
+- Session timing, game build, SDK version, operating system, device category, and connection type.
+- Country inferred from the network IP address.
+- Gameplay events needed for playtest analysis: tutorial/prologue progress, wave starts and results,
+  rerolls, selected offers, completed merges, aggregate board composition, Core health ratio, and
+  graceful exit or game-over state.
+
+The game does not intentionally send a name, email address, chat, exact board coordinates, precise
+location, advertising identifier, purchase information, or full per-cell/HP history. Automatic
+GameAnalytics error and hardware/performance reporting are disabled for this playtest.
+
+Purpose and processor
+The data is used only to understand the playtest funnel, difficulty, failures, and feature usage so
+the developer can improve KeepCoreSafe. GameAnalytics ApS processes the data on the developer's
+behalf. GameAnalytics documents a rolling retention period of up to 12 months for technical logs and
+analytics, after which the data is deleted or permanently anonymized; dashboard detail can become
+less granular earlier.
+
+Minors
+This private test is intended for adults. A minor should choose "Play Without Sharing" unless a
+parent or guardian has given permission.
+
+GameAnalytics privacy information:
+https://www.gameanalytics.com/trust/privacy-notice
+https://www.gameanalytics.com/trust/privacy-faq

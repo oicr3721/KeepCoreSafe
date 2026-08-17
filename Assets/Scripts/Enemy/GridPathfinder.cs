@@ -28,11 +28,11 @@ namespace KeepCoreSafe.Enemies
             public override int GetHashCode() => HashCode.Combine(Position, Distance);
         }
 
-        private sealed class SearchRecord
+        private struct SearchRecord
         {
             public int BlockingBlockCount;
             public SearchState? Parent;
-            public int EqualParentCount = 1;
+            public int EqualParentCount;
         }
 
         public static readonly Vector2Int[] Directions =
@@ -131,8 +131,14 @@ namespace KeepCoreSafe.Enemies
             int maximumDistance = shortestDistance + Mathf.Max(0, enemyData.PathLengthTolerance);
             Dictionary<SearchState, SearchRecord> records = new();
             SearchState startState = new(start, 0);
-            records[startState] = new SearchRecord { BlockingBlockCount = 0 };
+            records[startState] = new SearchRecord
+            {
+                BlockingBlockCount = 0,
+                EqualParentCount = 1
+            };
             List<SearchState> currentLayer = new() { startState };
+            List<SearchState> nextLayer = new();
+            HashSet<SearchState> queuedNextStates = new();
 
             SearchState? bestGoal = null;
             int bestBlockingBlockCount = int.MaxValue;
@@ -140,8 +146,8 @@ namespace KeepCoreSafe.Enemies
             int equalGoalCount = 0;
             for (int distance = 0; distance <= maximumDistance && currentLayer.Count > 0; distance++)
             {
-                List<SearchState> nextLayer = new();
-                HashSet<SearchState> queuedNextStates = new();
+                nextLayer.Clear();
+                queuedNextStates.Clear();
                 foreach (SearchState state in currentLayer)
                 {
                     SearchRecord record = records[state];
@@ -176,7 +182,8 @@ namespace KeepCoreSafe.Enemies
                             nextRecord = new SearchRecord
                             {
                                 BlockingBlockCount = nextBlockingCount,
-                                Parent = state
+                                Parent = state,
+                                EqualParentCount = 1
                             };
                             records.Add(nextState, nextRecord);
                         }
@@ -185,12 +192,14 @@ namespace KeepCoreSafe.Enemies
                             nextRecord.BlockingBlockCount = nextBlockingCount;
                             nextRecord.Parent = state;
                             nextRecord.EqualParentCount = 1;
+                            records[nextState] = nextRecord;
                         }
                         else if (nextBlockingCount == nextRecord.BlockingBlockCount)
                         {
                             nextRecord.EqualParentCount++;
                             if (random.Next(nextRecord.EqualParentCount) == 0)
                                 nextRecord.Parent = state;
+                            records[nextState] = nextRecord;
                         }
                         else
                         {
@@ -202,7 +211,7 @@ namespace KeepCoreSafe.Enemies
                     }
                 }
 
-                currentLayer = nextLayer;
+                (currentLayer, nextLayer) = (nextLayer, currentLayer);
             }
 
             if (!bestGoal.HasValue)

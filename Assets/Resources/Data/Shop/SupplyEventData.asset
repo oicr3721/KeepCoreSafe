@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9b31c2f68768da46a9bd6f82401b2ae, type: 3}
   m_Name: SupplyEventData
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.ShopEventData
-  appearanceChance: 1
+  appearanceChance: 0.15
   minimumWaveInterval: 1
   maximumWaveInterval: 7
   supplyHunterRatio: 0.2

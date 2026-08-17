@@ -19,7 +19,7 @@ MonoBehaviour:
   attackCooldown: 1.4
   pathLengthTolerance: 3
   energyOnDeath: 3
-  sprite: {fileID: 7272484427156038481, guid: e4adadbff4951da40a04c2daa4382a23, type: 3}
+  sprite: {fileID: -312338474530494657, guid: 6150ff7ebd629ec4699bc5ac128b811e, type: 3}
   prefab: {fileID: 5133716904113855213, guid: a03d69610f6d728489aeb0c646b7a092, type: 3}
   targetPriority: 0100000010000000040000002000000002000000
   attackSound:

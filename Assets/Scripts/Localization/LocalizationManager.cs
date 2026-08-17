@@ -9,7 +9,7 @@ namespace KeepCoreSafe.Localization
     {
         private const string ResourcePath = "i18n";
         private const string PrefsKey = "KeepCoreSafe.Locale";
-        private const string DefaultLocale = "ko";
+        private const string DefaultLocale = "en";
 
         private static readonly Dictionary<string, LanguageTable> tables = new();
         private static readonly List<LocalizationLanguageInfo> availableLanguages = new();

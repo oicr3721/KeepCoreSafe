@@ -1,5 +1,6 @@
 using System.Collections;
 using KeepCoreSafe.Blocks;
+using KeepCoreSafe.Analytics;
 using KeepCoreSafe.Controllers;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Enemies;
@@ -63,12 +64,14 @@ namespace KeepCoreSafe.Tutorial
         private SuicideEnemy finaleSuicideEnemy;
         private CoreBlock protectedCore;
         private bool finalePresentationStarted;
+        private string currentAnalyticsStep = AnalyticsTutorialSteps.Introduction;
 
         private static readonly int IdleTrigger = Animator.StringToHash("Idle");
         private static readonly int HappyTrigger = Animator.StringToHash("Happy");
 
         private void Start()
         {
+            AnalyticsService.TutorialStarted();
             typewriter.AdvanceRequested += HandleAdvance;
             placementController.BlockPlaced += HandleBlockPlaced;
             placementController.GrantedBlockSelectionRequested += CanSelectGrantedBlock;
@@ -96,9 +99,11 @@ namespace KeepCoreSafe.Tutorial
                 yield return SayKey("tutorial.intro.1");
                 yield return SayKey("tutorial.intro.2");
                 yield return SayKey("tutorial.intro.3");
+                AnalyticsService.TutorialStepCompleted(AnalyticsTutorialSteps.Introduction);
             }
 
             yield return new WaitUntil(() => placementController.PlacementInputEnabled);
+            currentAnalyticsStep = AnalyticsTutorialSteps.AttackMerge;
             Vector2Int core = GridManager.Instance.Grid.Core.GridPosition;
             firstTarget = core + Vector2Int.right + Vector2Int.down;
             firstLessonSelectionRequired = true;
@@ -125,6 +130,8 @@ namespace KeepCoreSafe.Tutorial
             gridHighlight.Hide();
             firstLessonSelectionRequired = false;
             yield return SayKey("tutorial.first.attack.success");
+            AnalyticsService.TutorialStepCompleted(AnalyticsTutorialSteps.AttackMerge);
+            currentAnalyticsStep = AnalyticsTutorialSteps.HealerLesson;
             yield return SayKey("tutorial.second.green.connect");
             while (greenBlocksPlaced < 2)
             {
@@ -139,7 +146,9 @@ namespace KeepCoreSafe.Tutorial
                 yield return SayKey("tutorial.second.healer.success");
             else
                 yield return SayKey("tutorial.second.healer.fail");
+            AnalyticsService.TutorialStepCompleted(AnalyticsTutorialSteps.HealerLesson);
 
+            currentAnalyticsStep = AnalyticsTutorialSteps.DefenseWave;
             preparationUI.SetStartWaveAllowed(true);
             yield return new WaitUntil(() => GameManager.Phase == GamePhase.Combat || gameOver);
             yield return new WaitUntil(() => GameManager.Phase != GamePhase.Combat || gameOver);
@@ -156,12 +165,14 @@ namespace KeepCoreSafe.Tutorial
                 yield return SayKey("tutorial.clear.shockwave");
             else
                 yield return SayKey("tutorial.clear.killall");
+            AnalyticsService.TutorialStepCompleted(AnalyticsTutorialSteps.DefenseWave);
 
             PlayHappyReaction();
             BeginFinalePresentation();
             dialogueRoot.SetActive(true);
             typewriter.Play(LocalizationManager.Get("tutorial.glitch.last"));
             yield return new WaitForSecondsRealtime(finaleGlitchStartDelay);
+            AnalyticsService.TutorialCompleted();
             glitchTransition.Play();
         }
 
@@ -243,6 +254,9 @@ namespace KeepCoreSafe.Tutorial
         {
             if (block.Data == redBlock && !attackCreated && position != firstTarget)
             {
+                AnalyticsService.TutorialExceptionOccurred(
+                    currentAnalyticsStep,
+                    AnalyticsExceptionTypes.WrongFirstPlacement);
                 wrongFirstPlacement = true;
                 wrongFirstBlock = block;
                 wrongFirstBlockDismantled = false;
@@ -281,6 +295,9 @@ namespace KeepCoreSafe.Tutorial
             if (lilyTransform == null || position != lilyCell)
                 return;
 
+            AnalyticsService.TutorialExceptionOccurred(
+                currentAnalyticsStep,
+                AnalyticsExceptionTypes.LilyCellPlacement);
             PlayHappyReaction();
             if (lilyPlacementWarningRoutine == null && !dialogueRoot.activeSelf)
                 lilyPlacementWarningRoutine = StartCoroutine(ShowLilyPlacementWarning());
@@ -299,6 +316,9 @@ namespace KeepCoreSafe.Tutorial
             if (!firstLessonSelectionRequired || attackCreated || grant.Data != greenBlock)
                 return true;
 
+            AnalyticsService.TutorialExceptionOccurred(
+                currentAnalyticsStep,
+                AnalyticsExceptionTypes.WrongColorSelected);
             if (colorblindGuidanceRoutine == null)
                 colorblindGuidanceRoutine = StartCoroutine(ShowColorblindGuidance());
             return false;
@@ -337,6 +357,10 @@ namespace KeepCoreSafe.Tutorial
         {
             if (block != null && block == wrongFirstBlock)
                 return true;
+
+            AnalyticsService.TutorialExceptionOccurred(
+                currentAnalyticsStep,
+                AnalyticsExceptionTypes.InvalidDismantle);
 
             ShowInvalidDismantleWarning();
             return false;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using KeepCoreSafe.Analytics;
 using KeepCoreSafe.Blocks;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Enemies;
@@ -69,6 +70,7 @@ namespace KeepCoreSafe.Controllers
             pendingSelectedOffer = currentOffers[offerIndex];
 
             selectedOfferIndex = offerIndex;
+            AnalyticsService.OfferSelected(pendingSelectedOffer, GameManager.WaveIndex);
             OfferSelected?.Invoke(offerIndex);
             return true;
         }
