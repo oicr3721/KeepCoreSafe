@@ -1177,7 +1177,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 342963011}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0e157ee61ce3496f9794bbe82e2ae70f, type: 3}
   m_Name: 
@@ -4519,10 +4519,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -5465,10 +5465,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -6329,8 +6329,8 @@ MonoBehaviour:
   rerollStagger: 0.025
   confirmFeedbackDelay: 0.11
   dockDuration: 0.34
-  expandedBackgroundColor: {r: 0.044754095, g: 0.021715911, b: 0.0754717, a: 0.47058824}
-  dockedBackgroundColor: {r: 0.038803823, g: 0.018378422, b: 0.066037714, a: 0.78431374}
+  expandedBackgroundColor: {r: 0.20522669, g: 0.2026522, b: 0.20754719, a: 0.13725491}
+  dockedBackgroundColor: {r: 0.21960784, g: 0.21960784, b: 0.21960784, a: 0.15686275}
 --- !u!225 &1585977512
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -6343,11 +6343,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!4 &1613914119 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
-  m_PrefabInstance: {fileID: 8903523888131957468}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1618156470
 GameObject:
   m_ObjectHideFlags: 0
@@ -6568,7 +6563,6 @@ Transform:
   - {fileID: 659626170}
   - {fileID: 2022665938}
   - {fileID: 1671922787}
-  - {fileID: 1613914119}
   - {fileID: 85974109}
   m_Father: {fileID: 559701217}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -7478,7 +7472,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.056930114, g: 0.03097188, b: 0.0754717, a: 1}
+  m_BackGroundColor: {r: 0.03529412, g: 0.023529412, b: 0.06666667, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -9353,67 +9347,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cd9aae5d8c62f4e4da14e4396a850066, type: 3}
---- !u!1001 &8903523888131957468
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1635818027}
-    m_Modifications:
-    - target: {fileID: 366314929401413900, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
-      propertyPath: m_Color.a
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2341653584143375499, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
-      propertyPath: m_Name
-      value: Block Destroy Effect
-      objectReference: {fileID: 0}
-    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -2
-      objectReference: {fileID: 0}
-    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -2
-      objectReference: {fileID: 0}
-    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3690075620626011393, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 8a04fab67d5dc2a488fb5f4c4e6fbf19, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

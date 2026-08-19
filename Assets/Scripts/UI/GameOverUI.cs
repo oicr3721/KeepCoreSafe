@@ -75,11 +75,17 @@ namespace KeepCoreSafe.UI
             if (bestWaveGroup != null)
                 PrepareItem(bestWaveGroup);
             PrepareItem(restartGroup);
-            waveLabel.text = $"wave {GameManager.WaveIndex}";
+            
+            if(waveLabel != null)
+            {
+                waveLabel.text = $"wave {GameManager.WaveIndex}";
+                LocalizationManager.Format(
+                    "gameover.wave", "wave {0}", GameManager.WaveIndex);
+            }
             if (bestWaveLabel != null)
             {
                 bestWaveLabel.text = LocalizationManager.Format(
-                    "gameover.bestWave", "Best Wave {0}", $"wave {BestWaveRecord.BestWave}");
+                    "gameover.bestWave", "Best wave: {0}", BestWaveRecord.BestWave);
             }
             if (bestWavePulseTarget != null)
             {

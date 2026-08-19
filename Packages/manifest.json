@@ -36,6 +36,7 @@
     "com.unity.ugui": "2.0.0",
     "com.gameanalytics.sdk": "8.0.1",
     "com.google.external-dependency-manager": "1.2.187",
+    "com.unityroom.client": "https://github.com/naichilab/unityroom-client-library.git?path=Assets/unityroom#v0.9.6",
     "com.unity.visualscripting": "1.9.11",
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.adaptiveperformance": "1.0.0",

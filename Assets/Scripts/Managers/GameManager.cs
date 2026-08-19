@@ -7,6 +7,7 @@ using KeepCoreSafe.Controllers;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Presentation;
 using KeepCoreSafe.Enemies;
+using KeepCoreSafe.Ranking;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -142,7 +143,10 @@ namespace KeepCoreSafe.Managers
             }
             SetTimeScale(1f);
             if (SceneManager.GetActiveScene().name == "GameScene")
+            {
                 BestWaveRecord.BeginRun();
+                UnityroomRankingService.BeginRun();
+            }
             RollNextWaveDifficulty(WaveIndex + 1);
         }
 
@@ -202,7 +206,10 @@ namespace KeepCoreSafe.Managers
             waveManager.StopWave();
             AnalyticsService.GameOver(gameOverState, "core_destroyed");
             if (SceneManager.GetActiveScene().name == "GameScene")
+            {
                 BestWaveRecord.RegisterGameOver(WaveIndex);
+                UnityroomRankingService.SubmitGameOverWave(WaveIndex);
+            }
             SetPhase(GamePhase.GameOver);
         }
 

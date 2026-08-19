@@ -13,6 +13,9 @@ namespace KeepCoreSafe.Analytics
     public static class AnalyticsConsentSettings
     {
         private const string PrefsKey = "KeepCoreSafe.AnalyticsConsent";
+        private const string PrefsNoticeVersionKey = "KeepCoreSafe.AnalyticsConsentNoticeVersion";
+        private const string PrefsRecordedAtUtcKey = "KeepCoreSafe.AnalyticsConsentRecordedAtUtc";
+        private const int CurrentNoticeVersion = 2;
 
         public static event Action<AnalyticsConsentDecision> ConsentChanged;
 
@@ -20,6 +23,9 @@ namespace KeepCoreSafe.Analytics
         {
             get
             {
+                if (PlayerPrefs.GetInt(PrefsNoticeVersionKey, 0) != CurrentNoticeVersion)
+                    return AnalyticsConsentDecision.Unknown;
+
                 int saved = PlayerPrefs.GetInt(PrefsKey, (int)AnalyticsConsentDecision.Unknown);
                 return Enum.IsDefined(typeof(AnalyticsConsentDecision), saved)
                     ? (AnalyticsConsentDecision)saved
@@ -39,6 +45,8 @@ namespace KeepCoreSafe.Analytics
                 return;
 
             PlayerPrefs.SetInt(PrefsKey, (int)decision);
+            PlayerPrefs.SetInt(PrefsNoticeVersionKey, CurrentNoticeVersion);
+            PlayerPrefs.SetString(PrefsRecordedAtUtcKey, DateTime.UtcNow.ToString("O"));
             PlayerPrefs.Save();
             ConsentChanged?.Invoke(decision);
         }

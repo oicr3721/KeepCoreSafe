@@ -106,3 +106,29 @@ where the developer already has a contact channel with every tester.
 `AnalyticsServiceTests` injects a recording backend and verifies lifecycle/step deduplication, one
 terminal event per wave, one Game Over per run, progression status, reroll propagation, and terminal
 board-summary presence without making network requests.
+
+## WebGL SDK 8.0.1 compatibility
+
+The GameAnalytics 8.0.1 WebGL bridge calls its JavaScript runtime with incorrect argument positions
+for Design events without a numeric value and Progression events without a score. Those overloads
+silently lose all custom fields. Its JavaScript validation also treats numeric zero and `false` as
+null, omits them, and emits misleading warning/error events.
+
+`GameAnalyticsBackend` contains a WebGL-player-only compatibility path. Events with custom fields use
+the correctly aligned numeric overloads with a neutral zero when no semantic value/score exists, and
+zero/false custom-field values are serialized as `"0"`/`"false"`. Other platforms retain their native
+numeric and boolean types. Downstream analysis should therefore cast these two WebGL string forms back
+to the intended type.
+
+## Raw export decision (2026-08-19)
+
+- GameAnalytics raw Data Export is a PipelineIQ add-on; advertised pricing starts at USD 499/month.
+  It is not appropriate for a private playtest of roughly 50 players.
+- Unity Analytics collection is comfortably inside its free tier at this scale (50,000 MAU and 500
+  custom events per MAU per month). Dashboard reports can be exported as CSV or PNG.
+- Unity raw event access is Data Access through a separately owned Snowflake account. Because that
+  introduces an external billable warehouse and cannot be guaranteed cost-free, the analytics backend
+  was not migrated under the project's zero-cost requirement.
+- Live Events JSON remains useful for integration debugging, not durable analysis: the inspected export
+  contained exactly 50 recent events and omitted the beginning of a long session. It must not be treated
+  as a complete raw dataset.

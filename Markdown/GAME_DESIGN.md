@@ -258,3 +258,8 @@ directives rather than a clean localized UI, without adding fixed lore.
 During Tutorial, Lily occupies an Inspector-configured Grid cell relative to the Core. That cell is
 not a valid Block placement target; attempting the placement leaves the grant untouched and prompts
 Lily's localized reaction animation/dialogue.
+
+For Unityroom WebGL releases only, confirmed Game Over submits the run's reached Wave to the external
+descending high-score board. Tutorial, early abandonment, Editor play, Windows builds, and generic
+WebGL releases do not submit a ranking score. This external ranking does not replace the local
+PlayerPrefs best-Wave display and does not add an in-game global leaderboard UI.

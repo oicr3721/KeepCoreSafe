@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: enemy.ranged.name
   maxHP: 80
   moveSpeed: 1.5
-  attackDamage: 2
+  attackDamage: 3
   attackCooldown: 1.4
   pathLengthTolerance: 3
   energyOnDeath: 3

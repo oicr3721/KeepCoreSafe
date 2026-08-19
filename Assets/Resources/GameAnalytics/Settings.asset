@@ -27,20 +27,26 @@ MonoBehaviour:
   CustomArea: 
   gameKey:
   - c011561bf18fab2d99f9e59d60e03171
+  - 6ad5225b3a7197238cf1d34db49721fb
   secretKey:
   - de73159a4e9f7ae39e686647d362cde0eedd2be2
+  - fac72a24e3b44d5ed38485afbb24e81bc234bbaf
   Build:
   - 0.1.0-playtest
+  - 0.1.0-webgl
   SelectedPlatformOrganization:
+  - DDD
   - DDD
   SelectedPlatformStudio:
   - DDD
+  - DDD
   SelectedPlatformGame:
   - Keep Core Safe
-  SelectedPlatformGameID: 2f570500
-  SelectedOrganization: 01000000
-  SelectedStudio: 01000000
-  SelectedGame: 01000000
+  - Keep Core Safe-web
+  SelectedPlatformGameID: 2f570500e2570500
+  SelectedOrganization: 0100000001000000
+  SelectedStudio: 0100000001000000
+  SelectedGame: 0100000001000000
   NewVersion: 
   Changes: 
   SignUpOpen: 0
@@ -62,7 +68,7 @@ MonoBehaviour:
   ResourceItemTypes: []
   ResourceCurrencies: []
   LastCreatedGamePlatform: -1
-  Platforms: 02000000
+  Platforms: 0200000011000000
   CurrentInspectorState: 1
   ClosedHints: 
   DisplayHints: 0
@@ -90,7 +96,7 @@ MonoBehaviour:
   IncludeGooglePlay: 1
   FpsCriticalThreshold: 20
   FpsCirticalSubmitInterval: 1
-  PlatformFoldOut: 01
+  PlatformFoldOut: 0101
   CustomDimensions01FoldOut: 0
   CustomDimensions02FoldOut: 0
   CustomDimensions03FoldOut: 0

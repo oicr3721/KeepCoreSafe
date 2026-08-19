@@ -453,6 +453,31 @@ camera controls, Core death presentation, and Game Over remain independent of th
 
 ---
 
+# Unityroom Score Ranking
+
+- Unityroom ranking is a separate optional transport from GameAnalytics. Analytics continues to own
+  play telemetry; ranking submits only the reached Wave when a real GameScene run reaches confirmed
+  Core-destruction Game Over.
+- `GameManager.WaveIndex` remains the single Wave source. `UnityroomRankingService` resets its
+  per-run guard when GameScene starts and queues at most one score from `HandleCoreDestroyed`.
+- Ranking code can call the official client only when both `UNITY_WEBGL` and the project-specific
+  `UNITYROOM` symbol are compiled. Editor, Windows, and other WebGL profiles retain the normal game
+  flow without a ranking API call.
+- `Unityroom WebGL - Desktop - Release` is the dedicated Build Profile. The existing generic WebGL
+  profile is unchanged and does not define `UNITYROOM`.
+- The official `com.unityroom.client` v0.9.6 package is pinned from `naichilab/unityroom-client-library`.
+  The build processor injects its runtime client into the build-scene copy only. No ranking prefab,
+  HMAC key, or Board No is serialized into a project Scene or Prefab.
+- The HMAC key and Board No come from machine-local EditorPrefs or the `UNITYROOM_HMAC_KEY` and
+  `UNITYROOM_BOARD_NO` CI environment variables. A Unityroom build fails before player generation if
+  the key is missing, preventing an apparently valid but non-reporting upload.
+- Submission uses descending high-score mode and is isolated from Game Over with a synchronous
+  exception boundary. The official client owns its asynchronous queue/retry behavior; ranking failure
+  never blocks the result UI or alters the local best-Wave record.
+- Setup and release verification are documented in `Markdown/UNITYROOM_RANKING.md`.
+
+---
+
 # Localization Build Preparation
 
 - `LocalizationManager` uses English when no valid saved locale exists. A locale previously saved in

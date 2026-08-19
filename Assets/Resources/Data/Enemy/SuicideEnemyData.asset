@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::KeepCoreSafe.Data.SuicideEnemyData
   displayName: enemy.suicide.name
   maxHP: 40
-  moveSpeed: 3.2
-  attackDamage: 35
+  moveSpeed: 3
+  attackDamage: 25
   attackCooldown: 1.2
   pathLengthTolerance: 3
-  energyOnDeath: 4
+  energyOnDeath: 2
   sprite: {fileID: 6452676401602884778, guid: 6150ff7ebd629ec4699bc5ac128b811e, type: 3}
   prefab: {fileID: 8918647325601005442, guid: 1b14a431c478659489c1b650c40833bb, type: 3}
   targetPriority: 0100000002000000100000000400000020000000
@@ -28,7 +28,7 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 0.96, y: 1.04}
     spatialBlend: 0
-  forcedTriggerHealthRatio: 0.4
+  forcedTriggerHealthRatio: 0.5
   initialPulseInterval: 0.2
   finalPulseInterval: 0.05
   initialScalePulse: 0.05
