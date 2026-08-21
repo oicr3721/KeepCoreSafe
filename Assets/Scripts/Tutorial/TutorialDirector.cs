@@ -78,6 +78,7 @@ namespace KeepCoreSafe.Tutorial
             placementController.BlockPlacementValidationRequested += CanPlaceBlockAtLilyCell;
             placementController.BlockPlacementRejected += HandleBlockPlacementRejected;
             placementController.BlockDismantleRequested += CanDismantleBlock;
+            placementController.BlockDismantleAvailabilityRequested += IsDismantleAvailable;
             placementController.BlockDismantled += HandleBlockDismantled;
             placementController.SkillBlockCreated += HandleSkillCreated;
             GameManager.StageCleared += HandleStageCleared;
@@ -355,7 +356,7 @@ namespace KeepCoreSafe.Tutorial
 
         private bool CanDismantleBlock(Block block, Vector2Int _)
         {
-            if (block != null && block == wrongFirstBlock)
+            if (IsDismantleAvailable(block, default))
                 return true;
 
             AnalyticsService.TutorialExceptionOccurred(
@@ -364,6 +365,11 @@ namespace KeepCoreSafe.Tutorial
 
             ShowInvalidDismantleWarning();
             return false;
+        }
+
+        private bool IsDismantleAvailable(Block block, Vector2Int _)
+        {
+            return block != null && block == wrongFirstBlock;
         }
 
         private void ShowInvalidDismantleWarning()
@@ -450,6 +456,7 @@ namespace KeepCoreSafe.Tutorial
                 placementController.BlockPlacementValidationRequested -= CanPlaceBlockAtLilyCell;
                 placementController.BlockPlacementRejected -= HandleBlockPlacementRejected;
                 placementController.BlockDismantleRequested -= CanDismantleBlock;
+                placementController.BlockDismantleAvailabilityRequested -= IsDismantleAvailable;
                 placementController.BlockDismantled -= HandleBlockDismantled;
                 placementController.SkillBlockCreated -= HandleSkillCreated;
             }

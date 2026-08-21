@@ -7,6 +7,7 @@ using KeepCoreSafe.Controllers;
 using KeepCoreSafe.Data;
 using KeepCoreSafe.Managers;
 using KeepCoreSafe.Presentation;
+using KeepCoreSafe.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -16,7 +17,7 @@ using UnityEngine.UI;
 namespace KeepCoreSafe.Tutorial
 {
     [DefaultExecutionOrder(100)]
-    public sealed class PrologueDirector : MonoBehaviour
+    public sealed class PrologueDirector : MonoBehaviour, IMouseCursorInteractionSource
     {
         private static readonly int IdleTrigger = Animator.StringToHash("Idle");
         private static readonly int ComaTrigger = Animator.StringToHash("Coma");
@@ -123,10 +124,9 @@ namespace KeepCoreSafe.Tutorial
                 return;
             }
 
-            Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-            mouseWorld.z = 0f;
-            Vector2Int hoveredCell = gridManager.WorldToGrid(mouseWorld);
-            bool insideGrid = gridManager.Grid.IsWithinBounds(hoveredCell);
+            bool insideGrid = TryGetHoveredCell(
+                Mouse.current.position.ReadValue(),
+                out Vector2Int hoveredCell);
 
             if (lilySelected)
             {
@@ -145,6 +145,31 @@ namespace KeepCoreSafe.Tutorial
             {
                 SelectPlacedLily();
             }
+        }
+
+        public bool IsPointerInteractionAvailable(Vector2 screenPosition)
+        {
+            if (!isActiveAndEnabled
+                || !inputEnabled
+                || fusionStarted
+                || !TryGetHoveredCell(screenPosition, out Vector2Int hoveredCell))
+            {
+                return false;
+            }
+
+            return lilySelected || lilyPlaced && hoveredCell == lilyCell;
+        }
+
+        private bool TryGetHoveredCell(Vector2 screenPosition, out Vector2Int hoveredCell)
+        {
+            hoveredCell = default;
+            if (Camera.main == null || gridManager == null || gridManager.Grid == null)
+                return false;
+
+            Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(screenPosition);
+            mouseWorld.z = 0f;
+            hoveredCell = gridManager.WorldToGrid(mouseWorld);
+            return gridManager.Grid.IsWithinBounds(hoveredCell);
         }
 
         private void SelectPlacedLily()

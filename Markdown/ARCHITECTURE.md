@@ -404,6 +404,22 @@ camera controls, Core death presentation, and Game Over remain independent of th
 
 ---
 
+# Dynamic Mouse Cursor
+
+- `MouseCursorController` is runtime-bootstrapped once and persists across Scenes. It loads the two
+  existing Cursor textures from `Resources/Sprites`, restores Default on every Scene load, and calls
+  `Cursor.SetCursor` only when the resolved state changes (plus explicit initialization/reset).
+- UI uses the existing EventSystem raycast order. Only the top `GraphicRaycaster` hit is authoritative:
+  an active, interactable `Selectable` or enabled pointer click/down handler is Clickable; a decorative
+  raycast target blocks the World input underneath but remains Default.
+- World hit testing remains Grid-based. `PlacementController` and `PrologueDirector` implement the
+  shared cursor query with the same screen-to-Grid conversion and availability conditions as their
+  existing left/right click paths; no Collider or physics raycast is introduced.
+- Tutorial dismantle availability is queried without invoking its rejection feedback. Analytics,
+  dialogue, and other attempt-side effects still run only on a real invalid right-click.
+
+---
+
 # Pre-Logging Runtime Refactor
 
 - `CombatBlock` owns the Combat-phase tick shared only by Attack, Healer, and Support blocks.

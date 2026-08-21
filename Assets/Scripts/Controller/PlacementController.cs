@@ -14,7 +14,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
-public sealed class PlacementController : MonoBehaviour
+public sealed class PlacementController : MonoBehaviour, IMouseCursorInteractionSource
 {
     [Serializable]
     private struct StartingBlock
@@ -66,6 +66,7 @@ public sealed class PlacementController : MonoBehaviour
     public event Action<BlockData, Vector2Int> BlockPlacementRejected;
     public event Action<Block, Vector2Int> BlockPlaced;
     public event Func<Block, Vector2Int, bool> BlockDismantleRequested;
+    public event Func<Block, Vector2Int, bool> BlockDismantleAvailabilityRequested;
     public event Action<Block, Vector2Int> BlockDismantled;
     public event Action<Block, Vector2Int> SkillBlockCreated;
 
@@ -104,8 +105,8 @@ public sealed class PlacementController : MonoBehaviour
             return;
         }
 
-        Vector2Int position = GridManager.Instance.WorldToGrid(GetMousePosition());
-        if (!GridManager.Instance.Grid.IsWithinBounds(position))
+        if (!TryGetGridPosition(Mouse.current.position.ReadValue(), out Vector2Int position)
+            || !GridManager.Instance.Grid.IsWithinBounds(position))
         {
             HidePreview();
             return;
@@ -193,6 +194,31 @@ public sealed class PlacementController : MonoBehaviour
         {
             ClearSelection();
         }
+    }
+
+    public bool IsPointerInteractionAvailable(Vector2 screenPosition)
+    {
+        if (!isActiveAndEnabled
+            || !placementInputEnabled
+            || Camera.main == null
+            || GridManager.Instance == null)
+        {
+            return false;
+        }
+
+        if (!TryGetGridPosition(screenPosition, out Vector2Int position)
+            || !GridManager.Instance.Grid.IsWithinBounds(position))
+            return false;
+
+        if (selectedSupplyIndex >= 0
+            && selectedGrant.Data != null
+            && CanPlaceSelectedBlock(position))
+        {
+            return true;
+        }
+
+        return TryGetDismantleCandidate(position, out Block block)
+               && IsDismantleAvailable(block, position);
     }
 
     private void TryPlaceSelectedBlock(Vector2Int position)
@@ -323,8 +349,7 @@ public sealed class PlacementController : MonoBehaviour
 
     private void TryDismantle(Vector2Int position)
     {
-        if (GridManager.Instance.IsInteractionLocked(position)
-            || !GridManager.Instance.TryGetBlock(position, out Block block)
+        if (!TryGetDismantleCandidate(position, out Block block)
             || !CanDismantle(block, position)
             || !GridManager.Instance.TryRemoveBlock(position, out block))
         {
@@ -337,6 +362,30 @@ public sealed class PlacementController : MonoBehaviour
             AudioManager.PlayAt(dismantleSound, block.transform.position);
             Destroy(block.gameObject);
         });
+    }
+
+    private bool TryGetDismantleCandidate(Vector2Int position, out Block block)
+    {
+        block = null;
+        return !GridManager.Instance.IsInteractionLocked(position)
+               && GridManager.Instance.TryGetBlock(position, out block);
+    }
+
+    private bool IsDismantleAvailable(Block block, Vector2Int position)
+    {
+        if (BlockDismantleAvailabilityRequested == null)
+            return true;
+
+        foreach (Delegate listener in BlockDismantleAvailabilityRequested.GetInvocationList())
+        {
+            if (listener is Func<Block, Vector2Int, bool> validator
+                && !validator(block, position))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private bool CanDismantle(Block block, Vector2Int position)
@@ -414,12 +463,16 @@ public sealed class PlacementController : MonoBehaviour
         return waveManager != null && waveManager.IsSpawnCellReserved(position);
     }
 
-    private Vector3 GetMousePosition()
+    private static bool TryGetGridPosition(Vector2 screenPosition, out Vector2Int position)
     {
-        Vector3 mousePosition = Mouse.current.position.ReadValue();
-        Vector3 worldPosition = Camera.main.ScreenToWorldPoint(mousePosition);
+        position = default;
+        if (Camera.main == null || GridManager.Instance == null)
+            return false;
+
+        Vector3 worldPosition = Camera.main.ScreenToWorldPoint(screenPosition);
         worldPosition.z = 0f;
-        return worldPosition;
+        position = GridManager.Instance.WorldToGrid(worldPosition);
+        return true;
     }
 
     private void OnPhaseChanged(GamePhase phase)
